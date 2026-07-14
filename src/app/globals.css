@@ -1,26 +1,1061 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+ * Anima Residences — design tokens.
+ * Declared inside `@theme` so Tailwind v4 both emits them as `:root` CSS
+ * variables (e.g. `var(--color-gold)`) AND generates matching utilities
+ * (`bg-gold`, `text-forest`, `border-earth`, …). This intentionally replaces
+ * Tailwind's default `stone`/`white` palettes with the brand values.
+ */
+/*
+ * Palette sampled from the project's own assets — not invented.
+ *   building.png : median colour of each material
+ *   logo_simon.png : the embossed gold of the mark
+ * See the comment beside each token for its provenance.
+ */
+@theme {
+  --color-stone: #f2ede6; /* paper */
+  --color-sand: #e5d8c6; /* limestone, sunlit facade */
+  --color-earth: #a89880; /* muted warm grey (UI text on dark) */
+  --color-gold: #b69a78; /* brass — the mark's own gold */
+  --color-forest: #363f19; /* foliage in shade */
+  --color-charcoal: #181913; /* deepest shadow in the render */
+  --color-white: #fafaf8;
+
+  /* extended, measured */
+  --color-brass-hi: #f6e7c8; /* gold highlight on the emboss */
+  --color-brass-lo: #866640; /* gold in shadow */
+  --color-olive-lit: #86926a; /* sunlit leaf — the "available" green */
+  --color-stone-shade: #5f574b; /* limestone in shade */
+  --color-sky: #aec6e5; /* sky — technical annotations */
 }
 
+/*
+ * Hero video plate.
+ *
+ * The master pushes in as the building tops out, so a 9:16 centre crop showed a
+ * bare stretch of wall on phones. They now get a 1240×1080 crop holding the
+ * whole facade (see MOBILE_CROP in scripts/optimize-media.mjs) and the layout —
+ * not the encoder — letterboxes it. `cover` there would undo the whole point.
+ */
+.hero-video {
+  position: relative; /* paint above the LQIP backdrop and the letterbox scrim */
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.hero-letterbox {
+  display: none;
+}
+/* Base (desktop) off. The mobile `display: block` lives in the media query
+   below — this MUST stay above it so equal-specificity source order lets the
+   media rule win on phones. */
+.hero-scrim-m {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  /* The desktop scrims key off a full-bleed frame; the phone's framing differs. */
+  .hero-ov-bottom,
+  .hero-ov-corner {
+    display: none;
+  }
+
+  /* ── Mode L — landscape crop (current master) ──────────────────────────
+   * The 840×1080 crop clears the whole building at EVERY phase of the timelapse
+   * (it's widest during construction), so it can't fill more than ~59% of a
+   * tall screen without cutting the sides mid-scroll. Video at the top, headline
+   * below on a blurred fill of the building — never black.
+   */
+  .hero--letterbox .hero-video {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 52px; /* just under the navigation */
+    width: 100%;
+    height: auto;
+    aspect-ratio: var(--m-aspect, 840 / 1080);
+    object-fit: cover;
+  }
+  .hero--letterbox .hero-letterbox {
+    display: block;
+    background:
+      linear-gradient(to bottom, rgba(24, 25, 19, 0.5) 0%, rgba(24, 25, 19, 0.32) 34%, rgba(20, 21, 15, 0.9) 62%, rgba(16, 17, 12, 0.96) 100%),
+      url(/images/hero-fill-mobile.jpg) center / cover no-repeat;
+  }
+  /* Softens the seam where the headline meets the video's bottom edge. */
+  .hero--letterbox .hero-scrim-m {
+    display: block;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.2) 24%, transparent 42%);
+  }
+
+  /* ── Mode F — portrait master (drop in assets/videos/hero-portrait.mp4) ──
+   * A vertically-shot cut fills the whole screen AND keeps the whole building,
+   * so the video covers the viewport and the headline overlays its lower third.
+   */
+  .hero--fill .hero-video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .hero--fill .hero-letterbox {
+    display: none; /* cover leaves no gap to fill */
+  }
+  .hero--fill .hero-scrim-m {
+    display: block;
+    background: linear-gradient(
+      to top,
+      rgba(0, 0, 0, 0.9) 0%,
+      rgba(0, 0, 0, 0.6) 20%,
+      rgba(0, 0, 0, 0.25) 40%,
+      transparent 58%
+    );
+  }
+}
+
+/*
+ * Building section — one markup, two geometries.
+ *
+ * Phone: the stage IS the image box (aspect-locked), so the facade is shown
+ * whole. `cover` on a 0.46 portrait viewport would crop it to a sliver.
+ * Desktop: the frame overflows the stage to reproduce `object-fit: cover`.
+ *
+ * Either way the frame keeps building.png's own ratio, so the hotspot
+ * percentages stay welded to the facade.
+ */
+.bld-stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1856 / 1312;
+  /*
+   * The spotlight dims the world with a 100vmax spread shadow. On a phone the
+   * heading, the stepper and the floor list all sit OUTSIDE the picture, and
+   * that shadow was swallowing them. Clip it to the picture; on desktop the
+   * facade is the whole viewport, so there is nothing else to protect.
+   */
+  overflow: hidden;
+}
+.bld-frame {
+  position: absolute;
+  inset: 0;
+}
+.bld-head {
+  padding: 96px 6% 20px;
+}
+
+@media (min-width: 1024px) {
+  .bld-stage {
+    aspect-ratio: auto;
+    height: 100svh;
+    overflow: visible;
+  }
+  .bld-frame {
+    inset: auto;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: max(100%, calc(100svh * 1856 / 1312));
+    aspect-ratio: 1856 / 1312;
+  }
+  .bld-head {
+    position: absolute;
+    top: 118px;
+    left: 6%;
+    /* The level scale hugs the facade at ~26.5% of the frame; the heading and
+       the figures share the dark column to its left and must not reach it. */
+    max-width: 212px;
+    padding: 0;
+    z-index: 3;
+  }
+}
+
+/*
+ * Floor plan — fit the whole drawing, never crop it.
+ *
+ * `height: 100%` + aspect-ratio makes the box 0.79× as wide as it is tall, which
+ * on a phone is wider than the screen: the drawing ran off both edges. This is
+ * `object-fit: contain` written out for a container, so the SVG hotspots keep
+ * sharing the image's exact box.
+ */
+.plan-fit {
+  container-type: size;
+}
+.plan-box {
+  aspect-ratio: 1042 / 1316;
+  width: min(100cqw, 100cqh * 1042 / 1316);
+}
+
+/*
+ * No hover on touch. The dark info chips are sized for a desktop-scale drawing;
+ * on a phone the whole plan is ~350 px wide and their type would be 5 px tall.
+ * Show a single large letter per unit instead — the facts live in the list
+ * underneath the plan.
+ */
+.unit-letter {
+  opacity: 0;
+}
+@media (hover: none) and (pointer: coarse) {
+  .unit-fill {
+    opacity: 0.1;
+  }
+  .unit-stroke {
+    opacity: 0.65;
+  }
+  .unit-chip {
+    opacity: 0;
+  }
+  .unit-letter {
+    opacity: 1;
+  }
+}
+
+/* ───────────────────────── The sheets (Vybavenie) ───────────────────────────
+ * The standard is issued as drawings, so the section is the board they are
+ * pinned to. One sheet is on the board at a time; the index beside it is what
+ * changes it. Six full-width illustrations made the section four screens long
+ * for a list of facts that fits on one.
+ */
+.am-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgba(28, 28, 26, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(28, 28, 26, 0.05) 1px, transparent 1px);
+  background-size: 88px 88px;
+  mask-image: radial-gradient(120% 70% at 50% 30%, #000 0%, rgba(0, 0, 0, 0.3) 55%, transparent 82%);
+  -webkit-mask-image: radial-gradient(120% 70% at 50% 30%, #000 0%, rgba(0, 0, 0, 0.3) 55%, transparent 82%);
+}
+
+/* A sheet: paper on the board, trimmed to corner marks, with a title block. */
+.am-plate-frame {
+  position: relative;
+  padding: 26px 26px 0;
+  border: 1px solid rgba(28, 28, 26, 0.16);
+  background: #fbf8f3;
+  box-shadow: 0 26px 60px -36px rgba(28, 28, 26, 0.5);
+}
+.am-plate-draw > svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.am-plate-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-top: 18px;
+  padding: 12px 0 14px;
+  border-top: 1px solid rgba(28, 28, 26, 0.14);
+}
+
+.am-tick {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  border-color: rgba(182, 154, 120, 0.7);
+  border-style: solid;
+  border-width: 0;
+}
+.am-tick--tl { top: 9px; left: 9px; border-top-width: 1px; border-left-width: 1px; }
+.am-tick--tr { top: 9px; right: 9px; border-top-width: 1px; border-right-width: 1px; }
+.am-tick--bl { bottom: 9px; left: 9px; border-bottom-width: 1px; border-left-width: 1px; }
+.am-tick--br { bottom: 9px; right: 9px; border-bottom-width: 1px; border-right-width: 1px; }
+
+/* ── The carousel ──────────────────────────────────────────────────────────
+ * The sheet is a WebGL surface: the hand draws it, and the cursor lights it.
+ * Everything below is the furniture around it.
+ */
+.sk-wrap {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  background: #eadec6;
+  cursor: crosshair;
+  touch-action: pan-y; /* a vertical scroll must still get through */
+}
+.sk-canvas,
+.sk-fallback img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.sk-fallback {
+  position: absolute;
+  inset: 0;
+  display: none;
+}
+/* No WebGL2, or the textures never arrived: the sheet is simply shown. */
+.sk-wrap[data-gl="off"] .sk-canvas { display: none; }
+.sk-wrap[data-gl="off"] .sk-fallback { display: block; }
+
+.am-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(28, 28, 26, 0.2);
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 15px;
+  color: rgba(28, 28, 26, 0.7);
+  cursor: pointer;
+  transition: border-color 0.3s ease, background-color 0.3s ease, color 0.3s ease;
+}
+.am-arrow:hover {
+  border-color: #1c1c1a;
+  background: #1c1c1a;
+  color: #f2ede6;
+}
+
+.am-count { flex-shrink: 0; }
+
+.am-bar {
+  position: relative;
+  display: block;
+  flex: 1;
+  height: 1px;
+  background: rgba(28, 28, 26, 0.14);
+}
+.am-bar-fill {
+  position: absolute;
+  inset: 0;
+  background: #b69a78;
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+/* The six, as words. The rule under the live one is the only thing that moves. */
+.am-idx {
+  position: relative;
+  padding-bottom: 5px;
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 11px;
+  font-weight: 300;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(28, 28, 26, 0.42);
+  cursor: pointer;
+  transition: color 0.35s ease;
+}
+.am-idx::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 1px;
+  background: #b69a78;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.am-idx:hover { color: rgba(28, 28, 26, 0.75); }
+.am-idx[data-on="true"] { color: #1c1c1a; }
+.am-idx[data-on="true"]::after { transform: scaleX(1); }
+
+/* ── The drawing itself ────────────────────────────────────────────────────
+ * `.ink` is a line that inks itself in: pathLength={1} rescales every path to
+ * length 1, so ONE dashoffset tween draws them all at a matched rate. `.poche`
+ * is cut material and `.fade` is anything that cannot be drawn — they arrive.
+ */
+.ink {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+.poche,
+.fade {
+  opacity: 0;
+}
+
+/* Annotation. Set in the drawing's own units, so a media query can enlarge it
+   on a phone — where the same sheet is shown at little over half the size and
+   9px of figure would be 5px of nothing. */
+.dwg-t {
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 10.5px;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  opacity: 0;
+  /*
+   * A word laid over a line is unreadable, and a drawing is nothing but lines.
+   * The paper is therefore stroked BEHIND the glyphs (paint-order: stroke), so
+   * every label punches its own hole in whatever it crosses — which is exactly
+   * what a draughtsman does when he masks a dimension over a wall.
+   */
+  paint-order: stroke;
+  stroke: #fbf8f3;
+  stroke-width: 3.6px;
+  stroke-linejoin: round;
+}
+.dwg-t--big {
+  font-size: 12px;
+  letter-spacing: 0.16em;
+}
+
+@media (max-width: 1023px) {
+  .dwg-t { font-size: 15px; letter-spacing: 0.06em; }
+  .dwg-t--big { font-size: 17px; letter-spacing: 0.1em; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ink { stroke-dashoffset: 0; }
+  .poche,
+  .fade,
+  .dwg-t { opacity: 1; }
+}
+
+/* ───────────────────────── Financovanie (the vessel) ────────────────────────
+ * The same drafting language, inverted: brass rules on a dark ground, and the
+ * mark's arch used as a vessel the mortgage is poured into.
+ */
+.fin-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgba(242, 237, 230, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(242, 237, 230, 0.05) 1px, transparent 1px);
+  background-size: 88px 88px;
+  mask-image: radial-gradient(110% 80% at 78% 60%, #000 0%, rgba(0, 0, 0, 0.3) 50%, transparent 80%);
+  -webkit-mask-image: radial-gradient(110% 80% at 78% 60%, #000 0%, rgba(0, 0, 0, 0.3) 50%, transparent 80%);
+}
+
+.fin-arcs {
+  position: absolute;
+  bottom: -34%;
+  right: -14%;
+  width: min(900px, 86vw);
+  pointer-events: none;
+  will-change: transform;
+}
+
+.fin-vessel {
+  position: relative;
+  padding: 34px 34px 36px;
+  border: 1px solid rgba(182, 154, 120, 0.22);
+  background:
+    linear-gradient(180deg, rgba(182, 154, 120, 0.07) 0%, rgba(182, 154, 120, 0) 55%),
+    rgba(10, 11, 8, 0.5);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+.fin-arch {
+  width: 152px;
+  height: auto;
+  flex-shrink: 0;
+  overflow: visible;
+}
+
+.fin-ink {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fin-ink { stroke-dashoffset: 0; }
+}
+
+/* Drawing-sheet annotations: figures must align like on a real plan. */
+.annot {
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  letter-spacing: 0.16em;
+}
+
+/*
+ * Fonts are injected by next/font as CSS variables on <html> (see layout.tsx).
+ * `@theme inline` maps them onto Tailwind's font utilities without copying the
+ * value, so `font-serif` → Cormorant Garamond and `font-sans` → DM Sans.
+ */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-serif: var(--font-cormorant);
+  --font-sans: var(--font-dm-sans);
 }
 
-@media (prefers-color-scheme: dark) {
+:root {
+  --background: var(--color-charcoal);
+  --foreground: var(--color-stone);
+
+  /*
+   * How far the world falls away around the lit floor. On desktop the facade
+   * fills the viewport and a heavy scrim is the whole cinematic effect; on a
+   * phone the picture is a small plate above the floor list, and the same value
+   * just drowns it.
+   */
+  --spot-scrim: rgba(6, 6, 6, 0.72);
+}
+
+@media (max-width: 1023px) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --spot-scrim: rgba(6, 6, 6, 0.4);
   }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-charcoal);
+  color: var(--color-stone);
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-weight: 300;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/*
+ * Native scrolling.
+ *
+ * A JS smooth-scroll library (Lenis) used to drive this page. It rewrites
+ * scrollTop every frame, which fights the browser's own compositor-threaded
+ * scrolling — and on this site it measurably felt worse than doing nothing.
+ * The browser scrolls better than we can. Smooth motion where it matters
+ * (the hero video) still comes from GSAP's `scrub`.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth; /* in-page anchors only; see layout.tsx */
+  }
+}
+
+/* Full-screen overlays must not chain their scroll to the page behind them. */
+.overlay-scroll {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+* {
+  cursor: default !important;
+}
+
+::selection {
+  background: var(--color-gold);
+  color: var(--color-charcoal);
+}
+
+/* Auto-tour indicator on phones. */
+@keyframes animaPulse {
+  0%, 100% { opacity: 0.35; transform: translateY(0); }
+  50%      { opacity: 1;    transform: translateY(-2px); }
+}
+
+/* ─────────────────────────── Cinematic hero grade ───────────────────────────
+ * A film frame, not a web hero: analogue grain, a vignette that pools the light
+ * on the title, and a slow breath on the footage so a paused frame still lives.
+ */
+.cine-grain {
+  position: absolute;
+  inset: -25%;
+  z-index: 5;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 150px 150px;
+  mix-blend-mode: overlay;
+  opacity: 0.28;
+  will-change: transform;
+  animation: cineGrain 0.5s steps(5) infinite;
+}
+@keyframes cineGrain {
+  0%   { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-9%, 8%, 0); }
+}
+
+/* Edge fall-off only — the pool behind the wordmark is .cine-scrim, which has
+   to melt away on scroll while this stays for the whole hero. */
+.cine-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: radial-gradient(140% 110% at 50% 42%, transparent 42%, rgba(0, 0, 0, 0.62) 100%);
+}
+
+/* ───────────────────────────────── The gate ─────────────────────────────────
+ * The site opens closed: two black leaves meeting on a gold seam, the wordmark
+ * split across them — ANIMA above the line, RESIDENCES below. Scrolling parts
+ * them, each leaf carrying its own half of the name away, and the film is behind.
+ *
+ * Everything here moves on transform and opacity ONLY. A gate that stutters on
+ * the first scroll of the first visit is worse than no gate at all.
+ */
+.gate {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 50%;
+  z-index: 10;
+  background: #050505;
+  will-change: transform;
+  /* the leaves are what the eye tracks; keep them on their own layer */
+  backface-visibility: hidden;
+}
+.gate--top { top: 0; }
+.gate--bot { bottom: 0; }
+
+/*
+ * The seam. One line to the eye, but really two — a gold edge on each leaf, laid
+ * exactly on top of one another. That is the whole trick: when the gate parts,
+ * the line splits in half and each half rides away on its own leaf, lighting the
+ * opening. It also hides the sub-pixel crack that two 50% halves leave on a
+ * viewport of odd height.
+ */
+.gate-edge {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  transform: scaleX(0);
+  background: linear-gradient(
+    to right,
+    #c9a875 0%,
+    #e8cfa2 24%,
+    #fdf1d2 50%,
+    #e8cfa2 76%,
+    #c9a875 100%
+  );
+  box-shadow:
+    0 0 12px rgba(253, 241, 210, 0.7),
+    0 0 42px rgba(228, 200, 139, 0.35);
+}
+.gate--top .gate-edge { bottom: 0; }
+.gate--bot .gate-edge { top: 0; }
+
+/*
+ * Light thrown INTO the opening by the seam.
+ *
+ * The obvious version — one glow pinned to the middle of the screen — was wrong:
+ * it stays put while the gate travels, so it stops reading as light from the
+ * edge and starts reading as fog over the film. This hangs off each leaf's own
+ * edge instead, past it, into the gap. It moves with the leaf that casts it, and
+ * the opening is lit from its rims the way real light through a parting door is.
+ *
+ * Faded in by the scroll (Hero.tsx) — at rest the leaves are shut and there is
+ * no gap for anything to spill into.
+ */
+.gate-bleed {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 34vh;
+  pointer-events: none;
+  opacity: 0;
+  mix-blend-mode: screen;
+}
+.gate--top .gate-bleed {
+  bottom: 0;
+  transform: translateY(100%); /* hangs below the leaf, i.e. into the gap */
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 238, 202, 0.42) 0%,
+    rgba(255, 232, 190, 0.12) 32%,
+    rgba(255, 226, 170, 0) 100%
+  );
+}
+.gate--bot .gate-bleed {
+  top: 0;
+  transform: translateY(-100%);
+  background: linear-gradient(
+    to top,
+    rgba(255, 238, 202, 0.42) 0%,
+    rgba(255, 232, 190, 0.12) 32%,
+    rgba(255, 226, 170, 0) 100%
+  );
+}
+
+/* Each half of the name, hung off the seam. They drift against their own leaf as
+   it leaves, so the letters linger a beat behind the gate — that lag is what
+   gives the opening depth instead of two rectangles sliding apart. */
+.gate-mark {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  will-change: transform;
+}
+.gate-mark--top { bottom: clamp(24px, 4.2vh, 54px); }
+.gate-mark--bot { top: clamp(20px, 3.4vh, 44px); }
+
+.gate-word {
+  display: block;
+  font-family: var(--font-cormorant), serif;
+  font-weight: 300;
+  color: #f1ecdf;
+  /* The floor matters more than the ceiling: on a 390px phone 11.6vw is 45px,
+     and a gate whose name is a whisper is not a gate. */
+  font-size: clamp(68px, 12vw, 168px);
+  line-height: 0.86;
+  letter-spacing: 0.06em;
+  /* letter-spacing pads the right of the last glyph; pull the line back on centre */
+  text-indent: 0.06em;
+}
+.gate-word--sub {
+  font-weight: 400;
+  font-size: clamp(12px, 1.7vw, 22px);
+  letter-spacing: 0.62em;
+  text-indent: 0.62em;
+  color: rgba(241, 236, 223, 0.82);
+}
+
+.cine-breath {
+  animation: cineBreath 26s ease-in-out infinite;
+}
+@keyframes cineBreath {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.035); }
+}
+
+/*
+ * The wordmark. Cream letters with a warm light band that travels THROUGH the
+ * glyphs — a gradient clipped to the text, not a block sliding over it. It
+ * sweeps once shortly after load, then rests as flat cream until the next pass.
+ * Animating only background-position keeps it a cheap repaint of a small area.
+ */
+.cine-word {
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  /* Base cream fills the whole gradient; a warm highlight sits at its centre.
+     The gradient is 2.6× the text, so background-position 0–100% ALWAYS covers
+     every glyph (outside that range parts fall uncovered → transparent). At 0%
+     and 100% the highlight is off the text (flat cream); at ~50% it crosses. */
+  background-image: linear-gradient(
+    100deg,
+    #efe9db 0%, #efe9db 40%,
+    #fbf0d4 45%, #fffaf0 50%, #fbf0d4 55%,
+    #efe9db 60%, #efe9db 100%
+  );
+  background-repeat: no-repeat;
+  background-size: 260% 100%;
+  background-position: 0% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: cineShine 8.5s ease-in-out 1.6s infinite;
+}
+@keyframes cineShine {
+  0%   { background-position: 0% 0; }   /* flat cream, highlight off to the right */
+  24%  { background-position: 100% 0; } /* highlight has swept across the letters */
+  100% { background-position: 100% 0; } /* rest (flat cream) until the next pass */
+}
+
+/* Phones: the SVG-turbulence grain re-rasterises across a DPR-3 surface every
+   frame — far too costly next to the scrubbed video decode, so drop it. The
+   breath goes too; nothing should compete with the scroll on a phone GPU. */
+@media (pointer: coarse) {
+  .cine-grain { display: none; }
+  .cine-breath { animation: none; }
+  /* Clip-to-text shimmer rasterises the glyphs as a mask every frame; across a
+     DPR-3 phone surface that is a needless cost next to the video. Phones get
+     the wordmark in flat cream — same letters, none of the churn. */
+  .cine-word {
+    color: #f1ecdf;
+    -webkit-text-fill-color: #f1ecdf;
+    background: none;
+    animation: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cine-grain, .cine-breath { animation: none; }
+  .cine-word { animation: none; background-position: 0% 0; }
+}
+
+/*
+ * Mortgage calculator slider (financovanie). A hairline track with a small
+ * brass knob — the track fill is painted inline as a gradient by the component.
+ */
+.hypo-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 2px;
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+.hypo-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #f2ede6;
+  border: 4px solid #b69a78;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+}
+.hypo-range::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #f2ede6;
+  border: 4px solid #b69a78;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+}
+.hypo-range::-moz-range-track {
+  height: 2px;
+  border-radius: 2px;
+}
+
+/* ───────────────────────────── Footer ───────────────────────────────────────
+ * The way out. Same drafting language as everything above it, inverted: brass
+ * hairlines on charcoal, and the name laid across the foot of the page.
+ */
+.ft {
+  position: relative;
+  overflow: hidden;
+  background: #101109;
+  color: #f2ede6;
+}
+.ft-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgba(242, 237, 230, 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(242, 237, 230, 0.045) 1px, transparent 1px);
+  background-size: 88px 88px;
+  mask-image: radial-gradient(100% 70% at 20% 10%, #000 0%, rgba(0, 0, 0, 0.25) 55%, transparent 82%);
+  -webkit-mask-image: radial-gradient(100% 70% at 20% 10%, #000 0%, rgba(0, 0, 0, 0.25) 55%, transparent 82%);
+}
+
+.ft-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 20px;
+  padding: 17px 28px;
+  background: #b69a78;
+  color: #141510;
+}
+
+/* A link that draws its own underline, rather than switching one on. */
+.ft-link,
+.cn-link,
+.ct-link {
+  position: relative;
+  display: inline-block;
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 13px;
+  font-weight: 300;
+  color: rgba(242, 237, 230, 0.72);
+  transition: color 0.3s ease;
+}
+.ft-link::after,
+.cn-link::after,
+.ct-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -3px;
+  width: 100%;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right center;
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.ft-link:hover,
+.cn-link:hover {
+  color: #b69a78;
+}
+.ft-link:hover::after,
+.cn-link:hover::after,
+.ct-link:hover::after {
+  transform: scaleX(1);
+  transform-origin: left center;
+}
+.cn-link,
+.ct-link {
+  color: inherit;
+}
+.ct-link {
+  color: #8f7658;
+}
+.ct-link--dark {
+  color: rgba(242, 237, 230, 0.82);
+}
+
+.ft-plain {
+  color: inherit;
+  transition: color 0.3s ease;
+}
+.ft-plain:hover {
+  color: #b69a78;
+}
+
+.ft-fine {
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 11px;
+  font-weight: 300;
+  color: rgba(242, 237, 230, 0.45);
+  transition: color 0.3s ease;
+}
+.ft-fine:hover {
+  color: #b69a78;
+}
+
+.ft-top {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: rgba(242, 237, 230, 0.55);
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+.ft-top:hover {
+  color: #b69a78;
+}
+.ft-top-arrow {
+  display: block;
+  width: 1px;
+  height: 22px;
+  background: currentColor;
+  position: relative;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.ft-top-arrow::before,
+.ft-top-arrow::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 1px;
+  height: 7px;
+  background: currentColor;
+}
+.ft-top-arrow::before { left: 0; transform: rotate(-40deg); transform-origin: top center; }
+.ft-top-arrow::after  { left: 0; transform: rotate(40deg);  transform-origin: top center; }
+.ft-top:hover .ft-top-arrow {
+  transform: translateY(-4px);
+}
+
+/* ───────────────────────────── Kontakt ──────────────────────────────────────
+ * The form is a drawing too: hairline rules instead of boxes, and the field's
+ * own underline is what lights up when you are in it.
+ */
+.cn-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 20px;
+  padding: 18px 30px;
+  background: #b69a78;
+  color: #1c1c1a;
+}
+
+.ct-field {
+  display: block;
+}
+.ct-input {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 9px 0 11px;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid rgba(28, 28, 26, 0.22);
+  outline: none;
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 14px;
+  font-weight: 300;
+  color: #1c1c1a;
+  transition: border-color 0.35s ease;
+}
+.ct-input::placeholder {
+  color: rgba(28, 28, 26, 0.3);
+}
+.ct-input:focus {
+  border-bottom-color: #b69a78;
+}
+textarea.ct-input {
+  resize: vertical;
+  line-height: 1.8;
+}
+
+/* The honeypot. Off the page rather than display:none — a bot that reads CSS
+   skips a hidden field, but happily fills one it can still "see". */
+.ct-pot {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.ct-chip {
+  padding: 9px 18px;
+  border: 1px solid rgba(28, 28, 26, 0.2);
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 12px;
+  font-weight: 300;
+  color: rgba(28, 28, 26, 0.7);
+  cursor: pointer;
+  transition: border-color 0.3s ease, background-color 0.3s ease, color 0.3s ease;
+}
+.ct-chip:hover {
+  border-color: rgba(182, 154, 120, 0.7);
+}
+.ct-chip[data-on="true"] {
+  background: #1c1c1a;
+  border-color: #1c1c1a;
+  color: #f2ede6;
+}
+
+.ct-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 12px;
+  font-weight: 300;
+  line-height: 1.8;
+  color: rgba(28, 28, 26, 0.68);
+  cursor: pointer;
+}
+.ct-consent input {
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+  margin-top: 3px;
+  accent-color: #b69a78;
+}
+
+.ct-submit {
+  display: inline-flex;
+  align-items: center;
+  gap: 20px;
+  padding: 18px 32px;
+  background: #1c1c1a;
+  color: #f2ede6;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+.ct-submit:hover {
+  background: #b69a78;
+  color: #141510;
+}
+.ct-submit:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+/*
+ * The map. It sits in the same trimmed frame as the drawings, so a third party's
+ * tiles still arrive on our paper. The iframe is greyed and warmed to sit in the
+ * palette — a raw Google map in full colour is the one thing on this site that
+ * would look like it came from somewhere else.
+ */
+.ct-map {
+  position: relative;
+  padding: 10px;
+  border: 1px solid rgba(182, 154, 120, 0.25);
+  background: rgba(242, 237, 230, 0.04);
+}
+.ct-map iframe {
+  display: block;
+  width: 100%;
+  height: clamp(300px, 46vh, 460px);
+  border: 0;
+  filter: grayscale(0.55) contrast(0.94) sepia(0.16);
 }

@@ -1,0 +1,11 @@
+import { launch, sleep } from "./cdp.mjs";
+const b = await launch({ w: 1500, h: 1000, touch: false, profile: "sk2" });
+await b.send("Emulation.setFocusEmulationEnabled", { enabled: true });
+await b.send("Page.setWebLifecycleState", { state: "active" });
+await b.goto("http://localhost:3000/");
+await b.evalJs(`document.querySelector("#amenities").scrollIntoView({block:"center"}); true`);
+await sleep(2500);
+console.log(await b.evalJs(`JSON.stringify(document.querySelector('.sk-wrap').__dbg)`));
+await sleep(1500);
+console.log(await b.evalJs(`JSON.stringify(document.querySelector('.sk-wrap').__dbg)`));
+b.close();

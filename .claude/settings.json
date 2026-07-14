@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\(JSON.stringify\\({dep:p.dependencies,dev:p.devDependencies},null,1\\)\\)\")",
+      "Bash(mkdir -p *)",
+      "Bash(awk 'NR>=74 && NR<=79 {printf \"%d: %s\\\\n\", NR, $0}' src/components/ui/SketchCanvas.tsx)",
+      "Bash(node sk.mjs)",
+      "Bash(node sk4.mjs)",
+      "Bash(node -e \"console.log\\(JSON.stringify\\(require\\('./package.json'\\).scripts,null,1\\)\\)\")",
+      "Bash(node -e \"console.log\\('engines:', JSON.stringify\\(require\\('./package.json'\\).engines\\)\\)\")",
+      "Bash(awk 'NR>2 {printf \"%-24s %6.1f MB\\\\n\", $9, $5/1048576}')",
+      "Bash(node -e ' *)",
+      "Bash(echo \"=== EXIT: $? ===\")",
+      "Bash(echo \"=== ESLINT EXIT: $? ===\")",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(awk 'NR>=50 && NR<=62 {printf \"%d: %s\\\\n\", NR, $0}' src/components/dev/FloorCalibrator.tsx)",
+      "Bash(awk 'NR>=24 && NR<=36 {printf \"%d: %s\\\\n\", NR, $0}' src/components/sections/ApartmentDetail.tsx)",
+      "Bash(awk 'NR>=292 && NR<=300 {printf \"%d: %s\\\\n\", NR, $0}' src/components/dev/FloorCalibrator.tsx)",
+      "Bash(echo \"=== ESLINT: $? \\(0 = clean\\) ===\")",
+      "Bash(sed -n '/Route \\(app\\)/,$p' /tmp/f.log)"
+    ],
+    "additionalDirectories": [
+      "/Users/samuelbiben/Projects/anima-residences/public/images/sketches"
+    ]
+  }
+}

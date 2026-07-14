@@ -1,0 +1,23 @@
+{
+  "building": {
+    "lqip": "data:image/webp;base64,UklGRpIAAABXRUJQVlA4IIYAAAAwBACdASoUAA4APu1iqU2ppaOiMAgBMB2JQBdgMXhWvRuzLj2yxtbPL0AA/gti9mbaumwY0OLwqUsPoRzdRKFi+LrYvMD/yLTi3SYG8LyDYWizPghhcbwOJwliNAR+tTV4pMiZxm2RMJDSMyTnzvqvoIfLDSyLbzl3O6QzDqh74hn+YrrAAA==",
+    "width": 1856,
+    "height": 1312
+  },
+  "logo_simon": {
+    "lqip": "data:image/webp;base64,UklGRkgBAABXRUJQVlA4WAoAAAAQAAAAEwAABgAAQUxQSIsAAAABgGzbtulon/di23a6tpOWzQ9Iyrar+q62/ccRERh9vd/wQQQiAAQQRe6CifkOOAy4xBCHZcHQqG5d9l1BU0U9oQwnE2VR3NbrVS9b+/BtqD3L3px9r6lrD9pLR/X9fegdbrHZ4JV6fVZZqP6fE748g1ijWqnW6WRKFVC7ncyuT1gwApFAIOILRUIQAFZQOCCWAAAAUAQAnQEqFAAHAD7tZKlOKaWjojAIATAdiWwAnTKAJaoVzrpIn8N32wo8AAD8XwePQVenMYeO7H3a99GWSjWDPXHEFCfhojdvzZrJbHMBMjZJW5Ksa++mY4Vf+0j17dUKev7v6o7pjLLqHyXF+RkSECP+J39/9cl/mNa4LJQL+wv7OTP4N/4Z+XV+J36G/+0dJdleAAAA",
+    "width": 1348,
+    "height": 466
+  },
+  "podorys": {
+    "lqip": "data:image/webp;base64,UklGRuIAAABXRUJQVlA4INYAAADQBACdASoUABkAPu1sqlEppaOiqAqpMB2JaQAD5PkNBHZjjZU13HvlhQxt+ia0AAD+1/1gBGI/4cQycmjr3fl6bXGVZ5PdaDOeh41P+vKz6J7geypfqsZSN7+USvVVI5VWTRASNgaxmIne2lOsWrQeI9cgm2aS18+wUghIREpukbwgP/4vqmAlTHll5C7mclDZfMevV161e1CNtFvs9Q9zsWsqZfz1uBeKHG+ZXdwwlTGPlYB5uCfitNyLezClnjPqAkO+WDlqYRP8f3Rh4zPQHaaZYAAA",
+    "width": 1042,
+    "height": 1316
+  },
+  "hero-poster": {
+    "lqip": "data:image/webp;base64,UklGRp4AAABXRUJQVlA4IJIAAADQAwCdASoYAA0APu1iqk2ppaQiMAgBMB2JYgCsMoAB9t1OvpNLMg4A/sFBZ3FE5R3WuNWO0BwTmdYNYz+iNlpOQJeDgRzHTr/K31hkJqaKbsM9UD25S8i527+6mWy9iZxIJjATEh9knEl+goSAO+20Ll0RQSBb984jB6SzVeJK0vW1FjCswuJ5oSNuMP/saFSQAA=="
+  },
+  "hero-poster-mobile": {
+    "lqip": "data:image/webp;base64,UklGRlYBAABXRUJQVlA4IEoBAABQBwCdASoYACsAPu1qrVEppaQipWzJMB2JagCsL9ZEnjHI5a5eNxeA/sU6lkhvg5n9EUnjs/j18yrc0X17fXtpVGgAAPvq3I/XNl5dyXTmigvIL5eGEDdv+eTH6oi/HUhqo2Lq5lV5x4hlYOmunkvduqdpS0DYB/nNvoguNEDts8WDSsbJxsr+0GSqDKR7PDokWiokUz2kn32N0EroHvET8pdIsy6uODhLY6sWLejBRlkX6/v+Jp8J2PYpb7/0kU87Rl/P2tCs9Kc34QohL8mQ9OSAe1c3QFcrGVQp5im1vwkWztEWfvFh3SC44f057LnPXXFzMxAYv8XFBAmNINA3fgD8KM7SIAPUKpu48AptknEP7vYG1KKsk+UKXHsEfMFOPC45Al5UygWnEMIfjKqGnun8JsuXs0+ujJANWST9I7SgrxpuYgVNAAA="
+  }
+}

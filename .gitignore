@@ -39,3 +39,16 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# ── Media ───────────────────────────────────────────────────────────────────
+# The MASTERS stay out: assets/ is ~150 MB of camera and Photoshop originals and
+# a build never touches them. The pipeline's OUTPUT goes in, because that is
+# what a build (and Vercel) actually needs — see scripts/optimize-media.mjs.
+#
+# Adding or re-cutting a master therefore means: run `npm run media` on a machine
+# that has assets/, and commit what it writes.
+/assets/
+/assets/.media-cache.json
+
+# env — except the template, which documents what has to be set
+!.env.example
