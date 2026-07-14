@@ -73,17 +73,9 @@ export default function Intro() {
       style={{ backgroundColor: "#F2EDE6", color: CHARCOAL }}
     >
       <div className="mx-auto max-w-[1400px] px-[6%] py-28 md:py-40">
-        {/* index row */}
-        <div className="flex items-baseline justify-between">
-          <Mask>
-            <SheetRef label="O projekte" color="rgba(28,28,26,0.5)" />
-          </Mask>
-          <Mask>
-            <p className="annot" style={{ fontSize: "10px", color: "rgba(28,28,26,0.4)" }}>
-              NITRA
-            </p>
-          </Mask>
-        </div>
+        <Mask>
+          <SheetRef label="O projekte" color="rgba(28,28,26,0.5)" />
+        </Mask>
 
         {/* statement */}
         <h2

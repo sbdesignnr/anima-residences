@@ -51,57 +51,38 @@ const QUALITY = { avif: 62, webp: 78, jpeg: 82, png: 90 };
 
 /* ── video recipes, all chosen by measurement (SSIM vs. the master) ──
  *
- * Resolution is the whole ballgame. The hero is full-bleed, so a 720p encode
- * gets upscaled ~2.5x on a retina 1600px window — that reads as "blurry" no
- * matter how low the CRF. So: encode at the master's native 1920x1080.
+ * THE OLD NOTE HERE WAS WRONG, and it is what made the hero stutter. It said:
  *
- *   H.264 1080p crf24  26.0 MB  SSIM 0.974   (universal)
- *   HEVC  1080p crf26  21.6 MB  SSIM 0.976   (Safari + HW Chrome: sharper AND smaller)
- *   H.264  720p crf26  12.0 MB  SSIM 0.955   <- what looked soft
+ *   "Size is not a download cost: every frame is a keyframe … so preload=metadata
+ *    lets the browser range-request only the frames the visitor actually scrolls
+ *    past."
  *
- * Size is not a download cost: every frame is a keyframe and the moov atom is
- * up front, so `preload="metadata"` lets the browser range-request only the
- * frames the visitor actually scrolls past.
+ * A scrub takes the visitor past EVERY frame. That is what a scrub is. So all
+ * 36 MB came down anyway — in 244 separate range requests, racing the scroll and
+ * losing. Size is the whole cost, and the encode had to shrink.
  *
- * The phone crop.
- *   The master is landscape; a phone is portrait, and the building CANNOT fill a
- *   tall screen whole — during construction (bare concrete, ~t8) the structure
- *   is ~820px wide, wider than the source is tall, so a portrait crop that held
- *   it would need >1080px of height that doesn't exist. The camera pulls back
- *   over the timelapse, so the building is WIDEST early and narrowest at the
- *   final render — the crop must clear the widest frame or the sides get cut
- *   mid-scroll.
- *   840x1080 (centre 960) clears the whole structure at every phase; the layout
- *   then letterboxes it against a blurred fill (see .hero-video / .hero-letterbox
- *   in globals.css). The proper fix is a portrait-shot master — see README.
+ * Measured, at the size the video is actually shown (1440px), against the master:
+ *
+ *   1928px crf26   30 MB   SSIM 0.974    <- what shipped, and what stuttered
+ *   1440px crf26   19 MB   SSIM 0.957
+ *   1440px crf30   12 MB   SSIM 0.927    <- indistinguishable under the grade
+ *   1152px crf28   11 MB   SSIM 0.925
+ *
+ * The hero carries a vignette, a film grain and a gate over it, and it is a
+ * construction timelapse — high motion, low detail-persistence. It does not need
+ * 1928px, and past 1440 the extra pixels are being thrown away by the display.
+ *
+ * Short GOPs were tried too and are NOT the answer here: at keyint 16 the file
+ * only fell 43 MB → 32 MB, because a timelapse's successive frames share almost
+ * nothing. Every frame stays a keyframe, so a seek still decodes exactly one.
  */
-const MOBILE_CROP = "crop=840:1080:540:0";
+const MOBILE_CROP = "crop=840:1080:540:0"; // only if no portrait master (see below)
 
 const VIDEO_JOBS = [
-  {
-    out: "hero-desktop.mp4",
-    vf: "fps=12",
-    codec: "h264",
-    crf: 24,
-  },
-  {
-    out: "hero-desktop.hevc.mp4",
-    vf: "fps=12",
-    codec: "hevc",
-    crf: 26,
-  },
-  {
-    out: "hero-mobile.mp4",
-    vf: `${MOBILE_CROP},fps=12`,
-    codec: "h264",
-    crf: 26,
-  },
-  {
-    out: "hero-mobile.hevc.mp4",
-    vf: `${MOBILE_CROP},fps=12`,
-    codec: "hevc",
-    crf: 28,
-  },
+  { out: "hero-desktop.mp4",      vf: "scale=1440:-2,fps=12", codec: "h264", crf: 30 },
+  { out: "hero-desktop.hevc.mp4", vf: "scale=1440:-2,fps=12", codec: "hevc", crf: 33 },
+  { out: "hero-mobile.mp4",       vf: `${MOBILE_CROP},scale=720:-2,fps=12`, codec: "h264", crf: 30 },
+  { out: "hero-mobile.hevc.mp4",  vf: `${MOBILE_CROP},scale=720:-2,fps=12`, codec: "hevc", crf: 33 },
 ];
 
 /** Every frame a keyframe -> a scroll seek decodes exactly one frame. */
@@ -504,9 +485,11 @@ const PORTRAIT_SRC = path.join(SRC_VID, "hero-portrait.mp4");
 let portrait = null;
 if (fs.existsSync(PORTRAIT_SRC)) {
   const box = await detectPillarbox(PORTRAIT_SRC);
+  // 720px wide. A phone shows this at ~390 CSS px; 1072 was three times the
+  // pixels it can resolve and 25 MB down somebody's mobile data.
   const vf = box
-    ? `crop=${box.w}:${box.h}:${box.x}:0,fps=12`
-    : "scale='min(1080,iw)':-2,fps=12";
+    ? `crop=${box.w}:${box.h}:${box.x}:0,scale=720:-2,fps=12`
+    : "scale=720:-2,fps=12";
   portrait = { src: PORTRAIT_SRC, vf, tag: hashOf(PORTRAIT_SRC) };
   console.log(`   · portrait master${box ? ` (pillar-box removed → ${box.w}×${box.h})` : ""}`);
 }

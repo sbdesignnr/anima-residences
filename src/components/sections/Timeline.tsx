@@ -88,7 +88,13 @@ export default function Timeline() {
 
         <div className="relative pl-10 md:pl-0">
           {/* Rail + animated fill */}
-          <div className="absolute bottom-0 left-[7px] top-2 w-px bg-earth/20 md:left-1/2 md:-translate-x-1/2">
+          {/*
+            The dot is 16px wide and sits at -37px inside a 40px pad, so its
+            LEFT edge is at 3px and its CENTRE at 11px. A 1px rail therefore has
+            to start at 10.5px — at 7px it ran a clear 3.5px to the left of every
+            dot it was supposed to thread.
+          */}
+          <div className="absolute bottom-0 left-[10.5px] top-2 w-px bg-earth/20 md:left-1/2 md:-translate-x-1/2">
             <div
               ref={line}
               className="absolute inset-0 origin-top bg-gold"

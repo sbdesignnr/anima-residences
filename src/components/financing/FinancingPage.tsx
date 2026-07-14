@@ -5,27 +5,52 @@ import Link from "next/link";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
-import { ArchMark, SheetRef } from "@/components/ui/brand";
+import { SheetRef } from "@/components/ui/brand";
 import HypoCalc from "@/components/financing/HypoCalc";
+import { COMPANY } from "@/components/ui/Footer";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
-const GOLD = "#B69A78";
 const STONE = "#F2EDE6";
 const CHARCOAL = "#1C1C1A";
 
-const BENEFITS = [
-  { t: "Výhodné sadzby", d: "Porovnáme ponuky partnerských bánk a vyberieme najlepšiu." },
-  { t: "Bezpečné vybavenie", d: "Zmluvy aj papierovanie ustrážime za vás." },
-  { t: "Osobný prístup", d: "Jeden poradca, ktorý vás prevedie celým procesom." },
-  { t: "Rýchle vybavenie", d: "Od žiadosti k schváleniu bez zbytočného čakania." },
+/**
+ * The process, as DURATIONS.
+ *
+ * It used to be four cards numbered 01–04, which is the shape every template on
+ * earth arrives in and which says nothing: everybody already knows a mortgage has
+ * steps. What nobody tells you is HOW LONG each one takes — and that is the only
+ * thing somebody deciding whether to start actually wants to know. So the numeral
+ * is gone and the clock is the headline.
+ */
+const STEPS = [
+  {
+    t: "Konzultácia",
+    when: "1 stretnutie",
+    d: "Prejdeme príjem, výdavky a to, na čo reálne dosiahnete. Nezáväzne a zadarmo — aj keď z toho nakoniec nič nebude.",
+  },
+  {
+    t: "Výber banky",
+    when: "2 – 3 dni",
+    d: "Poradca porovná ponuky partnerských bánk a prinesie tú, ktorá vychádza najlepšie pre vás. Nie tú, ktorá platí najlepšiu províziu jemu.",
+  },
+  {
+    t: "Žiadosť a znalecký posudok",
+    when: "1 – 2 týždne",
+    d: "Podklady, posudok, žiadosť. Papierovanie ustrážime my; vy prídete podpísať.",
+  },
+  {
+    t: "Schválenie a čerpanie",
+    when: "2 – 4 týždne",
+    d: "Banka úver schváli a peniaze idú predávajúcemu. Odvtedy platíte splátku namiesto nájmu.",
+  },
 ];
 
-const STEPS = [
-  { no: "01", t: "Konzultácia", d: "Nezáväzné stretnutie s poradcom. Prejdeme vaše možnosti a odpovieme na otázky. Prvá konzultácia je vždy zdarma." },
-  { no: "02", t: "Analýza", d: "Poradca zhodnotí vašu situáciu a pripraví návrh optimálneho riešenia na mieru." },
-  { no: "03", t: "Žiadosť", d: "Podáme žiadosť o hypotéku vo vybranej banke a postrážime všetky podklady." },
-  { no: "04", t: "Schválenie", d: "Banka úver schváli, podpíšete zmluvu — a kľúče od nového domova sú bližšie." },
+/** Three claims we can stand behind — not four adjectives with an icon over them. */
+const TRUTHS: [string, string][] = [
+  ["Prvá konzultácia je zdarma", "A zostane zdarma aj vtedy, keď si nakoniec byt nekúpite."],
+  ["Porovnáme banky, nie jednu banku", "Poradca nepracuje pre banku, ale pre vás — a preto smie povedať aj „toto si neberte“."],
+  ["Papierovanie ide mimo vás", "Podklady, znalecký posudok, komunikácia s bankou. Vy prídete podpísať."],
 ];
 
 export default function FinancingPage() {
@@ -33,32 +58,43 @@ export default function FinancingPage() {
 
   useGSAP(
     () => {
-      gsap.utils.toArray<HTMLElement>(".rise").forEach((el) => {
+      gsap.utils.toArray<HTMLElement>(".fp-rise").forEach((el) => {
         gsap.fromTo(
           el,
-          { y: 30, opacity: 0 },
-          { y: 0, opacity: 1, duration: 1, ease: "power3.out", scrollTrigger: { trigger: el, start: "top 86%" } }
+          { y: 26, opacity: 0 },
+          { y: 0, opacity: 1, duration: 1, ease: "power3.out", scrollTrigger: { trigger: el, start: "top 90%" } }
         );
       });
-      gsap.utils.toArray<HTMLElement>(".rule-x").forEach((el) => {
+      gsap.utils.toArray<HTMLElement>(".fp-rule").forEach((el) => {
         gsap.fromTo(
           el,
           { scaleX: 0 },
-          { scaleX: 1, transformOrigin: "left center", duration: 1.1, ease: "power3.out", scrollTrigger: { trigger: el, start: "top 92%" } }
+          { scaleX: 1, transformOrigin: "left center", duration: 1.2, ease: "power3.out", scrollTrigger: { trigger: el, start: "top 94%" } }
         );
       });
+      // The rail draws itself down through the steps as they are read.
+      gsap.fromTo(
+        ".fp-rail-fill",
+        { scaleY: 0 },
+        {
+          scaleY: 1,
+          transformOrigin: "top center",
+          ease: "none",
+          scrollTrigger: { trigger: ".fp-rail", start: "top 74%", end: "bottom 80%", scrub: 0.6 },
+        }
+      );
     },
     { scope: root }
   );
 
   return (
     <div ref={root}>
-      {/* ── Hero ── */}
+      {/* ── The question ── */}
       <section style={{ backgroundColor: CHARCOAL }}>
-        <div className="mx-auto max-w-[1400px] px-[6%] pb-24 pt-32 md:pb-28 md:pt-44">
+        <div className="mx-auto max-w-[1400px] px-[6%] pb-20 pt-32 md:pb-24 md:pt-44">
           <Link
             href="/"
-            className="rise annot inline-flex items-center gap-2 transition-colors duration-300 hover:text-gold"
+            className="fp-rise annot inline-flex items-center gap-2 transition-colors duration-300 hover:text-gold"
             style={{ fontSize: "10px", color: "rgba(242,237,230,0.55)" }}
           >
             <span aria-hidden>←</span> SPÄŤ NA ANIMA RESIDENCES
@@ -66,179 +102,147 @@ export default function FinancingPage() {
 
           <div className="mt-14 grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
             <div>
-              <div className="rise">
+              <div className="fp-rise">
                 <SheetRef label="Financovanie" />
               </div>
               <h1
-                className="rise mt-8"
-                style={{ fontFamily: "var(--font-cormorant)", fontSize: "clamp(48px, 8vw, 120px)", fontWeight: 300, lineHeight: 0.98, letterSpacing: "-0.02em", color: STONE }}
+                className="fp-rise mt-8"
+                style={{ fontFamily: "var(--font-cormorant)", fontSize: "clamp(42px, 6.6vw, 100px)", fontWeight: 300, lineHeight: 1.02, letterSpacing: "-0.02em", color: STONE }}
               >
-                Financovanie
+                Koľko ma to bude
                 <br />
-                <span style={{ color: "rgba(242,237,230,0.45)" }}>na mieru</span>
+                <span style={{ color: "rgba(242,237,230,0.45)" }}>stáť mesačne?</span>
               </h1>
             </div>
 
             <p
-              className="rise max-w-[440px] lg:justify-self-end"
+              className="fp-rise max-w-[430px] lg:justify-self-end"
               style={{ fontFamily: "var(--font-dm-sans)", fontSize: "13px", fontWeight: 300, lineHeight: 2.1, letterSpacing: "0.02em", color: "rgba(242,237,230,0.68)" }}
             >
-              Kúpa bytu je veľké rozhodnutie — financovanie by nemalo byť to, čo
-              vás na ňom stresuje. Prepojíme vás s poradcom, ktorý porovná ponuky
-              partnerských bánk, vybaví papierovanie a nájde splátku, ktorá vám
-              sadne. Vy sa môžete tešiť na nový domov.
+              To je jediná otázka, na ktorej naozaj záleží. A odpoveď na ňu
+              nezávisí od nejakej abstraktnej „výšky úveru“ — závisí od toho,
+              ktorý byt sa vám páči. Tak si ho vyberte.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ── The answer ── */}
+      <section id="kalkulacka" style={{ backgroundColor: "#141510" }}>
+        <div className="mx-auto max-w-[1400px] px-[6%] py-24 md:py-32">
+          <div className="fp-rule h-px w-full" style={{ backgroundColor: "rgba(242,237,230,0.14)" }} />
+          <div className="fp-rise mt-12">
+            <HypoCalc />
+          </div>
+
+          <p className="annot mt-16 max-w-[760px]" style={{ fontSize: "9px", lineHeight: 2.4, color: "rgba(242,237,230,0.32)" }}>
+            ORIENTAČNÝ PREPOČET. NEJDE O PONUKU ANI O PRÍSĽUB ÚVERU — SKUTOČNÚ SADZBU
+            A SPLÁTKU URČÍ BANKA PODĽA VAŠEJ SITUÁCIE.
+          </p>
+        </div>
+      </section>
+
+      {/* ── How long it takes ── */}
+      <section style={{ backgroundColor: "#F2EDE6", color: CHARCOAL }}>
+        <div className="mx-auto max-w-[1400px] px-[6%] py-24 md:py-32">
+          <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
+            <div>
+              <div className="fp-rise">
+                <SheetRef label="Ako to prebieha" color="rgba(28,28,26,0.5)" />
+              </div>
+              <h2
+                className="fp-rise mt-8 max-w-[800px]"
+                style={{ fontFamily: "var(--font-cormorant)", fontSize: "clamp(30px, 4vw, 58px)", fontWeight: 300, lineHeight: 1.08, letterSpacing: "-0.01em" }}
+              >
+                Od prvého stretnutia po kľúče
+                <br />
+                <span style={{ color: "rgba(28,28,26,0.45)" }}>je to zhruba mesiac a pol.</span>
+              </h2>
+            </div>
+            <p
+              className="fp-rise max-w-[400px] lg:justify-self-end"
+              style={{ fontFamily: "var(--font-dm-sans)", fontSize: "12.5px", fontWeight: 300, lineHeight: 2, color: "rgba(28,28,26,0.68)" }}
+            >
+              Že hypotéka má kroky, viete aj bez nás. Nikto vám však nepovie, ako
+              dlho trvajú — a pritom je to jediné, čo pri rozhodovaní, či do toho
+              vôbec ísť, naozaj potrebujete vedieť.
             </p>
           </div>
 
-          {/* benefits */}
-          <div className="rule-x mt-20 h-px w-full" style={{ backgroundColor: "rgba(242,237,230,0.15)" }} />
-          <ul className="mt-4 grid gap-x-10 sm:grid-cols-2 lg:grid-cols-4">
-            {BENEFITS.map((b) => (
-              <li key={b.t} className="rise flex flex-col gap-3 py-10" style={{ borderTop: "0" }}>
-                <ArchMark size={16} color={GOLD} />
-                <h3 className="mt-2" style={{ fontFamily: "var(--font-cormorant)", fontSize: "23px", fontWeight: 300, color: STONE }}>
-                  {b.t}
+          <ol className="fp-rail mt-16">
+            <span className="fp-rail-line" aria-hidden>
+              <span className="fp-rail-fill" />
+            </span>
+
+            {STEPS.map((s) => (
+              <li key={s.t} className="fp-step fp-rise">
+                <span className="fp-node" aria-hidden />
+                <div>
+                  <div className="flex flex-wrap items-baseline gap-x-5 gap-y-1">
+                    <h3 style={{ fontFamily: "var(--font-cormorant)", fontSize: "clamp(23px, 2.3vw, 31px)", fontWeight: 300, lineHeight: 1.15 }}>
+                      {s.t}
+                    </h3>
+                    <span className="fp-when">{s.when}</span>
+                  </div>
+                  <p
+                    className="mt-3 max-w-[560px]"
+                    style={{ fontFamily: "var(--font-dm-sans)", fontSize: "12.5px", fontWeight: 300, lineHeight: 1.95, color: "rgba(28,28,26,0.68)" }}
+                  >
+                    {s.d}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      {/* ── Why through an adviser ── */}
+      <section style={{ backgroundColor: CHARCOAL, color: STONE }}>
+        <div className="mx-auto max-w-[1400px] px-[6%] py-24 md:py-32">
+          <div className="fp-rise">
+            <SheetRef label="Prečo cez poradcu" />
+          </div>
+
+          <div className="fp-rule mt-10 h-px w-full" style={{ backgroundColor: "rgba(242,237,230,0.14)" }} />
+
+          <ul className="mt-2">
+            {TRUTHS.map(([head, body]) => (
+              <li
+                key={head}
+                className="fp-rise grid gap-3 py-9 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16"
+                style={{ borderBottom: "1px solid rgba(242,237,230,0.1)" }}
+              >
+                <h3 style={{ fontFamily: "var(--font-cormorant)", fontSize: "clamp(22px, 2.2vw, 30px)", fontWeight: 300, lineHeight: 1.25 }}>
+                  {head}
                 </h3>
-                <p style={{ fontFamily: "var(--font-dm-sans)", fontSize: "12px", fontWeight: 300, lineHeight: 1.8, color: "rgba(242,237,230,0.55)" }}>
-                  {b.d}
+                <p style={{ fontFamily: "var(--font-dm-sans)", fontSize: "13px", fontWeight: 300, lineHeight: 2, color: "rgba(242,237,230,0.62)" }}>
+                  {body}
                 </p>
               </li>
             ))}
           </ul>
-        </div>
-      </section>
 
-      {/* ── Proces ── */}
-      <section style={{ backgroundColor: "#F2EDE6", color: CHARCOAL }}>
-        <div className="mx-auto max-w-[1400px] px-[6%] py-28 md:py-40">
-          <div className="rise">
-            <SheetRef label="Ako to prebieha" color="rgba(28,28,26,0.5)" />
-          </div>
-          <h2
-            className="rise mt-8 max-w-[760px]"
-            style={{ fontFamily: "var(--font-cormorant)", fontSize: "clamp(32px, 4.4vw, 64px)", fontWeight: 300, lineHeight: 1.08, letterSpacing: "-0.01em" }}
-          >
-            Štyri kroky k vlastnému bývaniu
-          </h2>
+          <div className="fp-rise mt-16 flex flex-col gap-9 lg:flex-row lg:items-center lg:justify-between">
+            <p style={{ fontFamily: "var(--font-cormorant)", fontSize: "clamp(23px, 2.5vw, 33px)", fontWeight: 300, lineHeight: 1.35, color: STONE }}>
+              Prvá konzultácia je zdarma.
+              <span style={{ color: "rgba(242,237,230,0.45)" }}> Aj tá, po ktorej si to rozmyslíte.</span>
+            </p>
 
-          <div className="rule-x mt-16 h-px w-full" style={{ backgroundColor: "rgba(28,28,26,0.15)" }} />
-          <div className="grid gap-x-12 sm:grid-cols-2 lg:grid-cols-4">
-            {STEPS.map((s) => (
-              <div key={s.no} className="rise flex flex-col py-12" style={{ borderTop: "1px solid rgba(28,28,26,0.12)" }}>
-                <span style={{ fontFamily: "var(--font-cormorant)", fontSize: "48px", fontWeight: 300, lineHeight: 1, color: GOLD }}>
-                  {s.no}
-                </span>
-                <h3 className="mt-6" style={{ fontFamily: "var(--font-cormorant)", fontSize: "26px", fontWeight: 300 }}>
-                  {s.t}
-                </h3>
-                <p className="mt-3" style={{ fontFamily: "var(--font-dm-sans)", fontSize: "12.5px", fontWeight: 300, lineHeight: 1.8, color: "rgba(28,28,26,0.68)" }}>
-                  {s.d}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Kalkulačka ── */}
-      <section style={{ backgroundColor: "#141510" }}>
-        <div className="mx-auto max-w-[1400px] px-[6%] py-28 md:py-40">
-          <div className="rise flex items-baseline justify-between">
-            <SheetRef label="Hypokalkulačka" />
-            <span className="annot" style={{ fontSize: "10px", color: "rgba(242,237,230,0.4)" }}>
-              ORIENTAČNE
-            </span>
-          </div>
-          <h2
-            className="rise mt-8 max-w-[760px]"
-            style={{ fontFamily: "var(--font-cormorant)", fontSize: "clamp(32px, 4.4vw, 64px)", fontWeight: 300, lineHeight: 1.08, letterSpacing: "-0.01em", color: STONE }}
-          >
-            Spočítajte si mesačnú splátku
-          </h2>
-
-          <div className="rise mt-16">
-            <HypoCalc />
-          </div>
-        </div>
-      </section>
-
-      {/* ── Poradca ── */}
-      <section style={{ backgroundColor: "#F2EDE6", color: CHARCOAL }}>
-        <div className="mx-auto max-w-[1400px] px-[6%] py-28 md:py-40">
-          <div className="grid gap-16 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
-            <div>
-              <div className="rise">
-                <SheetRef label="Váš poradca" color="rgba(28,28,26,0.5)" />
-              </div>
-              <h2
-                className="rise mt-8"
-                style={{ fontFamily: "var(--font-cormorant)", fontSize: "clamp(32px, 4.4vw, 60px)", fontWeight: 300, lineHeight: 1.06, letterSpacing: "-0.01em" }}
-              >
-                Prvá konzultácia
-                <br />
-                <span style={{ color: "rgba(28,28,26,0.45)" }}>je vždy zdarma.</span>
-              </h2>
-              <p
-                className="rise mt-8 max-w-[420px]"
-                style={{ fontFamily: "var(--font-dm-sans)", fontSize: "13px", fontWeight: 300, lineHeight: 2.1, color: "rgba(28,28,26,0.7)" }}
-              >
-                Napíšte nám a spojíme vás s poradcom, ktorý sa financovaniu Anima
-                Residences venuje. Nezáväzne, bez tlaku a bez záväzkov.
-              </p>
-            </div>
-
-            {/* advisor card */}
-            <div
-              className="rise flex flex-col p-10 md:p-12"
-              style={{ background: CHARCOAL, color: STONE }}
-            >
-              <div className="flex items-center justify-between">
-                <ArchMark size={22} color={GOLD} />
-                <span className="annot" style={{ fontSize: "9px", color: "rgba(242,237,230,0.4)" }}>
-                  PORADENSTVO
-                </span>
-              </div>
-
-              <p className="mt-8" style={{ fontFamily: "var(--font-cormorant)", fontSize: "34px", fontWeight: 300, lineHeight: 1.1 }}>
-                Poradca pre financovanie
-              </p>
-
-              <dl className="mt-10 space-y-5 border-t pt-8" style={{ borderColor: "rgba(242,237,230,0.15)" }}>
-                <AdvisorRow label="E-mail" value="financovanie@animaresidences.sk" />
-                <AdvisorRow label="Telefón" value="+421 900 000 000" />
-                <AdvisorRow label="Dostupnosť" value="Po – Pia · 8:00 – 17:00" />
-              </dl>
-
-              <a
-                href="mailto:financovanie@animaresidences.sk"
-                className="group mt-10 inline-flex items-center justify-center gap-4"
-                style={{ background: GOLD, color: CHARCOAL, padding: "18px 0" }}
-              >
-                <span className="annot" style={{ fontSize: "11px", fontWeight: 500 }}>
-                  DOHODNÚŤ KONZULTÁCIU
-                </span>
+            <div className="flex flex-wrap items-center gap-8">
+              <a href={`tel:${COMPANY.phoneHref}`} className="fp-phone">
+                {COMPANY.phone}
+              </a>
+              <Link href="/kontakt" className="fp-cta group">
+                <span className="annot" style={{ fontSize: "11px", fontWeight: 500 }}>DOHODNÚŤ KONZULTÁCIU</span>
                 <span aria-hidden className="transition-transform duration-300 group-hover:translate-x-1" style={{ fontFamily: "var(--font-dm-sans)", fontSize: "15px" }}>
                   →
                 </span>
-              </a>
+              </Link>
             </div>
           </div>
         </div>
       </section>
-
-    </div>
-  );
-}
-
-function AdvisorRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-baseline justify-between gap-6">
-      <dt className="annot" style={{ fontSize: "9px", color: "rgba(242,237,230,0.45)" }}>
-        {label.toUpperCase()}
-      </dt>
-      <dd style={{ fontFamily: "var(--font-dm-sans)", fontSize: "13px", fontWeight: 300, color: STONE, textAlign: "right" }}>
-        {value}
-      </dd>
     </div>
   );
 }

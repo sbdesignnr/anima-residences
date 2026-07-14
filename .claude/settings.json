@@ -17,7 +17,8 @@
       "Bash(awk 'NR>=24 && NR<=36 {printf \"%d: %s\\\\n\", NR, $0}' src/components/sections/ApartmentDetail.tsx)",
       "Bash(awk 'NR>=292 && NR<=300 {printf \"%d: %s\\\\n\", NR, $0}' src/components/dev/FloorCalibrator.tsx)",
       "Bash(echo \"=== ESLINT: $? \\(0 = clean\\) ===\")",
-      "Bash(sed -n '/Route \\(app\\)/,$p' /tmp/f.log)"
+      "Bash(sed -n '/Route \\(app\\)/,$p' /tmp/f.log)",
+      "Bash(python3 -c ' *)"
     ],
     "additionalDirectories": [
       "/Users/samuelbiben/Projects/anima-residences/public/images/sketches"

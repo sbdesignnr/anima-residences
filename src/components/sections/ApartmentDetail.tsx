@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { ArchMark, LevelTag, SheetRef } from "@/components/ui/brand";
+import { ArchMark, SheetRef } from "@/components/ui/brand";
 import {
   PLAN_H,
   PLAN_W,
@@ -211,8 +211,7 @@ export default function ApartmentDetail({
         </div>
 
         <div className="text-right">
-          <LevelTag value={floor.level} color={GOLD} />
-          <p style={{ fontFamily: "var(--font-cormorant)", fontSize: 40, fontWeight: 300, color: STONE, marginTop: 10 }}>
+          <p style={{ fontFamily: "var(--font-cormorant)", fontSize: 40, fontWeight: 300, color: STONE }}>
             {apartment.cena}
           </p>
         </div>

@@ -27,13 +27,6 @@ const LQIP_BG: React.CSSProperties = {
   backgroundPosition: "center",
 };
 
-/**
- * HEVC is both sharper and ~16% smaller, and Safari — the browser that matters
- * most for this scrub — decodes it in hardware. Chrome falls back to H.264
- * unless the OS exposes an HEVC decoder.
- */
-const HEVC = 'video/mp4; codecs="hvc1.1.6.L93.B0"';
-
 /** The encode's frame rate. Seeks are snapped to this grid — see applySeek. */
 const VIDEO_FPS = 12;
 
@@ -47,11 +40,24 @@ const isPhone = () => window.matchMedia("(max-width: 767px)").matches;
 const HERO_MOBILE = media.heroMobile;
 const MOBILE_FILL = HERO_MOBILE.w / HERO_MOBILE.h <= 0.62;
 
-const videoSrcFor = (video: HTMLVideoElement) => {
-  const base = isPhone() ? "hero-mobile" : "hero-desktop";
-  const hevc = video.canPlayType(HEVC) !== "";
-  return `/videos/${base}${hevc ? ".hevc" : ""}.mp4`;
-};
+/**
+ * The cut, and the codec, chosen by the BROWSER — in the markup, not in an effect.
+ *
+ * Picking the src in JavaScript meant the fetch could not begin until the bundle
+ * had loaded, parsed, hydrated and run: a second or more of a 12 MB download
+ * simply not happening yet, on the one element the whole page is waiting for.
+ * A <source> list with `media` and `type` is decided during HTML parse, so the
+ * bytes are already in flight before React has drawn its first breath.
+ *
+ * Order matters: the browser takes the FIRST source whose media query matches and
+ * whose type it can decode — so HEVC is offered ahead of H.264 in each pair.
+ */
+const SOURCES: { src: string; type: string; media: string }[] = [
+  { src: "/videos/hero-mobile.hevc.mp4", type: `video/mp4; codecs="hvc1.1.6.L93.B0"`, media: "(max-width: 767px)" },
+  { src: "/videos/hero-mobile.mp4", type: "video/mp4", media: "(max-width: 767px)" },
+  { src: "/videos/hero-desktop.hevc.mp4", type: `video/mp4; codecs="hvc1.1.6.L93.B0"`, media: "(min-width: 768px)" },
+  { src: "/videos/hero-desktop.mp4", type: "video/mp4", media: "(min-width: 768px)" },
+];
 
 /** Each poster is its own encode's first frame, so it shares the crop exactly. */
 const posterFor = () =>
@@ -114,10 +120,10 @@ export default function Hero() {
       const video = videoRef.current;
       if (!video) return;
 
-      // Picked here rather than in SSR so a phone never fetches the desktop cut
-      // and Safari gets HEVC. Runs in a layout effect, i.e. before first paint.
+      // The src is NOT set here — the <source> list in the markup already chose
+      // it, and the download is already underway. Only the poster is picked in
+      // JS, because `poster` takes no media query.
       video.poster = posterFor();
-      video.src = videoSrcFor(video);
 
       video.muted = true;
       video.playsInline = true;
@@ -266,10 +272,17 @@ export default function Hero() {
           muted
           playsInline
           controls={false}
-          preload="metadata"
+          // auto, not metadata. A scrub takes the visitor past EVERY frame, so
+          // the whole file comes down regardless — the only question is whether
+          // it arrives up front, or in 244 range requests racing the scroll.
+          preload="auto"
           className="hero-video cine-breath"
           style={{ willChange: "transform" }}
-        />
+        >
+          {SOURCES.map((s) => (
+            <source key={s.src} src={s.src} type={s.type} media={s.media} />
+          ))}
+        </video>
       </div>
 
       {/* Cinematic grade on the footage. */}

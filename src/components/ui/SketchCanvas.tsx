@@ -485,27 +485,51 @@ export default function SketchCanvas({
     ro.observe(wrap);
     resize();
 
-    /* Load every sheet up front — 1.1 MB for all six in AVIF, and a carousel
-       that stalls on the second slide is worse than one that costs a second. */
+    /*
+     * The six sheets — 1.1 MB in AVIF — but NOT on page load.
+     *
+     * They used to be fetched the moment the component mounted, which is while
+     * the hero is still pulling down its video: a megabyte of contention against
+     * the one thing the visitor is actually looking at. They are fetched when the
+     * section comes within a screen of the viewport instead, which is early
+     * enough that the first sheet is always ready and late enough that it never
+     * competes with the hero.
+     */
     let dead = false;
-    Promise.all(bases.map((b) => load(b)))
-      .then((imgs) => {
-        if (dead) return;
-        imgs.forEach((img, i) => upload(i, img));
-        bind(idxRef.current);
-        runHand();
-        onReady?.();
-      })
-      .catch(() => {
-        wrap.dataset.gl = "off";
-        onReady?.();
-      });
+    let started = false;
+    const fetchSheets = () => {
+      if (started || dead) return;
+      started = true;
+      Promise.all(bases.map((b) => load(b)))
+        .then((imgs) => {
+          if (dead) return;
+          imgs.forEach((img, i) => upload(i, img));
+          bind(idxRef.current);
+          runHand();
+          onReady?.();
+        })
+        .catch(() => {
+          wrap.dataset.gl = "off";
+          onReady?.();
+        });
+    };
+    const near = new IntersectionObserver(
+      ([e]) => {
+        if (e.isIntersecting) {
+          fetchSheets();
+          near.disconnect();
+        }
+      },
+      { rootMargin: "100% 0px" }
+    );
+    near.observe(wrap);
 
     // Expose the switch to the React layer without re-creating the context.
     (wrap as HTMLDivElement & { __show?: (i: number) => void }).__show = showIndex;
 
     return () => {
       dead = true;
+      near.disconnect();
       io.disconnect();
       ro.disconnect();
       cancelAnimationFrame(raf);
