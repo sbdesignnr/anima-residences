@@ -54,6 +54,61 @@ export default function Hero() {
   const restMi = useRef(140);
   /** The white I's rendered height in px — the size the window fills TO first. */
   const glyphH = useRef(200);
+  const maskBuilt = useRef(false);
+  /** The glyph stem's width as a fraction of its height — measured off the real
+      glyph, so the mask can be grown JUST far enough for the thin stem to clear
+      the viewport width (a hand-guessed multiple left the film in a band). */
+  const stemRatio = useRef(0.12);
+
+  /**
+   * The window is the EXACT glyph, not a drawing of one.
+   *
+   * A hand-drawn serif-I never matches Cinzel's I — the serifs, the bracketing,
+   * the stem taper are all subtly off, and the eye reads it instantly as a
+   * SECOND, different I laid over the word. So the mask is rendered from the very
+   * same font the wordmark uses: the "I" is drawn to a canvas with .hw-anima's
+   * own computed font, tight-cropped to its ink, and handed to the portal as its
+   * mask image. Now the film shows through a window that IS the letter.
+   */
+  const buildMask = () => {
+    const portal = portalRef.current;
+    const el = iRef.current;
+    if (!portal || !el || maskBuilt.current) return;
+    const ff = getComputedStyle(el).fontFamily;
+    if (!ff) return;
+    const R = 512;
+    const cv = document.createElement("canvas");
+    const ctx = cv.getContext("2d");
+    if (!ctx) return;
+    ctx.font = `600 ${R}px ${ff}`;
+    const m = ctx.measureText("I");
+    const left = m.actualBoundingBoxLeft ?? 0;
+    const right = m.actualBoundingBoxRight ?? R * 0.3;
+    const asc = m.actualBoundingBoxAscent ?? R * 0.72;
+    const desc = m.actualBoundingBoxDescent ?? 0;
+    const w = Math.max(2, Math.ceil(left + right));
+    const h = Math.max(2, Math.ceil(asc + desc));
+    if (h < 20) return; // font not ready yet — try again after fonts.ready
+    cv.width = w;
+    cv.height = h;
+    ctx.font = `600 ${R}px ${ff}`;
+    ctx.fillStyle = "#fff";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
+    ctx.fillText("I", left, asc);
+    try {
+      const row = ctx.getImageData(0, Math.floor(h / 2), w, 1).data;
+      let a = -1, z = -1;
+      for (let x = 0; x < w; x++) {
+        if (row[x * 4 + 3] > 40) { if (a < 0) a = x; z = x; }
+      }
+      if (a >= 0) stemRatio.current = Math.max(0.04, (z - a + 1) / h);
+    } catch { /* same-origin text — never tainted */ }
+    const url = `url(${cv.toDataURL("image/png")})`;
+    portal.style.webkitMaskImage = url;
+    portal.style.maskImage = url;
+    maskBuilt.current = true;
+  };
 
   /**
    * Anchor the dive on the real I.
@@ -73,17 +128,18 @@ export default function Hero() {
     const cx = ((r.left + r.width / 2) / vw) * 100;
     const cy = ((r.top + r.height / 2) / vh) * 100;
     glyphH.current = r.height;
-    restMi.current = Math.max(30, r.height * 0.46);
+    restMi.current = Math.max(30, r.height * 0.42);
     sec.style.setProperty("--ix", cx.toFixed(2) + "%");
     sec.style.setProperty("--iy", cy.toFixed(2) + "%");
     sec.style.setProperty("--mi", restMi.current.toFixed(1) + "px");
+    buildMask();
   };
 
   // ── The wordmark settles onto the plaster on load. ──
   useGSAP(
     () => {
       const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      if (document.fonts?.ready) document.fonts.ready.then(measure);
+      if (document.fonts?.ready) document.fonts.ready.then(() => { measure(); buildMask(); });
       measure();
 
       if (reduce) {
@@ -154,12 +210,12 @@ export default function Hero() {
 
       // How big the I-mask must get for the film to be WHOLE.
       //
-      // The mask height is --mi; the glyph is ~0.64x as wide and its STEM a
-      // quarter of that (0.16 * --mi). It is the stem that has to clear the
-      // viewport WIDTH — the serifs are long gone off-screen — so --mi must reach
-      // vw / 0.16 = 6.25 * vw or the film ends as a centred band with the page
-      // showing down both sides.
-      const endMi = () => Math.max(window.innerWidth * 6.25, window.innerHeight) * 1.3;
+      // On screen the STEM is all that covers the centre — the serifs are long
+      // gone off the top and bottom — so the stem has to clear the viewport
+      // WIDTH. Stem width on screen = stemRatio * --mi, so --mi must reach
+      // vw / stemRatio. stemRatio is measured off the real glyph (thin), not
+      // guessed; undershoot it and the film ends as a band with page down the sides.
+      const endMi = () => Math.max(window.innerWidth / stemRatio.current, window.innerHeight) * 1.18;
 
       // The growth is deliberately in TWO parts. The whole reveal must not happen
       // the instant you touch the wheel: first the film wells up and fills the
@@ -169,7 +225,7 @@ export default function Hero() {
       const FILL_AT = 0.46;
       const applyDive = () => {
         const p = dive.v;
-        const fill = glyphH.current * 0.82;
+        const fill = glyphH.current * 0.74;
         let mi: number;
         if (p <= FILL_AT) {
           mi = restMi.current + (fill - restMi.current) * (p / FILL_AT);
