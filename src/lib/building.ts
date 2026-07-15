@@ -50,7 +50,7 @@ export type FloorData = {
 };
 
 export const FLOOR_DATA: FloorData[] = [
-  { id: "4NP", byty: 3, volne: 3, vymera: "45 – 70 m²", cena: "od 245 000 €", cenaOd: 245000, level: "+9,300", areas: [45, 70, 50] },
+  { id: "4NP", byty: 2, volne: 2, vymera: "62 – 84 m²", cena: "od 268 000 €", cenaOd: 268000, level: "+9,300", areas: [62, 84] },
   { id: "3NP", byty: 3, volne: 1, vymera: "45 – 70 m²", cena: "od 198 000 €", cenaOd: 198000, level: "+6,200", areas: [45, 70, 50] },
   { id: "2NP", byty: 3, volne: 2, vymera: "45 – 70 m²", cena: "od 185 000 €", cenaOd: 185000, level: "+3,100", areas: [45, 70, 50] },
   { id: "1NP", byty: 3, volne: 0, vymera: "45 – 70 m²", cena: "od 175 000 €", cenaOd: 175000, level: "±0,000", areas: [45, 70, 50] },
@@ -143,7 +143,9 @@ export type Apartment = {
 
 export function apartmentsFor(floor: Floor): Apartment[] {
   const n = floor.id.replace("NP", "");
-  return UNITS.map((unit, i) => ({
+  // Each floor takes the first `byty` units — the top floor is two penthouses,
+  // the rest three. 2 + 3 + 3 + 3 = 11.
+  return UNITS.slice(0, floor.byty).map((unit, i) => ({
     id: `${n}${unit.letter}`,
     floorId: floor.id,
     unit,

@@ -45,11 +45,15 @@ export default function Hero() {
   const grainRef = useRef<HTMLDivElement>(null);
   const creamRef = useRef<HTMLDivElement>(null);
   const wordRef = useRef<HTMLDivElement>(null);
+  const portalRef = useRef<HTMLDivElement>(null);
   const iRef = useRef<HTMLElement>(null);
   const waveRef = useRef<WaveHandle>(null);
-  /** The I-window is shut at rest (0) — the opening is a clean white ANIMA,
-      and the film grows out of the I only as the dive begins. */
-  const restMi = useRef(0);
+  /** Where the film-window starts, in px — a touch smaller than the white I, so
+      the film first appears INSIDE that very glyph rather than as a second one.
+      Held invisible at rest (portal opacity 0), so the opening is a clean ANIMA. */
+  const restMi = useRef(140);
+  /** The white I's rendered height in px — the size the window fills TO first. */
+  const glyphH = useRef(200);
 
   /**
    * Anchor the dive on the real I.
@@ -68,9 +72,11 @@ export default function Hero() {
     const vh = sec.clientHeight || 1;
     const cx = ((r.left + r.width / 2) / vw) * 100;
     const cy = ((r.top + r.height / 2) / vh) * 100;
+    glyphH.current = r.height;
+    restMi.current = Math.max(30, r.height * 0.46);
     sec.style.setProperty("--ix", cx.toFixed(2) + "%");
     sec.style.setProperty("--iy", cy.toFixed(2) + "%");
-    sec.style.setProperty("--mi", "0px");
+    sec.style.setProperty("--mi", restMi.current.toFixed(1) + "px");
   };
 
   // ── The wordmark settles onto the plaster on load. ──
@@ -145,18 +151,35 @@ export default function Hero() {
 
       const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       const dive = { v: 0 };
+
       // How big the I-mask must get for the film to be WHOLE.
       //
-      // The mask height is --mi; the glyph is ~0.64x as wide, and its STEM is a
+      // The mask height is --mi; the glyph is ~0.64x as wide and its STEM a
       // quarter of that (0.16 * --mi). It is the stem that has to clear the
       // viewport WIDTH — the serifs are long gone off-screen — so --mi must reach
-      // vw / 0.16 = 6.25 * vw before there are no bare edges. Undershoot this and
-      // the film ends as a centred band with the page showing down both sides.
+      // vw / 0.16 = 6.25 * vw or the film ends as a centred band with the page
+      // showing down both sides.
       const endMi = () => Math.max(window.innerWidth * 6.25, window.innerHeight) * 1.3;
+
+      // The growth is deliberately in TWO parts. The whole reveal must not happen
+      // the instant you touch the wheel: first the film wells up and fills the
+      // white I (so you read "video appearing IN the letter", ANIMA still whole);
+      // only in the second half does the camera submerge and the film rush out to
+      // fill the screen. FILL = the size at which the window covers the glyph.
+      const FILL_AT = 0.46;
       const applyDive = () => {
-        waveRef.current?.setDive(dive.v);
-        const mi = restMi.current + (endMi() - restMi.current) * dive.v;
+        const p = dive.v;
+        const fill = glyphH.current * 0.82;
+        let mi: number;
+        if (p <= FILL_AT) {
+          mi = restMi.current + (fill - restMi.current) * (p / FILL_AT);
+        } else {
+          const q = (p - FILL_AT) / (1 - FILL_AT);
+          mi = fill + (endMi() - fill) * q * q; // the rush eases IN
+        }
         sec.style.setProperty("--mi", mi.toFixed(1) + "px");
+        // The plaster stays calm while the I fills, then bleaches as we submerge.
+        waveRef.current?.setDive(Math.max(0, (p - 0.4) / 0.6));
       };
 
       const tl = gsap.timeline({
@@ -176,6 +199,7 @@ export default function Hero() {
         // Least motion: the plaster and letters simply give way and the film,
         // which is what the scroll is really for, takes over.
         tl.to([creamRef.current, wordRef.current], { opacity: 0, ease: "none", duration: INTRO * 0.7 }, 0)
+          .fromTo(portalRef.current, { opacity: 0 }, { opacity: 1, ease: "none", duration: INTRO * 0.4 }, 0)
           .to(dive, { v: 1, ease: "none", duration: INTRO, onUpdate: applyDive }, 0)
           .fromTo(grainRef.current, { opacity: 0 }, { opacity: 0.28, ease: "none", duration: INTRO }, 0);
       } else {
@@ -183,10 +207,20 @@ export default function Hero() {
         // white letters over it dissolve so the film shows through the glyph, and
         // the plaster and the other letters rush the camera and fly past — a slow
         // roll on the whole scene reads as the camera moving, not the picture.
-        tl.to(creamRef.current, { scale: 2.7, rotate: -3, opacity: 0, ease: "power2.in", duration: INTRO }, 0)
-          .to(wordRef.current, { scale: 3.0, rotate: -3, opacity: 0, ease: "power2.in", duration: INTRO * 0.86 }, 0)
-          .to(dive, { v: 1, ease: "power2.in", duration: INTRO, onUpdate: applyDive }, 0)
-          .fromTo(grainRef.current, { opacity: 0 }, { opacity: 0.28, ease: "none", duration: INTRO }, INTRO * 0.4);
+        const P1 = INTRO * FILL_AT; // fill the I
+        const P2 = INTRO - P1; // submerge
+        tl
+          // the dive runs the mask across the whole INTRO (shaped in applyDive)
+          .to(dive, { v: 1, ease: "none", duration: INTRO, onUpdate: applyDive }, 0)
+          // the film wells up inside the white I — hidden at rest, quick to appear
+          .fromTo(portalRef.current, { opacity: 0 }, { opacity: 1, ease: "power1.out", duration: INTRO * 0.12 }, 0)
+          // Phase 1: the scene barely breathes — ANIMA stays whole while the I fills.
+          .fromTo(creamRef.current, { scale: 1 }, { scale: 1.07, ease: "power1.in", duration: P1 }, 0)
+          .fromTo(wordRef.current, { scale: 1 }, { scale: 1.05, ease: "power1.in", duration: P1 }, 0)
+          // Phase 2: the camera submerges — the plaster and letters rush past.
+          .to(creamRef.current, { scale: 3.0, rotate: -3, opacity: 0, ease: "power2.in", duration: P2 }, P1)
+          .to(wordRef.current, { scale: 3.2, rotate: -3, opacity: 0, ease: "power2.in", duration: P2 }, P1)
+          .fromTo(grainRef.current, { opacity: 0 }, { opacity: 0.28, ease: "none", duration: P2 }, P1);
       }
 
       // ── INTRO → 1: the film, scrubbed ──
@@ -241,7 +275,7 @@ export default function Hero() {
 
       {/* z2 — the film, MASKED to the letter I so only the I shows it. The mask
              (--mi) grows on scroll until the film is the whole screen. */}
-      <div className="hero-portal" aria-hidden>
+      <div ref={portalRef} className="hero-portal" style={{ opacity: 0 }} aria-hidden>
         <div className="absolute inset-0" style={{ ...LQIP_BG, backgroundColor: "#181913" }}>
           <div className="hero-letterbox absolute inset-0" />
           <video

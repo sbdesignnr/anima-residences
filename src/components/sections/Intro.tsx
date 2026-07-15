@@ -11,7 +11,7 @@ gsap.registerPlugin(ScrollTrigger, useGSAP);
 const CHARCOAL = "#1C1C1A";
 
 const STATS = [
-  { to: 12, suffix: "", label: "BYTOV", group: false },
+  { to: 11, suffix: "", label: "BYTOV", group: false },
   { to: 4, suffix: "", label: "PODLAŽIA", group: false },
   { to: 1200, suffix: " m²", label: "ZELENE", group: true },
   // A year is never thousands-separated.
