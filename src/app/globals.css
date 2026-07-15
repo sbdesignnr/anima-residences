@@ -569,130 +569,119 @@ body {
   background: radial-gradient(140% 110% at 50% 42%, transparent 42%, rgba(0, 0, 0, 0.62) 100%);
 }
 
-/* ───────────────────────────────── The gate ─────────────────────────────────
- * The site opens closed: two black leaves meeting on a gold seam, the wordmark
- * split across them — ANIMA above the line, RESIDENCES below. Scrolling parts
- * them, each leaf carrying its own half of the name away, and the film is behind.
- *
- * Everything here moves on transform and opacity ONLY. A gate that stutters on
- * the first scroll of the first visit is worse than no gate at all.
+/* ───────────────────────────── The opening dive ─────────────────────────────
+ * The site opens on a living plaster ground (WaveCanvas) with a raised wordmark.
+ * On scroll the camera dives THROUGH it: the wordmark flies past the eye, the
+ * ground falls away and bleaches into light, and the film is behind. The 3D is
+ * real — a perspective on the section, a preserve-3d scene, and translateZ on
+ * the two layers so the wordmark parallaxes ahead of the ground.
  */
-.gate {
+.hero-perspective { perspective: 1100px; }
+
+.hero-scene {
   position: absolute;
-  left: 0;
-  width: 100%;
-  height: 50%;
-  z-index: 10;
-  background: #050505;
+  inset: 0;
+  z-index: 20;
+  transform-style: preserve-3d;
   will-change: transform;
-  /* the leaves are what the eye tracks; keep them on their own layer */
+}
+
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  will-change: transform, opacity;
   backface-visibility: hidden;
 }
-.gate--top { top: 0; }
-.gate--bot { bottom: 0; }
-
-/*
- * The seam. One line to the eye, but really two — a gold edge on each leaf, laid
- * exactly on top of one another. That is the whole trick: when the gate parts,
- * the line splits in half and each half rides away on its own leaf, lighting the
- * opening. It also hides the sub-pixel crack that two 50% halves leave on a
- * viewport of odd height.
- */
-.gate-edge {
+.hero-bg-canvas,
+.hero-bg-fallback {
   position: absolute;
-  left: 0;
+  inset: 0;
+  display: block;
   width: 100%;
+  height: 100%;
+}
+.hero-bg-canvas { z-index: 1; }
+/* Behind the canvas; shows through if WebGL2 is unavailable (a bare canvas is
+   transparent), so there is always warm cream rather than the section's black. */
+.hero-bg-fallback {
+  z-index: 0;
+  background: radial-gradient(120% 92% at 32% 22%, #ece3d2 0%, #ddceb2 55%, #cdba98 100%);
+}
+
+/* Nav is white; at the very top it sits over cream. A whisper of shade holds it
+   legible until the page has scrolled enough for the nav to take its own ground. */
+.hero-topscrim {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgba(46, 38, 24, 0.42) 0%, rgba(46, 38, 24, 0) 16%);
+}
+
+.hero-word {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6vw;
+  text-align: center;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+}
+.hw-line { display: block; }
+
+/* ANIMA — engraved Roman caps, near-white, standing PROUD of the plaster. The
+   stack is the extrusion (a few tight beige steps) plus one soft ambient cast
+   below; together they read as a raised letter, not a printed one. */
+.hw-anima {
+  font-family: var(--font-cinzel), serif;
+  font-weight: 600;
+  color: #fcf8f0;
+  font-size: clamp(64px, 13vw, 208px);
+  line-height: 0.94;
+  letter-spacing: 0.06em;
+  text-indent: 0.06em;
+  text-shadow:
+    0 1px 0 #e7dcc6,
+    0 2px 0 #ddd0b6,
+    0 3px 0 #d2c3a4,
+    0 4px 1px rgba(120, 96, 58, 0.35),
+    0 9px 18px rgba(96, 74, 42, 0.30),
+    0 20px 44px rgba(80, 60, 32, 0.26);
+}
+
+.hw-sub {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(14px, 2.2vw, 40px);
+  margin-top: clamp(14px, 2.4vh, 34px);
+  width: min(94%, 580px);
+}
+.hw-res {
+  font-family: var(--font-cinzel), serif;
+  font-weight: 500;
+  color: #a9884f;
+  font-size: clamp(12px, 1.65vw, 24px);
+  letter-spacing: 0.42em;
+  text-indent: 0.42em;
+  white-space: nowrap;
+  text-shadow: 0 1px 0 rgba(255, 251, 242, 0.55);
+}
+.hw-rule {
+  display: block;
+  flex: 1;
   height: 1px;
   transform: scaleX(0);
-  background: linear-gradient(
-    to right,
-    #c9a875 0%,
-    #e8cfa2 24%,
-    #fdf1d2 50%,
-    #e8cfa2 76%,
-    #c9a875 100%
-  );
-  box-shadow:
-    0 0 12px rgba(253, 241, 210, 0.7),
-    0 0 42px rgba(228, 200, 139, 0.35);
+  transform-origin: right center;
+  background: linear-gradient(to right, rgba(169, 136, 79, 0), rgba(169, 136, 79, 0.85));
 }
-.gate--top .gate-edge { bottom: 0; }
-.gate--bot .gate-edge { top: 0; }
-
-/*
- * Light thrown INTO the opening by the seam.
- *
- * The obvious version — one glow pinned to the middle of the screen — was wrong:
- * it stays put while the gate travels, so it stops reading as light from the
- * edge and starts reading as fog over the film. This hangs off each leaf's own
- * edge instead, past it, into the gap. It moves with the leaf that casts it, and
- * the opening is lit from its rims the way real light through a parting door is.
- *
- * Faded in by the scroll (Hero.tsx) — at rest the leaves are shut and there is
- * no gap for anything to spill into.
- */
-.gate-bleed {
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 34vh;
-  pointer-events: none;
-  opacity: 0;
-  mix-blend-mode: screen;
-}
-.gate--top .gate-bleed {
-  bottom: 0;
-  transform: translateY(100%); /* hangs below the leaf, i.e. into the gap */
-  background: linear-gradient(
-    to bottom,
-    rgba(255, 238, 202, 0.42) 0%,
-    rgba(255, 232, 190, 0.12) 32%,
-    rgba(255, 226, 170, 0) 100%
-  );
-}
-.gate--bot .gate-bleed {
-  top: 0;
-  transform: translateY(-100%);
-  background: linear-gradient(
-    to top,
-    rgba(255, 238, 202, 0.42) 0%,
-    rgba(255, 232, 190, 0.12) 32%,
-    rgba(255, 226, 170, 0) 100%
-  );
-}
-
-/* Each half of the name, hung off the seam. They drift against their own leaf as
-   it leaves, so the letters linger a beat behind the gate — that lag is what
-   gives the opening depth instead of two rectangles sliding apart. */
-.gate-mark {
-  position: absolute;
-  left: 0;
-  width: 100%;
-  text-align: center;
-  will-change: transform;
-}
-.gate-mark--top { bottom: clamp(24px, 4.2vh, 54px); }
-.gate-mark--bot { top: clamp(20px, 3.4vh, 44px); }
-
-.gate-word {
-  display: block;
-  font-family: var(--font-cormorant), serif;
-  font-weight: 300;
-  color: #f1ecdf;
-  /* The floor matters more than the ceiling: on a 390px phone 11.6vw is 45px,
-     and a gate whose name is a whisper is not a gate. */
-  font-size: clamp(68px, 12vw, 168px);
-  line-height: 0.86;
-  letter-spacing: 0.06em;
-  /* letter-spacing pads the right of the last glyph; pull the line back on centre */
-  text-indent: 0.06em;
-}
-.gate-word--sub {
-  font-weight: 400;
-  font-size: clamp(12px, 1.7vw, 22px);
-  letter-spacing: 0.62em;
-  text-indent: 0.62em;
-  color: rgba(241, 236, 223, 0.82);
+.hw-sub .hw-rule:last-child {
+  transform-origin: left center;
+  background: linear-gradient(to left, rgba(169, 136, 79, 0), rgba(169, 136, 79, 0.85));
 }
 
 .cine-breath {
@@ -703,58 +692,16 @@ body {
   50%      { transform: scale(1.035); }
 }
 
-/*
- * The wordmark. Cream letters with a warm light band that travels THROUGH the
- * glyphs — a gradient clipped to the text, not a block sliding over it. It
- * sweeps once shortly after load, then rests as flat cream until the next pass.
- * Animating only background-position keeps it a cheap repaint of a small area.
- */
-.cine-word {
-  color: transparent;
-  -webkit-text-fill-color: transparent;
-  /* Base cream fills the whole gradient; a warm highlight sits at its centre.
-     The gradient is 2.6× the text, so background-position 0–100% ALWAYS covers
-     every glyph (outside that range parts fall uncovered → transparent). At 0%
-     and 100% the highlight is off the text (flat cream); at ~50% it crosses. */
-  background-image: linear-gradient(
-    100deg,
-    #efe9db 0%, #efe9db 40%,
-    #fbf0d4 45%, #fffaf0 50%, #fbf0d4 55%,
-    #efe9db 60%, #efe9db 100%
-  );
-  background-repeat: no-repeat;
-  background-size: 260% 100%;
-  background-position: 0% 0;
-  -webkit-background-clip: text;
-  background-clip: text;
-  animation: cineShine 8.5s ease-in-out 1.6s infinite;
-}
-@keyframes cineShine {
-  0%   { background-position: 0% 0; }   /* flat cream, highlight off to the right */
-  24%  { background-position: 100% 0; } /* highlight has swept across the letters */
-  100% { background-position: 100% 0; } /* rest (flat cream) until the next pass */
-}
-
 /* Phones: the SVG-turbulence grain re-rasterises across a DPR-3 surface every
    frame — far too costly next to the scrubbed video decode, so drop it. The
    breath goes too; nothing should compete with the scroll on a phone GPU. */
 @media (pointer: coarse) {
   .cine-grain { display: none; }
   .cine-breath { animation: none; }
-  /* Clip-to-text shimmer rasterises the glyphs as a mask every frame; across a
-     DPR-3 phone surface that is a needless cost next to the video. Phones get
-     the wordmark in flat cream — same letters, none of the churn. */
-  .cine-word {
-    color: #f1ecdf;
-    -webkit-text-fill-color: #f1ecdf;
-    background: none;
-    animation: none;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .cine-grain, .cine-breath { animation: none; }
-  .cine-word { animation: none; background-position: 0% 0; }
 }
 
 /*

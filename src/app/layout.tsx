@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Cormorant_Garamond, DM_Sans } from "next/font/google";
+import { Cinzel, Cormorant_Garamond, DM_Sans } from "next/font/google";
 import "./globals.css";
 
 const cormorant = Cormorant_Garamond({
@@ -13,6 +13,19 @@ const dmSans = DM_Sans({
   subsets: ["latin"],
   weight: ["300", "400", "500"],
   variable: "--font-dm-sans",
+  display: "swap",
+});
+
+/**
+ * The hero logotype only. Cinzel is engraved Roman capitals — the Trajan-lineage
+ * face the reference logo is drawn in — and it gives ANIMA the weight and
+ * presence a delicate Garamond cannot. Scoped to the wordmark; the rest of the
+ * site stays on Cormorant.
+ */
+const cinzel = Cinzel({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  variable: "--font-cinzel",
   display: "swap",
 });
 
@@ -37,7 +50,7 @@ export default function RootLayout({
     // applies to in-page anchors.
     <html
       lang="sk"
-      className={`${cormorant.variable} ${dmSans.variable}`}
+      className={`${cormorant.variable} ${dmSans.variable} ${cinzel.variable}`}
       data-scroll-behavior="smooth"
     >
       <body className="bg-charcoal text-stone antialiased">{children}</body>
