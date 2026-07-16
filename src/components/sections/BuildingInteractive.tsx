@@ -10,20 +10,30 @@ import { SheetRef } from "@/components/ui/brand";
 import ApartmentDetail from "@/components/sections/ApartmentDetail";
 import {
   apartmentsFor,
+  bboxOf,
   buildFloors,
   centerOf,
+  centroidOf,
   FLOOR_GEOMETRY,
   PLAN_H,
   PLAN_W,
   plural,
+  polyPath,
+  polyStr,
+  UNITS,
   type Apartment,
   type Floor,
   type FloorGeometry,
   type FloorId,
+  type Pt,
+  type Unit,
 } from "@/lib/building";
 
 /** Dev-only; the chunk is never fetched unless `?calibrate` is present. */
 const FloorCalibrator = dynamic(() => import("@/components/dev/FloorCalibrator"), {
+  ssr: false,
+});
+const PlanCalibrator = dynamic(() => import("@/components/dev/PlanCalibrator"), {
   ssr: false,
 });
 
@@ -48,37 +58,17 @@ const DETAIL_BG = "#101109";
 const SCALE_X = 26.5;
 
 /**
- * The chosen floor is CALLED OUT, not just lit: a gold hairline around the band
- * and a warm wash inside it, with everything beyond it falling away.
+ * The chosen floor is CALLED OUT, not just lit.
  *
- * The scrim is a single enormous spread shadow rather than panels tiled around
- * the band, because the edge here is meant to be crisp — it lands exactly under
- * the hairline. (Soft-edged shadow panels are the right answer only when there
- * is no border to hide the seam; with one, feathering just smudges a dark lip
- * inside the gold line.) `.bld-stage` clips it, or on a phone it would reach out
- * and swallow the floor list underneath the picture.
+ * `predok.jpeg` is a three-quarter render, so a floor is a POLYGON that slants
+ * with the perspective and folds around the corner — never a rectangle. The
+ * callout is therefore drawn in SVG: one dark scrim over the whole picture with
+ * the floor's exact shape punched OUT of it (an even-odd path), a warm wash and
+ * a travelling glint inside that shape, and a gold hairline tracing its edge.
+ * Because the scrim's hole is the floor's own polygon, the crisp edge lands
+ * exactly under the hairline at any fold.
  */
-const CALLOUT_BORDER = "1.5px solid rgba(196,168,130,0.95)";
-const CALLOUT_SHADOW =
-  "0 0 0 1px rgba(0,0,0,0.55)," +          // dark seam: gold alone vanishes on a lit facade
-  // The fallback is not decoration. An unresolved var() invalidates the WHOLE
-  // box-shadow — not just its own layer — so a missing --spot-scrim silently
-  // takes the seam, the scrim and both inner shadows with it, and the callout
-  // renders as a bare gold rectangle on an undimmed facade.
-  "0 0 0 100vmax var(--spot-scrim, rgba(6,6,6,0.72))," +
-  "inset 0 0 0 1px rgba(0,0,0,0.35)," +
-  "inset 0 0 90px rgba(196,168,130,0.10)";
-/** Warm, and heavier on the left — the side the eye enters from. */
-const CALLOUT_WASH =
-  "linear-gradient(100deg, rgba(196,168,130,0.22) 0%, rgba(196,168,130,0.07) 55%, rgba(196,168,130,0) 100%)";
-
-/* ────────────────────────────── geometry ─────────────────────────────
- * Measured from building.png pixels. Facade = warm beige (R>G>B, bright);
- * slab lines = luminance minima across the full facade width.
- *   roof 9.5%  ·  slabs 29.9% / 45.7% / 59.3%  ·  ground 77.0%
- *   facade left 30.4% for every floor; the upper block stops at 77.1%
- *   while 3NP/2NP/1NP run out to ~91.5% (the lower wing).
- * ------------------------------------------------------------------- */
+const SCRIM = "rgba(6,6,6,0.7)";
 
 /* ───────────────────────────── component ───────────────────────────── */
 
@@ -87,8 +77,16 @@ export default function BuildingInteractive() {
   const stageRef = useRef<HTMLDivElement>(null);
   const zoomRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
-  const spotRef = useRef<HTMLDivElement>(null);
-  const sweepRef = useRef<HTMLSpanElement>(null);
+  const planBoxRef = useRef<HTMLDivElement>(null);
+  /** The SVG callout: a scrim with the floor punched out, plus wash / glint / edge. */
+  const calloutRef = useRef<SVGGElement>(null);
+  const scrimRef = useRef<SVGPathElement>(null);
+  const washRef = useRef<SVGPolygonElement>(null);
+  const edgeRef = useRef<SVGPolygonElement>(null);
+  const clipRef = useRef<SVGPolygonElement>(null);
+  const sweepRef = useRef<SVGRectElement>(null);
+  /** The polygon currently drawn, so a floor change can tween point-for-point. */
+  const shownPts = useRef<Pt[] | null>(null);
   const leaderRef = useRef<HTMLDivElement>(null);
   const markerRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -104,8 +102,14 @@ export default function BuildingInteractive() {
   const origin = useRef({ top: 0, left: 0, right: 0, bottom: 0 });
 
   const [geometry, setGeometry] = useState<Record<FloorId, FloorGeometry>>(FLOOR_GEOMETRY);
+  const [units, setUnits] = useState<Unit[]>(UNITS);
   const [calibrating, setCalibrating] = useState(false);
   const floors = useMemo(() => buildFloors(geometry), [geometry]);
+  /** The live outline for a unit — the edited one while calibrating, else the shipped one. */
+  const polyForUnit = useCallback(
+    (u: Unit) => units.find((x) => x.letter === u.letter)?.poly ?? u.poly,
+    [units]
+  );
 
   const [activeFloorId, setActiveFloorId] = useState<FloorId | null>(null);
   // Derive from `floors` so a band being dragged updates the live spotlight.
@@ -148,6 +152,8 @@ export default function BuildingInteractive() {
     try {
       const saved = localStorage.getItem("anima:floor-geometry");
       if (saved) setGeometry(JSON.parse(saved));
+      const savedU = localStorage.getItem("anima:plan-units");
+      if (savedU) setUnits(JSON.parse(savedU));
     } catch {}
   }, []);
 
@@ -161,6 +167,18 @@ export default function BuildingInteractive() {
   const resetGeometry = useCallback(() => {
     setGeometry(FLOOR_GEOMETRY);
     localStorage.removeItem("anima:floor-geometry");
+  }, []);
+
+  const updateUnits = useCallback((u: Unit[]) => {
+    setUnits(u);
+    try {
+      localStorage.setItem("anima:plan-units", JSON.stringify(u));
+    } catch {}
+  }, []);
+
+  const resetUnits = useCallback(() => {
+    setUnits(UNITS);
+    localStorage.removeItem("anima:plan-units");
   }, []);
 
   /**
@@ -317,11 +335,12 @@ export default function BuildingInteractive() {
   /*
    * Lighting a floor.
    *
-   * There is no highlight box. The facade falls into shadow — four panels that
-   * tile everything AROUND the chosen band, each feathered on the edge that
-   * meets it — so what's left is a soft-edged hole of light on that one floor.
-   * A leader line runs from the level scale to the band, the way a dimension is
-   * called out on a drawing, and the figures below re-set themselves.
+   * The whole picture falls into shadow (a dark scrim) with the chosen floor's
+   * exact polygon punched OUT of it — so what's left is a lit hole in the shape
+   * of that floor, warmed by a wash and traced by a gold hairline. Moving to
+   * another floor tweens the polygon point-for-point when the two shapes share a
+   * vertex count, and snaps otherwise. A leader line runs from the level scale
+   * to the band, and the figures below re-set themselves.
    */
   useGSAP(
     () => {
@@ -329,22 +348,51 @@ export default function BuildingInteractive() {
       const ease = "power3.out";
       const D = 0.62;
 
+      // Draw a polygon into every layer of the callout at once.
+      const drawPts = (pts: Pt[]) => {
+        const s = polyStr(pts);
+        washRef.current?.setAttribute("points", s);
+        edgeRef.current?.setAttribute("points", s);
+        clipRef.current?.setAttribute("points", s);
+        // even-odd: the outer frame minus the floor = a hole exactly its shape
+        scrimRef.current?.setAttribute("d", `M0 0H100V100H0Z ${polyPath(pts)}`);
+      };
+
       if (!f) {
-        gsap.to([spotRef.current, leaderRef.current], { opacity: 0, duration: 0.35, ease });
+        gsap.to([calloutRef.current, leaderRef.current], { opacity: 0, duration: 0.35, ease });
         gsap.to(cardRef.current, { opacity: 0, y: 10, duration: 0.28, ease });
         return;
       }
 
-      // The callout resolves onto the band — and its spread shadow takes the
-      // rest of the elevation down with it.
-      gsap.to(spotRef.current, {
-        top: `${f.top}%`, height: `${f.height}%`, left: `${f.left}%`, width: `${f.width}%`,
-        opacity: 1, duration: D, ease,
-      });
-      gsap.fromTo(sweepRef.current, { xPercent: -150 }, { xPercent: 290, duration: 1.25, delay: 0.12, ease: "power2.inOut" });
+      const target = f.poly;
+      const b = bboxOf(target);
+      const from = shownPts.current;
+
+      // Tween the shape when the vertex counts match; otherwise snap to it.
+      if (from && from.length === target.length) {
+        const p = { t: 0 };
+        drawPts(from);
+        gsap.to(p, {
+          t: 1, duration: D, ease,
+          onUpdate: () =>
+            drawPts(target.map((tp, i) => [from[i][0] + (tp[0] - from[i][0]) * p.t, from[i][1] + (tp[1] - from[i][1]) * p.t] as Pt)),
+        });
+      } else {
+        drawPts(target);
+      }
+      shownPts.current = target.map((p) => [...p] as Pt);
+      gsap.to(calloutRef.current, { opacity: 1, duration: D, ease });
+
+      // One pass of light travels across the lit floor (clipped to its shape).
+      gsap.set(sweepRef.current, { attr: { y: b.top, height: b.height } });
+      gsap.fromTo(
+        sweepRef.current,
+        { attr: { x: b.left - b.width } },
+        { attr: { x: b.right + b.width * 0.2 }, duration: 1.25, delay: 0.12, ease: "power2.inOut" }
+      );
 
       // Leader line + the marker gliding down the scale.
-      gsap.to(leaderRef.current, { top: `${centerOf(f)}%`, opacity: 1, duration: D, ease });
+      gsap.to(leaderRef.current, { top: `${centerOf(f)}%`, width: `${b.left - SCALE_X}%`, opacity: 1, duration: D, ease });
       gsap.fromTo(leaderRef.current, { scaleX: 0 }, { scaleX: 1, duration: 0.7, ease: "power4.out" });
       gsap.to(markerRef.current, { top: `${centerOf(f)}%`, duration: 0.7, ease: "power4.out" });
 
@@ -463,7 +511,7 @@ export default function BuildingInteractive() {
       .to([overlayRef.current, headingRef.current], { opacity: 0, duration: 0.25, ease: "power2.out" }, 0)
       .to(zoomRef.current, {
         scale: 2, opacity: 0,
-        transformOrigin: `center ${centerOf(floor)}%`,
+        transformOrigin: `${centroidOf(floor.poly)[0]}% ${centerOf(floor)}%`,
         duration: 0.7, ease: "power3.inOut",
       }, 0)
       .add(() => setSelectedFloor(floor));
@@ -531,7 +579,7 @@ export default function BuildingInteractive() {
       <div className="bld-frame">
         <div ref={zoomRef} className="relative h-full w-full">
           <Image
-            src="/images/building.avif"
+            src="/images/predok.avif"
             alt="Vizualizácia budovy Anima Residences"
             fill
             sizes="150vw"
@@ -553,38 +601,64 @@ export default function BuildingInteractive() {
 
       {/* ── Interactive overlay, sharing the image's geometry ── */}
       <div ref={overlayRef} className="bld-frame" style={{ zIndex: 2 }}>
-        {/* ── The callout: a gold hairline around the chosen floor, the facade
-               inside it warmed, and — via the spread shadow — the rest of the
-               elevation taken down. ── */}
-        <div
-          ref={spotRef}
-          className="pointer-events-none absolute overflow-hidden"
-          style={{
-            left: `${floors[0].left}%`,
-            width: `${floors[0].width}%`,
-            top: `${floors[0].top}%`,
-            height: `${floors[0].height}%`,
-            opacity: 0,
-            border: CALLOUT_BORDER,
-            boxShadow: CALLOUT_SHADOW,
-            backdropFilter: "brightness(1.14) saturate(1.08) contrast(1.03)",
-            WebkitBackdropFilter: "brightness(1.14) saturate(1.08) contrast(1.03)",
-          }}
-          aria-hidden
-        >
-          <span className="absolute inset-0" style={{ background: CALLOUT_WASH }} />
-          {/* one pass of light as the floor takes the stage */}
-          <span
-            ref={sweepRef}
-            className="absolute inset-y-0"
-            style={{
-              width: "45%",
-              transform: "translateX(-160%)",
-              background:
-                "linear-gradient(105deg, transparent 0%, rgba(255,255,255,0.14) 45%, rgba(196,168,130,0.20) 55%, transparent 100%)",
-            }}
-          />
-        </div>
+        {/* ── The callout + hotspots, in the photo's own coordinate space.
+               `preserveAspectRatio="none"` maps the 0–100 viewBox straight onto
+               the frame, so a point in image-% lands on the same pixel of the
+               facade at every screen size. ── */}
+        <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 h-full w-full">
+          <defs>
+            <linearGradient id="bldWash" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="rgba(255,250,242,0.16)" />
+              <stop offset="55%" stopColor="rgba(196,168,130,0.10)" />
+              <stop offset="100%" stopColor="rgba(196,168,130,0)" />
+            </linearGradient>
+            <linearGradient id="bldSweep" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="rgba(255,255,255,0)" />
+              <stop offset="50%" stopColor="rgba(255,255,255,0.16)" />
+              <stop offset="60%" stopColor="rgba(196,168,130,0.22)" />
+              <stop offset="100%" stopColor="rgba(196,168,130,0)" />
+            </linearGradient>
+            <clipPath id="bldFloorClip">
+              <polygon ref={clipRef} points={polyStr(floors[0].poly)} />
+            </clipPath>
+          </defs>
+
+          {/* the callout — hidden until a floor is chosen */}
+          <g ref={calloutRef} style={{ opacity: 0, pointerEvents: "none" }} aria-hidden>
+            {/* dark scrim over everything, with the floor punched out (even-odd) */}
+            <path ref={scrimRef} d={`M0 0H100V100H0Z ${polyPath(floors[0].poly)}`} fillRule="evenodd" fill={SCRIM} />
+            {/* warm wash + travelling glint, both confined to the floor */}
+            <polygon ref={washRef} points={polyStr(floors[0].poly)} fill="url(#bldWash)" />
+            <rect ref={sweepRef} x={-20} y={0} width={22} height={12} fill="url(#bldSweep)" clipPath="url(#bldFloorClip)" />
+            {/* the gold hairline tracing the floor's edge */}
+            <polygon
+              ref={edgeRef}
+              points={polyStr(floors[0].poly)}
+              fill="none"
+              stroke="rgba(196,168,130,0.95)"
+              strokeWidth={1.4}
+              strokeLinejoin="round"
+              vectorEffect="non-scaling-stroke"
+            />
+          </g>
+
+          {/* hotspots — the exact floor polygons, transparent but clickable */}
+          {floors.map((floor) => (
+            <polygon
+              key={floor.id}
+              points={polyStr(floor.poly)}
+              fill="transparent"
+              tabIndex={0}
+              aria-label={`Podlažie ${floor.id}`}
+              style={{ cursor: "pointer", pointerEvents: calibrating ? "none" : "fill", outline: "none" }}
+              onMouseEnter={() => { setActiveFloor(floor); hideHint(); }}
+              onFocus={() => setActiveFloor(floor)}
+              onMouseLeave={() => setActiveFloor(null)}
+              onBlur={() => setActiveFloor(null)}
+              onClick={() => openFloor(floor)}
+            />
+          ))}
+        </svg>
 
         {/* ── Level scale — the elevation read as a section: one hairline, a
                level mark per floor, and a leader drawn out to the lit band ── */}
@@ -592,8 +666,8 @@ export default function BuildingInteractive() {
           className="bld-scale-line pointer-events-none absolute hidden lg:block"
           style={{
             left: `${SCALE_X}%`,
-            top: `${floors[0].top}%`,
-            height: `${floors[3].top + floors[3].height - floors[0].top}%`,
+            top: `${bboxOf(floors[0].poly).top}%`,
+            height: `${bboxOf(floors[3].poly).bottom - bboxOf(floors[0].poly).top}%`,
             width: "1px",
             background: "linear-gradient(to bottom, rgba(242,237,230,0), rgba(242,237,230,0.22) 12%, rgba(242,237,230,0.22) 88%, rgba(242,237,230,0))",
           }}
@@ -611,7 +685,7 @@ export default function BuildingInteractive() {
           className="pointer-events-none absolute hidden lg:block"
           style={{
             left: `${SCALE_X}%`,
-            width: `${floors[0].left - SCALE_X}%`,
+            width: `${bboxOf(floors[0].poly).left - SCALE_X}%`,
             top: `${centerOf(floors[0])}%`,
             height: "1px",
             opacity: 0,
@@ -668,28 +742,6 @@ export default function BuildingInteractive() {
           );
         })}
 
-        {/* Hotspots — exactly the measured floor bands */}
-        {floors.map((floor) => (
-          <button
-            key={floor.id}
-            aria-label={`Podlažie ${floor.id}`}
-            onMouseEnter={() => { setActiveFloor(floor); hideHint(); }}
-            onFocus={() => setActiveFloor(floor)}
-            onMouseLeave={() => setActiveFloor(null)}
-            onBlur={() => setActiveFloor(null)}
-            onClick={() => openFloor(floor)}
-            className="absolute"
-            style={{
-              cursor: "pointer",
-              left: `${floor.left}%`,
-              width: `${floor.width}%`,
-              top: `${floor.top}%`,
-              height: `${floor.height}%`,
-              pointerEvents: calibrating ? "none" : undefined,
-            }}
-          />
-        ))}
-
         {/* ── The gold target. Sits over the facade, climbs it, and lights each
                floor on the way — the instruction, performed rather than
                written. Painted last so it rides above the callout. ── */}
@@ -697,7 +749,7 @@ export default function BuildingInteractive() {
           ref={ghostRef}
           className="pointer-events-none absolute hidden lg:block"
           style={{
-            left: "58%",
+            left: "42%",
             top: `${centerOf(floors[3])}%`,
             marginLeft: "-17px",
             marginTop: "-17px",
@@ -731,13 +783,19 @@ export default function BuildingInteractive() {
           </span>
         </div>
 
-        {calibrating && (
+        {/* Only while the facade is the thing on screen — a floor plan open on
+            top has its OWN calibrator, and two live keyboard editors would fight. */}
+        {calibrating && !selectedFloor && (
           <FloorCalibrator
             geometry={geometry}
             onChange={updateGeometry}
             onSelect={setActiveFloorId}
             frameRef={overlayRef}
             onReset={resetGeometry}
+            onOpen={(id) => {
+              const f = floors.find((x) => x.id === id);
+              if (f) openFloor(f);
+            }}
           />
         )}
       </div>
@@ -932,7 +990,7 @@ export default function BuildingInteractive() {
           {/* The real drawing, with hover zones locked to its own pixel grid.
               `.plan-fit` / `.plan-box` fit it whole — see globals.css. */}
           <div className="plan-fit flex min-h-0 flex-1 items-center justify-center">
-            <div className="plan-box relative">
+            <div ref={planBoxRef} className="plan-box relative">
               <Image
                 src="/images/podorys.avif"
                 alt={`Pôdorys ${selectedFloor.id}`}
@@ -944,24 +1002,24 @@ export default function BuildingInteractive() {
 
               <svg viewBox={`0 0 ${PLAN_W} ${PLAN_H}`} className="absolute inset-0 h-full w-full">
                 {apartmentsFor(selectedFloor).map((apt) => {
-                  const u = apt.unit;
+                  const poly = polyForUnit(apt.unit);
+                  const pts = polyStr(poly);
                   const free = apt.stav === "Voľný";
-                  const cx = u.x + u.w / 2;
-                  const cy = u.y + u.h / 2;
+                  const [cx, cy] = centroidOf(poly);
                   return (
                     <g
                       key={apt.id}
                       className="group cursor-pointer"
                       onClick={(e) => openApartment(apt, e.currentTarget)}
                     >
-                      <rect
-                        x={u.x} y={u.y} width={u.w} height={u.h}
+                      <polygon
+                        points={pts}
                         fill={GOLD}
                         className="unit-fill opacity-0 transition-opacity duration-300 group-hover:opacity-[0.18]"
                       />
-                      <rect
-                        x={u.x} y={u.y} width={u.w} height={u.h}
-                        fill="transparent" stroke={GOLD} strokeWidth={4}
+                      <polygon
+                        points={pts}
+                        fill="transparent" stroke={GOLD} strokeWidth={4} strokeLinejoin="round"
                         className="unit-stroke opacity-0 transition-opacity duration-300 group-hover:opacity-100"
                       />
 
@@ -972,7 +1030,7 @@ export default function BuildingInteractive() {
                         x={cx} y={cy} textAnchor="middle" dominantBaseline="central"
                         style={{ fontFamily: "var(--font-cormorant)", fontSize: 150, fill: "rgba(28,28,26,0.30)" }}
                       >
-                        {u.letter}
+                        {apt.unit.letter}
                       </text>
 
                       {/* Pointer: the full chip — the drawing underneath is white */}
@@ -990,6 +1048,15 @@ export default function BuildingInteractive() {
                   );
                 })}
               </svg>
+
+              {calibrating && (
+                <PlanCalibrator
+                  units={units}
+                  onChange={updateUnits}
+                  frameRef={planBoxRef}
+                  onReset={resetUnits}
+                />
+              )}
             </div>
           </div>
 

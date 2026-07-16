@@ -129,7 +129,7 @@
 .bld-stage {
   position: relative;
   width: 100%;
-  aspect-ratio: 1856 / 1312;
+  aspect-ratio: 1600 / 1131;
   /*
    * The spotlight dims the world with a 100vmax spread shadow. On a phone the
    * heading, the stepper and the floor list all sit OUTSIDE the picture, and
@@ -157,8 +157,8 @@
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    width: max(100%, calc(100svh * 1856 / 1312));
-    aspect-ratio: 1856 / 1312;
+    width: max(100%, calc(100svh * 1600 / 1131));
+    aspect-ratio: 1600 / 1131;
   }
   .bld-head {
     position: absolute;
@@ -569,32 +569,46 @@ body {
   background: radial-gradient(140% 110% at 50% 42%, transparent 42%, rgba(0, 0, 0, 0.62) 100%);
 }
 
-/* ─── The opening dive: into the I ───────────────────────────────────────────
- * The site opens on the living plaster ground with ANIMA raised on it. The
- * letter I is a WINDOW: on scroll the camera dives into it, the film grows out
- * of it to fill the screen, and the plaster and the other letters fly past.
+/* ─── The film lives INSIDE the letter I ─────────────────────────────────────
+ * The site opens on the living plaster with ANIMA raised on it, ALL of it white.
+ * The film is a full-screen video, but it is CLIPPED to the exact outline of the
+ * letter I in the wordmark (an SVG clip-path built from the real Cinzel glyph —
+ * see Hero.tsx). At rest it is invisible.
  *
- * Three layers, back to front:
- *   .hero-cream   — the WaveCanvas plaster (z1), which flies the camera on the dive
- *   .hero-portal  — the film (z2), url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%20100'%3E%3Cg%20fill='%23fff'%3E%3Crect%20x='11'%20y='6'%20width='42'%20height='9'/%3E%3Crect%20x='26'%20y='6'%20width='12'%20height='88'/%3E%3Crect%20x='11'%20y='85'%20width='42'%20height='9'/%3E%3C/g%3E%3C/svg%3E")ED to an I so only the I shows it; the
- *                   mask (--mi) grows on scroll until the film is the whole screen
- *   .hero-word    — the white letters (z3) on top, so the I reads as a clean
- *                   glyph at rest and dissolves to reveal the film beneath it
+ * On scroll the white I fills with the video (the film fades up inside the glyph)
+ * and that I-shaped window grows — the camera pushing straight into the letter —
+ * until it is larger than the screen and nothing is left but the film, which then
+ * scrubs. NOTHING is ever drawn beside the I; the window is the I itself.
  *
- * The dive anchors on the I's MEASURED centre (--ix, --iy) — see Hero.tsx.
+ * The wordmark rushes forward on translateZ with the vanishing point pinned to
+ * the I (perspective-origin --ix/--iy), so ANIMA comes at you while A, N, M, A
+ * diverge off the edges and the I — which the window tracks — stays dead centre.
+ *
+ *   .hero-cream  z2  the plaster — flies past and gives way
+ *   .hero-word   z3  the white letters — ANIMA, rushing forward
+ *   .hero-film   z4  the video, clipped to the I, growing over the white I
  */
+.hero-persp {
+  perspective: 720px;
+  perspective-origin: var(--ix, 50%) var(--iy, 50%);
+}
 #hero {
   --ix: 50%;
   --iy: 48%;
-  --mi: 14vh;
+}
+
+.hero-film {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
 }
 
 .hero-cream {
   position: absolute;
   inset: 0;
-  z-index: 1;
-  transform-origin: var(--ix) var(--iy);
+  z-index: 2;
   will-change: transform, opacity;
+  backface-visibility: hidden;
 }
 .hero-bg-canvas,
 .hero-bg-fallback {
@@ -609,22 +623,6 @@ body {
 .hero-bg-fallback {
   z-index: 0;
   background: radial-gradient(120% 92% at 32% 22%, #ece3d2 0%, #ddceb2 55%, #cdba98 100%);
-}
-
-.hero-portal {
-  position: absolute;
-  inset: 0;
-  z-index: 4;
-  /* Only the I shows the film — the mask is the letterform, grown from the I's
-     own height (--mi) up past the whole screen as the dive completes. */
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%20100'%3E%3Cg%20fill='%23fff'%3E%3Crect%20x='11'%20y='6'%20width='42'%20height='9'/%3E%3Crect%20x='26'%20y='6'%20width='12'%20height='88'/%3E%3Crect%20x='11'%20y='85'%20width='42'%20height='9'/%3E%3C/g%3E%3C/svg%3E");
-  mask-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%20100'%3E%3Cg%20fill='%23fff'%3E%3Crect%20x='11'%20y='6'%20width='42'%20height='9'/%3E%3Crect%20x='26'%20y='6'%20width='12'%20height='88'/%3E%3Crect%20x='11'%20y='85'%20width='42'%20height='9'/%3E%3C/g%3E%3C/svg%3E");
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  -webkit-mask-position: var(--ix) var(--iy);
-  mask-position: var(--ix) var(--iy);
-  -webkit-mask-size: auto var(--mi);
-  mask-size: auto var(--mi);
 }
 
 /* Nav legibility over both the cream top and, once dived, the film. */
@@ -646,8 +644,8 @@ body {
   justify-content: center;
   padding: 0 6vw;
   text-align: center;
-  transform-origin: var(--ix) var(--iy);
   will-change: transform, opacity;
+  backface-visibility: hidden;
 }
 .hw-line { display: block; }
 

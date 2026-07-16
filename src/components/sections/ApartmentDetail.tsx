@@ -6,6 +6,7 @@ import { ArchMark, SheetRef } from "@/components/ui/brand";
 import {
   PLAN_H,
   PLAN_W,
+  polyStr,
   UNIT_COPY,
   type Apartment,
   type Floor,
@@ -262,11 +263,8 @@ export default function ApartmentDetail({
                 style={{ objectFit: "contain", filter: "invert(1)", opacity: 0.6 }}
               />
               <svg viewBox={`0 0 ${PLAN_W} ${PLAN_H}`} className="absolute inset-0 h-full w-full">
-                <rect
-                  x={apartment.unit.x}
-                  y={apartment.unit.y}
-                  width={apartment.unit.w}
-                  height={apartment.unit.h}
+                <polygon
+                  points={polyStr(apartment.unit.poly)}
                   fill={GOLD}
                   fillOpacity={0.16}
                   stroke={GOLD}

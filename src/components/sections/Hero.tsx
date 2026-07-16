@@ -36,8 +36,8 @@ const SOURCES: { src: string; type: string; media: string }[] = [
 const posterFor = () =>
   isPhone() ? "/images/hero-poster-mobile.avif" : "/images/hero-poster.avif";
 
-/** The share of the pinned scroll the dive-into-the-I takes before the film runs. */
-const INTRO = 0.42;
+/** The share of the pinned scroll spent pushing INTO the I, before the film scrubs. */
+const INTRO = 0.5;
 
 export default function Hero() {
   const heroRef = useRef<HTMLElement>(null);
@@ -45,101 +45,125 @@ export default function Hero() {
   const grainRef = useRef<HTMLDivElement>(null);
   const creamRef = useRef<HTMLDivElement>(null);
   const wordRef = useRef<HTMLDivElement>(null);
-  const portalRef = useRef<HTMLDivElement>(null);
+  const filmRef = useRef<HTMLDivElement>(null);
   const iRef = useRef<HTMLElement>(null);
   const waveRef = useRef<WaveHandle>(null);
-  /** Where the film-window starts, in px — a touch smaller than the white I, so
-      the film first appears INSIDE that very glyph rather than as a second one.
-      Held invisible at rest (portal opacity 0), so the opening is a clean ANIMA. */
-  const restMi = useRef(140);
-  /** The white I's rendered height in px — the size the window fills TO first. */
-  const glyphH = useRef(200);
-  const maskBuilt = useRef(false);
-  /** The glyph stem's width as a fraction of its height — measured off the real
-      glyph, so the mask can be grown JUST far enough for the thin stem to clear
-      the viewport width (a hand-guessed multiple left the film in a band). */
-  const stemRatio = useRef(0.12);
-
   /**
-   * The window is the EXACT glyph, not a drawing of one.
-   *
-   * A hand-drawn serif-I never matches Cinzel's I — the serifs, the bracketing,
-   * the stem taper are all subtly off, and the eye reads it instantly as a
-   * SECOND, different I laid over the word. So the mask is rendered from the very
-   * same font the wordmark uses: the "I" is drawn to a canvas with .hw-anima's
-   * own computed font, tight-cropped to its ink, and handed to the portal as its
-   * mask image. Now the film shows through a window that IS the letter.
+   * The film is masked to the letter I. The mask is the REAL glyph, drawn to a
+   * canvas in the wordmark's own font, so the video window matches the I exactly.
+   * `bw/bh` are its on-screen size, `cx/cy` the I's centre (the growth origin),
+   * and `grow` how far the mask must scale for the stem to swallow the screen.
    */
+  const geom = useRef({ cx: 0, cy: 0, bw: 40, bh: 200, grow: 60, ready: false });
+
+  /** Render the letter I to a canvas in the wordmark's font → a mask image. */
   const buildMask = () => {
-    const portal = portalRef.current;
     const el = iRef.current;
-    if (!portal || !el || maskBuilt.current) return;
-    const ff = getComputedStyle(el).fontFamily;
-    if (!ff) return;
-    const R = 512;
+    const film = filmRef.current;
+    if (!el || !film) return;
+    const cs = getComputedStyle(el);
+    const fs = parseFloat(cs.fontSize) || 160;
+    const SUP = 4; // supersample so the glyph edge stays crisp while it grows
+    const F = fs * SUP;
+
+    const probe = document.createElement("canvas").getContext("2d");
+    if (!probe) return;
+    probe.font = `${cs.fontWeight} ${F}px ${cs.fontFamily}`;
+    const m = probe.measureText("I");
+    const left = m.actualBoundingBoxLeft ?? 0;
+    const right = m.actualBoundingBoxRight ?? m.width;
+    const asc = m.actualBoundingBoxAscent ?? F * 0.7;
+    const desc = m.actualBoundingBoxDescent ?? 0;
+    const gw = Math.max(1, Math.ceil(left + right));
+    const gh = Math.max(1, Math.ceil(asc + desc));
+
     const cv = document.createElement("canvas");
+    cv.width = gw;
+    cv.height = gh;
     const ctx = cv.getContext("2d");
     if (!ctx) return;
-    ctx.font = `600 ${R}px ${ff}`;
-    const m = ctx.measureText("I");
-    const left = m.actualBoundingBoxLeft ?? 0;
-    const right = m.actualBoundingBoxRight ?? R * 0.3;
-    const asc = m.actualBoundingBoxAscent ?? R * 0.72;
-    const desc = m.actualBoundingBoxDescent ?? 0;
-    const w = Math.max(2, Math.ceil(left + right));
-    const h = Math.max(2, Math.ceil(asc + desc));
-    if (h < 20) return; // font not ready yet — try again after fonts.ready
-    cv.width = w;
-    cv.height = h;
-    ctx.font = `600 ${R}px ${ff}`;
-    ctx.fillStyle = "#fff";
-    ctx.textAlign = "left";
+    ctx.font = `${cs.fontWeight} ${F}px ${cs.fontFamily}`;
     ctx.textBaseline = "alphabetic";
+    ctx.fillStyle = "#fff";
     ctx.fillText("I", left, asc);
-    try {
-      const row = ctx.getImageData(0, Math.floor(h / 2), w, 1).data;
-      let a = -1, z = -1;
-      for (let x = 0; x < w; x++) {
-        if (row[x * 4 + 3] > 40) { if (a < 0) a = x; z = x; }
+
+    // The stem is the narrow waist between the serifs; the window has to grow
+    // until THAT clears the screen (the serifs clear long before).
+    const row = ctx.getImageData(0, Math.floor(gh / 2), gw, 1).data;
+    let first = -1, last = -1;
+    for (let x = 0; x < gw; x++) {
+      if (row[x * 4 + 3] > 128) {
+        if (first < 0) first = x;
+        last = x;
       }
-      if (a >= 0) stemRatio.current = Math.max(0.04, (z - a + 1) / h);
-    } catch { /* same-origin text — never tainted */ }
-    const url = `url(${cv.toDataURL("image/png")})`;
-    portal.style.webkitMaskImage = url;
-    portal.style.maskImage = url;
-    maskBuilt.current = true;
+    }
+    const stem = first >= 0 ? last - first + 1 : gw * 0.12;
+
+    film.style.maskImage = `url(${cv.toDataURL("image/png")})`;
+    film.style.webkitMaskImage = `url(${cv.toDataURL("image/png")})`;
+    film.style.maskRepeat = "no-repeat";
+    film.style.webkitMaskRepeat = "no-repeat";
+
+    geom.current.bw = gw / SUP;
+    geom.current.bh = gh / SUP;
+    geom.current.ready = true;
+    return stem / SUP; // on-screen stem width at base size
   };
 
   /**
-   * Anchor the dive on the real I.
-   *
-   * The film-window and the fly-past both zoom about the letter I, so where the
-   * I actually sits has to be measured, not assumed — its centre drifts with the
-   * font size across breakpoints. Written as CSS custom properties the mask and
-   * the transforms both read.
+   * Place & size the mask so the glyph is centred on the real I and scaled by k.
+   * Growing k opens the I-shaped window; past `grow` the stem alone fills the view.
+   */
+  const applyGrow = (k: number) => {
+    const film = filmRef.current;
+    const { cx, cy, bw, bh } = geom.current;
+    if (!film) return;
+    const w = bw * k;
+    const h = bh * k;
+    const x = cx - w / 2;
+    const y = cy - h / 2;
+    film.style.maskSize = `${w}px ${h}px`;
+    film.style.webkitMaskSize = `${w}px ${h}px`;
+    film.style.maskPosition = `${x}px ${y}px`;
+    film.style.webkitMaskPosition = `${x}px ${y}px`;
+  };
+
+  /**
+   * The window IS the letter I, so everything is measured from that very element:
+   * its centre (the growth origin and the wordmark's vanishing point) and the
+   * mask glyph itself. From the stem width we learn how far to grow to fill the
+   * screen.
    */
   const measure = () => {
     const sec = heroRef.current;
     const el = iRef.current;
     if (!sec || !el) return;
+
     const r = el.getBoundingClientRect();
+    const cx = r.left + r.width / 2;
+    const cy = r.top + r.height / 2;
     const vw = sec.clientWidth || 1;
     const vh = sec.clientHeight || 1;
-    const cx = ((r.left + r.width / 2) / vw) * 100;
-    const cy = ((r.top + r.height / 2) / vh) * 100;
-    glyphH.current = r.height;
-    restMi.current = Math.max(30, r.height * 0.42);
-    sec.style.setProperty("--ix", cx.toFixed(2) + "%");
-    sec.style.setProperty("--iy", cy.toFixed(2) + "%");
-    sec.style.setProperty("--mi", restMi.current.toFixed(1) + "px");
-    buildMask();
+    geom.current.cx = cx;
+    geom.current.cy = cy;
+
+    // Vanishing point for the wordmark's translateZ, so the I stays centred.
+    sec.style.setProperty("--ix", ((cx / vw) * 100).toFixed(2) + "%");
+    sec.style.setProperty("--iy", ((cy / vh) * 100).toFixed(2) + "%");
+
+    const stem = buildMask() ?? geom.current.bw * 0.12;
+    geom.current.grow = Math.max(
+      (vw / Math.max(stem, 1)) * 1.15,
+      vh / Math.max(geom.current.bh, 1)
+    );
+    applyGrow(1);
   };
 
   // ── The wordmark settles onto the plaster on load. ──
   useGSAP(
     () => {
       const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      if (document.fonts?.ready) document.fonts.ready.then(() => { measure(); buildMask(); });
+      if (document.fonts?.ready) document.fonts.ready.then(measure);
       measure();
 
       if (reduce) {
@@ -160,7 +184,7 @@ export default function Hero() {
     { scope: heroRef }
   );
 
-  // ── Scroll: the camera dives into the I, the film grows out of it, then scrubs ──
+  // ── Scroll: the video fills the I, and the I grows until it IS the screen ──
   useGSAP(
     () => {
       const video = videoRef.current;
@@ -207,36 +231,8 @@ export default function Hero() {
 
       const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       const dive = { v: 0 };
-
-      // How big the I-mask must get for the film to be WHOLE.
-      //
-      // On screen the STEM is all that covers the centre — the serifs are long
-      // gone off the top and bottom — so the stem has to clear the viewport
-      // WIDTH. Stem width on screen = stemRatio * --mi, so --mi must reach
-      // vw / stemRatio. stemRatio is measured off the real glyph (thin), not
-      // guessed; undershoot it and the film ends as a band with page down the sides.
-      const endMi = () => Math.max(window.innerWidth / stemRatio.current, window.innerHeight) * 1.18;
-
-      // The growth is deliberately in TWO parts. The whole reveal must not happen
-      // the instant you touch the wheel: first the film wells up and fills the
-      // white I (so you read "video appearing IN the letter", ANIMA still whole);
-      // only in the second half does the camera submerge and the film rush out to
-      // fill the screen. FILL = the size at which the window covers the glyph.
-      const FILL_AT = 0.46;
-      const applyDive = () => {
-        const p = dive.v;
-        const fill = glyphH.current * 0.74;
-        let mi: number;
-        if (p <= FILL_AT) {
-          mi = restMi.current + (fill - restMi.current) * (p / FILL_AT);
-        } else {
-          const q = (p - FILL_AT) / (1 - FILL_AT);
-          mi = fill + (endMi() - fill) * q * q; // the rush eases IN
-        }
-        sec.style.setProperty("--mi", mi.toFixed(1) + "px");
-        // The plaster stays calm while the I fills, then bleaches as we submerge.
-        waveRef.current?.setDive(Math.max(0, (p - 0.4) / 0.6));
-      };
+      const grow = { g: 1 };
+      applyGrow(1);
 
       const tl = gsap.timeline({
         scrollTrigger: {
@@ -252,31 +248,37 @@ export default function Hero() {
       });
 
       if (reduce) {
-        // Least motion: the plaster and letters simply give way and the film,
-        // which is what the scroll is really for, takes over.
-        tl.to([creamRef.current, wordRef.current], { opacity: 0, ease: "none", duration: INTRO * 0.7 }, 0)
-          .fromTo(portalRef.current, { opacity: 0 }, { opacity: 1, ease: "none", duration: INTRO * 0.4 }, 0)
-          .to(dive, { v: 1, ease: "none", duration: INTRO, onUpdate: applyDive }, 0)
-          .fromTo(grainRef.current, { opacity: 0 }, { opacity: 0.28, ease: "none", duration: INTRO }, 0);
+        // Least motion: no dive. The window simply opens and the plaster gives way.
+        gsap.set(filmRef.current, { maskImage: "none", WebkitMaskImage: "none" });
+        tl.to(filmRef.current, { opacity: 1, ease: "none", duration: INTRO * 0.6 }, 0)
+          .to([creamRef.current, wordRef.current], { opacity: 0, ease: "none", duration: INTRO }, 0)
+          .to(dive, { v: 1, ease: "none", duration: INTRO, onUpdate: () => waveRef.current?.setDive(dive.v) }, 0);
       } else {
-        // The camera dives into the I. The film grows out of it (the mask), the
-        // white letters over it dissolve so the film shows through the glyph, and
-        // the plaster and the other letters rush the camera and fly past — a slow
-        // roll on the whole scene reads as the camera moving, not the picture.
-        const P1 = INTRO * FILL_AT; // fill the I
-        const P2 = INTRO - P1; // submerge
+        // THE CAMERA INTO THE I.
+        //
+        // 1) The film fades UP inside the glyph — the white I fills with video.
+        // 2) That I-shaped window grows, centred on the I, until the stem alone is
+        //    wider than the screen: the camera has gone through the letter and
+        //    nothing is left but the film.
+        // 3) The wordmark rushes forward (translateZ, vanishing point on the I) so
+        //    ANIMA comes at you and A, N, M, A sweep off the edges; the plaster
+        //    parallaxes and bleaches, all of it gone as the I fills.
+        const FILL = INTRO * 0.4; // how long the white I takes to become video
+
         tl
-          // the dive runs the mask across the whole INTRO (shaped in applyDive)
-          .to(dive, { v: 1, ease: "none", duration: INTRO, onUpdate: applyDive }, 0)
-          // the film wells up inside the white I — hidden at rest, quick to appear
-          .fromTo(portalRef.current, { opacity: 0 }, { opacity: 1, ease: "power1.out", duration: INTRO * 0.12 }, 0)
-          // Phase 1: the scene barely breathes — ANIMA stays whole while the I fills.
-          .fromTo(creamRef.current, { scale: 1 }, { scale: 1.07, ease: "power1.in", duration: P1 }, 0)
-          .fromTo(wordRef.current, { scale: 1 }, { scale: 1.05, ease: "power1.in", duration: P1 }, 0)
-          // Phase 2: the camera submerges — the plaster and letters rush past.
-          .to(creamRef.current, { scale: 3.0, rotate: -3, opacity: 0, ease: "power2.in", duration: P2 }, P1)
-          .to(wordRef.current, { scale: 3.2, rotate: -3, opacity: 0, ease: "power2.in", duration: P2 }, P1)
-          .fromTo(grainRef.current, { opacity: 0 }, { opacity: 0.28, ease: "none", duration: P2 }, P1);
+          .to(filmRef.current, { opacity: 1, ease: "power1.out", duration: FILL }, 0)
+          .to(grow, {
+            g: () => geom.current.grow,
+            ease: "power2.in",
+            duration: INTRO,
+            onUpdate: () => applyGrow(grow.g),
+          }, 0)
+          .to(wordRef.current, { z: 640, ease: "power2.in", duration: INTRO }, 0)
+          .to(creamRef.current, { z: 320, scale: 1.16, ease: "power2.in", duration: INTRO }, 0)
+          .to(dive, { v: 1, ease: "power2.in", duration: INTRO, onUpdate: () => waveRef.current?.setDive(dive.v) }, 0)
+          .to(wordRef.current, { opacity: 0, ease: "power1.in", duration: INTRO * 0.28 }, INTRO * 0.72)
+          .to(creamRef.current, { opacity: 0, ease: "power1.in", duration: INTRO * 0.28 }, INTRO * 0.72)
+          .fromTo(grainRef.current, { opacity: 0 }, { opacity: 0.28, ease: "none", duration: INTRO * 0.28 }, INTRO * 0.72);
       }
 
       // ── INTRO → 1: the film, scrubbed ──
@@ -315,7 +317,7 @@ export default function Hero() {
     <section
       ref={heroRef}
       id="hero"
-      className={`relative w-full overflow-hidden bg-charcoal ${MOBILE_FILL ? "hero--fill" : "hero--letterbox"}`}
+      className={`hero-persp relative w-full overflow-hidden bg-charcoal ${MOBILE_FILL ? "hero--fill" : "hero--letterbox"}`}
       style={{ height: "100svh", ["--m-aspect" as string]: `${HERO_MOBILE.w} / ${HERO_MOBILE.h}` }}
     >
       <link rel="preload" as="image" href="/images/hero-poster.avif" type="image/avif" media="(min-width: 768px)" fetchPriority="high" />
@@ -323,15 +325,28 @@ export default function Hero() {
 
       <h1 className="sr-only">Anima Residences</h1>
 
-      {/* z1 — the living plaster ground, behind everything and flying past on the dive */}
+      {/* z2 — the living plaster, flying past on the dive */}
       <div ref={creamRef} className="hero-cream" aria-hidden>
         <WaveCanvas ref={waveRef} className="hero-bg-canvas" />
         <div className="hero-bg-fallback" />
       </div>
 
-      {/* z2 — the film, MASKED to the letter I so only the I shows it. The mask
-             (--mi) grows on scroll until the film is the whole screen. */}
-      <div ref={portalRef} className="hero-portal" style={{ opacity: 0 }} aria-hidden>
+      {/* z3 — the white wordmark. The camera flies into its I; the film window,
+             above, fills that very glyph and then grows past it. */}
+      <div ref={wordRef} className="hero-word" aria-hidden>
+        <span className="hw-line hw-anima">
+          AN<i ref={iRef} className="hw-i">I</i>MA
+        </span>
+        <span className="hw-sub">
+          <span className="hw-rule" />
+          <span className="hw-line hw-res">RESIDENCES</span>
+          <span className="hw-rule" />
+        </span>
+      </div>
+
+      {/* z4 — the film: a full-screen video masked to the I. Invisible at rest;
+             it fills the glyph, then the glyph grows until it is the whole screen. */}
+      <div ref={filmRef} className="hero-film" style={{ opacity: 0 }} aria-hidden>
         <div className="absolute inset-0" style={{ ...LQIP_BG, backgroundColor: "#181913" }}>
           <div className="hero-letterbox absolute inset-0" />
           <video
@@ -353,21 +368,8 @@ export default function Hero() {
         <div ref={grainRef} className="cine-grain" style={{ opacity: 0 }} aria-hidden />
       </div>
 
-      {/* Nav legibility — over cream at the top, over the film after the dive. */}
+      {/* Nav legibility — over cream at the top, over the film once arrived. */}
       <div className="hero-topscrim" aria-hidden />
-
-      {/* z3 — the white letters. At rest the I is a clean glyph over the portal;
-             on the dive it dissolves and the film shows through it. */}
-      <div ref={wordRef} className="hero-word" aria-hidden>
-        <span className="hw-line hw-anima">
-          AN<i ref={iRef} className="hw-i">I</i>MA
-        </span>
-        <span className="hw-sub">
-          <span className="hw-rule" />
-          <span className="hw-line hw-res">RESIDENCES</span>
-          <span className="hw-rule" />
-        </span>
-      </div>
     </section>
   );
 }

@@ -3,38 +3,67 @@
  *
  * `FLOOR_GEOMETRY` is the only thing you ever need to tune, and it is the exact
  * shape the in-page calibrator emits — open the site with `?calibrate`, drag the
- * bands onto the facade, hit Copy, and paste the object straight over this one.
+ * vertices onto the facade (add or remove points to fold the band around the
+ * corner), hit Copy, and paste the object straight over this one.
  *
- * All values are percentages of building.png itself (1856×1312), NOT of the
- * viewport. The image box keeps the picture's own aspect ratio at every screen
- * size, so these numbers stay welded to the facade.
+ * A floor is a POLYGON, not a rectangle. `predok.jpeg` is a three-quarter render:
+ * the slab lines slant with the perspective and the band wraps the corner onto
+ * the side elevation, so a rectangle can never sit on it. Each floor is therefore
+ * a list of points that can be folded ("zalomiť") to trace the real facade.
  *
- * The current values were measured from the pixels: the facade is warm beige
- * (R>G>B, bright) and the slab lines are luminance minima running the full width
- * of it — roof 9.5%, slabs 29.9% / 45.7% / 59.3%, ground 75.3%.
+ * Every coordinate is [x, y] as a PERCENTAGE of the photo itself (1600×1131),
+ * NOT of the viewport. The image box keeps the picture's own aspect ratio at
+ * every screen size, so these numbers stay welded to the facade.
+ *
+ * The defaults below trace the front (balcony) elevation between the far corner
+ * (~30 %) and the near corner (~54 %); fold them onto the side in the calibrator.
  */
 
 export type FloorId = "4NP" | "3NP" | "2NP" | "1NP";
 
+/** A point as [x, y]. For floors: % of the photo. For units: podorys pixels. */
+export type Pt = [number, number];
+
 export type FloorGeometry = {
-  /** Top edge, % of image height. */
-  top: number;
-  /** Band height, % of image height. */
-  height: number;
-  /** Left edge, % of image width. */
-  left: number;
-  /** Band width, % of image width. */
-  width: number;
+  /** The shading polygon, following the facade's perspective. % of the photo. */
+  poly: Pt[];
 };
 
 /* ── paste calibrator output here ────────────────────────────────────── */
 export const FLOOR_GEOMETRY: Record<FloorId, FloorGeometry> = {
-  "4NP": { top: 9.08, height: 18.98, left: 30.38, width: 46.85 },
-  "3NP": { top: 28.22, height: 17.64, left: 30.39, width: 62.2 },
-  "2NP": { top: 45.28, height: 16.27, left: 30.38, width: 62.23 },
-  "1NP": { top: 60.38, height: 23.59, left: 30.44, width: 62.17 },
+  "4NP": { poly: [[24.51, 32.91], [44.21, 16.73], [76.57, 40.55], [76.52, 43.36], [53.82, 28.47], [24.57, 44.99]] },
+  "3NP": { poly: [[24.46, 44.99], [53.71, 28.55], [76.57, 43.48], [76.32, 54.29], [53.53, 45.73], [24.57, 55.49]] },
+  "2NP": { poly: [[24.51, 55.58], [53.64, 45.82], [76.41, 54.32], [76.3, 65.5], [53.88, 62.66], [24.63, 66.16]] },
+  "1NP": { poly: [[24.57, 66.16], [53.82, 62.74], [76.24, 65.53], [76.18, 79.11], [53.82, 82.42], [24.51, 78.33]] },
 };
 /* ────────────────────────────────────────────────────────────────────── */
+
+/** Axis-aligned bounds of a polygon — drives the scale, leader and zoom. */
+export const bboxOf = (poly: Pt[]) => {
+  let left = Infinity, top = Infinity, right = -Infinity, bottom = -Infinity;
+  for (const [x, y] of poly) {
+    if (x < left) left = x;
+    if (x > right) right = x;
+    if (y < top) top = y;
+    if (y > bottom) bottom = y;
+  }
+  return { left, top, right, bottom, width: right - left, height: bottom - top };
+};
+
+/** Vertex average — a stable anchor for a unit's label, even on an L-shape. */
+export const centroidOf = (poly: Pt[]): Pt => {
+  const n = poly.length || 1;
+  let sx = 0, sy = 0;
+  for (const [x, y] of poly) { sx += x; sy += y; }
+  return [sx / n, sy / n];
+};
+
+/** SVG `points` string. */
+export const polyStr = (poly: Pt[]) => poly.map(([x, y]) => `${x},${y}`).join(" ");
+
+/** SVG path `d` for a closed polygon (used to punch the scrim's hole). */
+export const polyPath = (poly: Pt[]) =>
+  poly.map(([x, y], i) => `${i ? "L" : "M"}${x} ${y}`).join(" ") + " Z";
 
 /** Everything about a floor except where it sits on the picture. */
 export type FloorData = {
@@ -61,14 +90,21 @@ export type Floor = FloorData & FloorGeometry;
 export const buildFloors = (geometry: Record<FloorId, FloorGeometry>): Floor[] =>
   FLOOR_DATA.map((f) => ({ ...f, ...geometry[f.id] }));
 
-export const centerOf = (f: FloorGeometry) => f.top + f.height / 2;
+/** Vertical centre of a floor band, % of the photo — anchors the leader line. */
+export const centerOf = (f: FloorGeometry) => {
+  const b = bboxOf(f.poly);
+  return b.top + b.height / 2;
+};
 
 /* ─────────────────────── floorplan (podorys.png) ───────────────────────
- * 1042×1316. Structural walls measured from the drawing's pixels:
- *   vertical core walls  x = 358 (34.4%) and x = 686 (65.8%)
- *   thick party wall     y = 409..444 (31.1..33.7%) in the left bay
- * Arrows in the drawing: A ◀ left bay · B ▲ centre-north · C ▶ right bay.
- * The centre-south block is the stair/lift core — not a unit.
+ * 1042×1316. Each unit is an exact POLYGON, not a rectangle — a real apartment
+ * boundary steps in and out (rovno, doľava, doprava, dole), so the outline has
+ * to be traceable point by point. Open `?calibrate` on an opened floor plan to
+ * drag the vertices, add or drop points, and Copy the UNITS array back here.
+ *
+ * Coordinates are podorys pixels. Arrows in the drawing: A ◀ left bay ·
+ * B ▲ centre-north · C ▶ right bay. The centre-south block is the stair/lift
+ * core — not a unit. The defaults are simple rectangles; reshape as needed.
  * ------------------------------------------------------------------- */
 export const PLAN_W = 1042;
 export const PLAN_H = 1316;
@@ -77,18 +113,16 @@ export type UnitLetter = "A" | "B" | "C";
 
 export type Unit = {
   letter: UnitLetter;
-  x: number;
-  y: number;
-  w: number;
-  h: number;
+  /** Exact apartment outline, in podorys pixels. Any number of points. */
+  poly: Pt[];
   area: number;
   rooms: string;
 };
 
 export const UNITS: Unit[] = [
-  { letter: "A", x: 24, y: 22, w: 334, h: 1244, area: 45, rooms: "2-izbový" },
-  { letter: "B", x: 358, y: 22, w: 328, h: 422, area: 70, rooms: "3-izbový" },
-  { letter: "C", x: 686, y: 22, w: 332, h: 1244, area: 50, rooms: "2-izbový" },
+  { letter: "A", poly: [[40, 446], [353, 446], [347, 1230], [40, 1230]], area: 45, rooms: "2-izbový" },
+  { letter: "B", poly: [[40, 39], [1001, 39], [1003, 290], [723, 291], [722, 408], [683, 408], [683, 588], [548, 588], [444, 587], [366, 587], [367, 408], [42, 409]], area: 70, rooms: "3-izbový" },
+  { letter: "C", poly: [[699, 419], [737, 419], [737, 303], [1001, 303], [1003, 1230], [698, 1230]], area: 50, rooms: "2-izbový" },
 ];
 
 /** Written per unit type, not per apartment — the layouts repeat on every floor. */

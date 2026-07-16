@@ -83,7 +83,7 @@ export default function Intro() {
           style={{ fontFamily: "var(--font-cormorant)", fontSize: "clamp(34px, 4.6vw, 76px)", fontWeight: 300, lineHeight: 1.08, letterSpacing: "-0.01em" }}
         >
           <Mask>
-            <span className="block">Dvanásť bytov.</span>
+            <span className="block">Jedenásť bytov.</span>
           </Mask>
           <Mask>
             <span className="block">Jedna tichá ulica</span>
@@ -104,7 +104,7 @@ export default function Intro() {
             >
               Anima Residences nevznikla z tabuľky. Vznikla z otázky, ako sa v byte
               naozaj žije — kde ráno dopadá svetlo, kadiaľ prechádza vzduch, čo vidíte,
-              keď zdvihnete oči od stola. Štyri podlažia, dvanásť bytov, žiadny z nich
+              keď zdvihnete oči od stola. Štyri podlažia, jedenásť bytov, žiadny z nich
               rovnaký. Vnútorný dvor zostáva zelený, pretože ticho je tiež materiál.
             </p>
           </Mask>
