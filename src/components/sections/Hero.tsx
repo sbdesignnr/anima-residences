@@ -14,7 +14,6 @@ ScrollTrigger.config({ ignoreMobileResize: true });
 const isCoarse = () =>
   typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
 
-const VIDEO_FPS = 12;
 const isPhone = () => window.matchMedia("(max-width: 767px)").matches;
 const HERO_MOBILE = media.heroMobile;
 const MOBILE_FILL = HERO_MOBILE.w / HERO_MOBILE.h <= 0.62;
@@ -29,8 +28,8 @@ const SOURCES: { src: string; type: string; media: string }[] = [
 const posterFor = () =>
   isPhone() ? "/images/hero-poster-mobile.avif" : "/images/hero-poster.avif";
 
-/** The share of the pinned scroll spent pushing INTO the I, before the film scrubs. */
-const INTRO = 0.5;
+/** The share of the pinned scroll spent pushing INTO the I; the rest holds the film. */
+const INTRO = 0.6;
 
 export default function Hero() {
   const heroRef = useRef<HTMLElement>(null);
@@ -55,7 +54,7 @@ export default function Hero() {
   const active = useRef(false);
   const raf = useRef(0);
 
-  /** Cover-fit the current video frame into w×h. */
+  /** Cover-fit the video's current (playing) frame into w×h. */
   const drawCover = (ctx: CanvasRenderingContext2D, W: number, H: number) => {
     const v = videoRef.current;
     if (!v || !v.videoWidth || !v.videoHeight) return;
@@ -70,11 +69,11 @@ export default function Hero() {
   };
 
   /**
-   * Paint the window: the video, kept only where the letter I is. Because the I
-   * is drawn here in the wordmark's own font at the measured glyph centre, the
-   * video sits exactly on the real white I — the same letter, filling with film
-   * and growing — never a second glyph beside it. Past `grow`, the stem covers
-   * the frame and the clip is dropped: pure film.
+   * Paint the window: the playing video, kept only where the letter I is. The I
+   * is drawn here in the wordmark's own font at the measured glyph centre, so the
+   * video sits exactly on the real white I — the same letter filling with film
+   * and growing, never a second glyph. Past `grow`, the stem covers the frame and
+   * the clip is dropped: pure film.
    */
   const render = () => {
     const cv = canvasRef.current;
@@ -162,10 +161,10 @@ export default function Hero() {
       octx.textBaseline = "alphabetic";
       octx.fillStyle = "#fff";
       octx.fillText("I", left, asc);
-      const row = octx.getImageData(0, Math.floor(gh / 2), gw, 1).data;
+      const rowpx = octx.getImageData(0, Math.floor(gh / 2), gw, 1).data;
       let f = -1, l = -1;
       for (let x = 0; x < gw; x++) {
-        if (row[x * 4 + 3] > 128) {
+        if (rowpx[x * 4 + 3] > 128) {
           if (f < 0) f = x;
           l = x;
         }
@@ -222,7 +221,7 @@ export default function Hero() {
     { scope: heroRef }
   );
 
-  // ── Scroll: the white I fills with film, then that I grows into the screen ──
+  // ── Scroll: the white I fills with the playing film, then that I grows in ──
   useGSAP(
     () => {
       const video = videoRef.current;
@@ -231,42 +230,18 @@ export default function Hero() {
 
       video.poster = posterFor();
       video.muted = true;
+      video.loop = true;
       video.playsInline = true;
       video.setAttribute("playsinline", "");
       video.setAttribute("webkit-playsinline", "");
-      video.pause();
 
-      let primed = false;
-      const prime = () => {
-        if (primed) return;
-        if (video.readyState === 0) video.load();
+      // The film PLAYS the whole time — a playing, on-screen (but occluded) video
+      // is the only kind Safari keeps decoding for the canvas to draw.
+      const play = () => {
         const p = video.play();
-        if (p) {
-          p.then(() => {
-            video.pause();
-            primed = true;
-            render();
-          }).catch(() => {
-            primed = false;
-          });
-        } else {
-          video.pause();
-          primed = true;
-        }
+        if (p) p.then(() => render()).catch(() => {});
       };
-
-      const scrub = { t: 0 };
-      let lastFrame = -1;
-      const applySeek = () => {
-        if (video.readyState < 1 || video.seeking) return;
-        const d = video.duration;
-        if (!Number.isFinite(d) || d <= 0) return;
-        const maxFrame = Math.floor(d * VIDEO_FPS) - 1;
-        const frame = Math.max(0, Math.min(Math.round(scrub.t * VIDEO_FPS), maxFrame));
-        if (frame === lastFrame) return;
-        lastFrame = frame;
-        video.currentTime = (frame + 0.5) / VIDEO_FPS;
-      };
+      play();
 
       const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       const dive = { v: 0 };
@@ -280,7 +255,7 @@ export default function Hero() {
         scrollTrigger: {
           trigger: sec,
           start: "top top",
-          end: () => "+=" + window.innerHeight * (isCoarse() ? 2 : 3),
+          end: () => "+=" + window.innerHeight * (isCoarse() ? 1.6 : 2),
           scrub: 0.8,
           pin: true,
           anticipatePin: 1,
@@ -288,7 +263,10 @@ export default function Hero() {
           onRefresh: measure,
           onToggle: (self) => {
             active.current = self.isActive;
-            if (self.isActive) kick();
+            if (self.isActive) {
+              kick();
+              play();
+            }
           },
         },
       });
@@ -296,16 +274,16 @@ export default function Hero() {
       kick();
 
       if (reduce) {
-        // Least motion: the window opens whole, the plaster gives way, no dive.
         state.g = geom.current.grow;
-        tl.to(state, { op: 1, ease: "none", duration: INTRO * 0.6, onUpdate: mark }, 0)
-          .to([creamRef.current, wordRef.current], { opacity: 0, ease: "none", duration: INTRO }, 0)
-          .fromTo(finalRef.current, { opacity: 0 }, { opacity: 1, ease: "none", duration: INTRO }, 0)
-          .to(dive, { v: 1, ease: "none", duration: INTRO, onUpdate: () => waveRef.current?.setDive(dive.v) }, 0);
+        tl.to(state, { op: 1, ease: "none", duration: 0.4, onUpdate: mark }, 0)
+          .to([creamRef.current, wordRef.current], { opacity: 0, ease: "none", duration: 0.6 }, 0)
+          .fromTo(finalRef.current, { opacity: 0 }, { opacity: 1, ease: "none", duration: 0.6 }, 0)
+          .to(dive, { v: 1, ease: "none", duration: 0.6, onUpdate: () => waveRef.current?.setDive(dive.v) }, 0)
+          .to({}, { duration: 0.4 }, 0.6); // hold on the film
       } else {
         // 1) THE FILL — the white I dissolves as the film rises inside that very
         //    glyph. The wordmark holds still so the two coincide exactly.
-        const FILL = INTRO * 0.34;
+        const FILL = INTRO * 0.32;
         const DIVE = INTRO - FILL;
         tl
           .to(state, { op: 1, ease: "power1.out", duration: FILL, onUpdate: mark }, 0)
@@ -319,30 +297,19 @@ export default function Hero() {
           .to(dive, { v: 1, ease: "power2.in", duration: DIVE, onUpdate: () => waveRef.current?.setDive(dive.v) }, FILL)
           .to(wordRef.current, { opacity: 0, ease: "power1.in", duration: DIVE * 0.5 }, FILL + DIVE * 0.5)
           .to(creamRef.current, { opacity: 0, ease: "power1.in", duration: DIVE * 0.5 }, FILL + DIVE * 0.5)
-          .fromTo(finalRef.current, { opacity: 0 }, { opacity: 1, ease: "none", duration: DIVE }, FILL);
+          .fromTo(finalRef.current, { opacity: 0 }, { opacity: 1, ease: "none", duration: DIVE }, FILL)
+          // 3) THE HOLD — pinned a while longer on the full, playing film.
+          .to({}, { duration: 1 - INTRO }, INTRO);
       }
 
-      // ── INTRO → 1: the film, scrubbed (canvas paints each seeked frame) ──
-      tl.to(
-        scrub,
-        {
-          t: () => (Number.isFinite(video.duration) ? video.duration : 0),
-          ease: "none",
-          duration: reduce ? 1 : 1 - INTRO,
-          onUpdate: applySeek,
-        },
-        reduce ? 0 : INTRO
-      );
-
       const onLoaded = () => {
-        prime();
+        play();
         ScrollTrigger.refresh();
       };
       if (video.readyState >= 1) onLoaded();
       video.addEventListener("loadedmetadata", onLoaded);
-      video.addEventListener("seeked", render);
 
-      const onGesture = () => prime();
+      const onGesture = () => play();
       window.addEventListener("pointerdown", onGesture, { once: true });
       window.addEventListener("touchstart", onGesture, { once: true });
 
@@ -351,7 +318,6 @@ export default function Hero() {
         cancelAnimationFrame(raf.current);
         raf.current = 0;
         video.removeEventListener("loadedmetadata", onLoaded);
-        video.removeEventListener("seeked", render);
         window.removeEventListener("pointerdown", onGesture);
         window.removeEventListener("touchstart", onGesture);
       };
@@ -371,13 +337,15 @@ export default function Hero() {
 
       <h1 className="sr-only">Anima Residences</h1>
 
-      {/* z0 — the video, hidden. It is only a frame source for the canvas, so it
-             never composites over anything and cannot leak through on Safari. */}
+      {/* z0 — the video, PLAYING, at the very bottom and occluded by the plaster.
+             It is only a frame source for the canvas; Safari keeps decoding it
+             because it is on-screen and playing, but it is never seen directly. */}
       <video
         ref={videoRef}
         className="hero-src"
-        autoPlay={false}
+        autoPlay
         muted
+        loop
         playsInline
         controls={false}
         preload="auto"
@@ -388,7 +356,7 @@ export default function Hero() {
         ))}
       </video>
 
-      {/* z2 — the living plaster, flying past on the dive */}
+      {/* z2 — the living plaster, flying past on the dive (and occluding the video) */}
       <div ref={creamRef} className="hero-cream" aria-hidden>
         <WaveCanvas ref={waveRef} className="hero-bg-canvas" />
         <div className="hero-bg-fallback" />

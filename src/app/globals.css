@@ -596,13 +596,15 @@ body {
   --iy: 48%;
 }
 
+/* The <video> plays at the very bottom (z0), occluded by the opaque plaster, so
+   Safari keeps decoding real frames for the canvas to draw — a hidden or
+   opacity:0 video is not decoded there. It is never the thing on screen. */
 .hero-src {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0;
   z-index: 0;
   pointer-events: none;
 }
