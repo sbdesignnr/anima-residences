@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
-import { ArchMark } from "@/components/ui/brand";
 
 const BRASS = "#B69A78";
 const STONE = "#F2EDE6";
@@ -188,7 +187,6 @@ export default function Navigation() {
         </ul>
 
         <div className="drawer-item flex flex-col items-center gap-6">
-          <ArchMark size={22} color={BRASS} />
           <Link
             href="/#contact"
             onClick={() => setOpen(false)}
