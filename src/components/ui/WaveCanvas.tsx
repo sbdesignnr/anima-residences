@@ -131,8 +131,8 @@ export type WaveHandle = {
   setDive: (v: number) => void;
 };
 
-const WaveCanvas = forwardRef<WaveHandle, { className?: string }>(function WaveCanvas(
-  { className },
+const WaveCanvas = forwardRef<WaveHandle, { className?: string; startTime?: number }>(function WaveCanvas(
+  { className, startTime },
   ref
 ) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -207,7 +207,9 @@ const WaveCanvas = forwardRef<WaveHandle, { className?: string }>(function WaveC
     let visible = true;
     let running = false;
     let raf = 0;
-    const t0 = performance.now();
+    // A shared origin lets two canvases render the SAME field frame-for-frame, so
+    // the split hero's two plaster halves meet seamlessly at the centre.
+    const t0 = startTime ?? performance.now();
 
     const frame = () => {
       raf = 0;
@@ -260,7 +262,7 @@ const WaveCanvas = forwardRef<WaveHandle, { className?: string }>(function WaveC
       cancelAnimationFrame(raf);
       gl.getExtension("WEBGL_lose_context")?.loseContext();
     };
-  }, []);
+  }, [startTime]);
 
   return <canvas ref={canvasRef} className={className} />;
 });

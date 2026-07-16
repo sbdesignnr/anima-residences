@@ -569,55 +569,112 @@ body {
   background: radial-gradient(140% 110% at 50% 42%, transparent 42%, rgba(0, 0, 0, 0.62) 100%);
 }
 
-/* ─── The film lives INSIDE the letter I ─────────────────────────────────────
- * The site opens on the living plaster with ANIMA raised on it, ALL of it white.
- * The <video> is shown DIRECTLY and scrubbed by scroll, and clipped to the exact
- * outline of the real Cinzel I with `clip-path: polygon()` — the glyph traced to
- * a polygon in Hero.tsx. Safari renders a seeked <video> and honours clip-path on
- * it (a CSS mask on a <video> it does not — that leaked and drifted).
+/* ─── The opening: the plaster splits from the centre ───────────────────────
+ * The site opens on the living plaster with ANIMA above the centre seam and
+ * RESIDENCES below it. On scroll a gold LIGHTNING sparks along that seam (drawn
+ * on .hero-bolt), then the two halves part — ANIMA rising, RESIDENCES descending
+ * — and the film behind is revealed in the widening middle.
  *
- * At rest the video is clipped just inside the I and hidden behind the white I of
- * the wordmark. On scroll the white I dissolves as that clip opens into the film,
- * the I grows toward you until it is the whole screen, and from there the film
- * scrubs on with the scroll. Nothing is drawn beside the I.
+ * Each half is a full-viewport layer clipped to its side; the two plaster
+ * canvases share one time origin, so they render the same living field and meet
+ * seamlessly until they move apart.
  *
- *   .hero-cream  z2  the plaster — flies past and gives way
- *   .hero-src    z4  the <video> itself, scrubbed, clipped to the growing I
- *   .hero-word   z5  the white letters over it; the I fades to reveal the film
- *   .hero-final  z6  the cinematic grade (vignette, grain) over the arrived film
+ *   .hero-openvid  z0  the film, revealed between the parting halves
+ *   .hero-half     z2  a plaster half + its word; slides off on scroll
+ *   .hero-seamline z3  the gold hairline at rest · .hero-bolt z3  the lightning
  */
-.hero-persp {
-  perspective: 720px;
-  perspective-origin: var(--ix, 50%) var(--iy, 50%);
+/* The film and its grade, one stacking context BELOW the plaster halves. */
+.hero-openfilm {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
 }
-#hero {
-  --ix: 50%;
-  --iy: 48%;
-}
-
-.hero-src {
+.hero-openvid {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  z-index: 4;
+  z-index: 0;
   pointer-events: none;
-  will-change: clip-path;
-}
-.hero-final {
-  position: absolute;
-  inset: 0;
-  z-index: 6;
-  pointer-events: none;
+  will-change: transform;
 }
 
-.hero-cream {
+.hero-half {
   position: absolute;
   inset: 0;
   z-index: 2;
-  will-change: transform, opacity;
+  overflow: hidden;
+  will-change: transform;
   backface-visibility: hidden;
+}
+.hero-half--top { clip-path: inset(0 0 50% 0); }
+.hero-half--bottom { clip-path: inset(50% 0 0 0); }
+/* a gold breath along each parting edge */
+.hero-half--top::after,
+.hero-half--bottom::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 90px;
+  pointer-events: none;
+  z-index: 2;
+}
+.hero-half--top::after { bottom: 50%; background: linear-gradient(to bottom, rgba(214,184,124,0), rgba(214,184,124,0.12)); }
+.hero-half--bottom::after { top: 50%; background: linear-gradient(to top, rgba(214,184,124,0), rgba(214,184,124,0.12)); }
+
+.hero-word-top {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 50%;
+  z-index: 3;
+  padding: 0 6vw 1.6vh;
+  text-align: center;
+}
+.hero-word-bottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  z-index: 3;
+  padding: 3.2vh 6vw 0;
+  text-align: center;
+}
+
+.hero-seamline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  transform: translateY(-50%);
+  z-index: 3;
+  pointer-events: none;
+  background: linear-gradient(to right, rgba(182,154,120,0) 0%, rgba(214,184,124,0.55) 50%, rgba(182,154,120,0) 100%);
+  box-shadow: 0 0 16px rgba(214,184,124,0.35);
+}
+.hero-bolt {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 240px;
+  width: 100%;
+  transform: translateY(-50%);
+  z-index: 4;
+  pointer-events: none;
+}
+/* The strike's light thrown across the whole hero — SCREEN so it lifts the
+   scene the way real lightning does, brightest along the seam. */
+.hero-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  background: radial-gradient(130% 62% at 50% 50%, rgba(255,246,220,0.98) 0%, rgba(238,206,152,0.55) 24%, rgba(214,184,124,0) 62%);
 }
 .hero-bg-canvas,
 .hero-bg-fallback {
@@ -643,19 +700,6 @@ body {
   background: linear-gradient(to bottom, rgba(28, 24, 15, 0.5) 0%, rgba(28, 24, 15, 0) 15%);
 }
 
-.hero-word {
-  position: absolute;
-  inset: 0;
-  z-index: 5;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 0 6vw;
-  text-align: center;
-  will-change: transform, opacity;
-  backface-visibility: hidden;
-}
 .hw-line { display: block; }
 
 /* ANIMA — engraved Roman caps, near-white, standing PROUD of the plaster. The
