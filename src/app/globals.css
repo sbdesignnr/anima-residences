@@ -722,7 +722,7 @@ body {
   align-items: center;
   justify-content: center;
   gap: clamp(14px, 2.2vw, 40px);
-  margin-top: clamp(14px, 2.4vh, 34px);
+  margin: clamp(14px, 2.4vh, 34px) auto 0;
   width: min(94%, 580px);
 }
 .hw-res {
