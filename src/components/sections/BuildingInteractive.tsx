@@ -807,11 +807,6 @@ export default function BuildingInteractive() {
           {card && (
             <>
               <Fig>
-                <span className="annot" style={{ fontSize: "10px", color: GOLD, display: "block" }}>
-                  {card.level}
-                </span>
-              </Fig>
-              <Fig className="mt-1">
                 <span style={{ fontFamily: "var(--font-cormorant)", fontSize: "68px", fontWeight: 300, lineHeight: 1, color: STONE, letterSpacing: "0.01em", display: "block" }}>
                   {card.id}
                 </span>
@@ -902,9 +897,6 @@ export default function BuildingInteractive() {
         <div className="mt-4 flex items-center justify-between">
           <span className="annot" style={{ fontSize: 10, color: STONE }}>
             {activeFloor ? activeFloor.id : "—"}
-            <span style={{ color: "rgba(242,237,230,0.35)" }}>
-              {activeFloor ? `  ·  ${activeFloor.level}` : ""}
-            </span>
           </span>
 
           {autoTour ? (
@@ -955,9 +947,6 @@ export default function BuildingInteractive() {
                 <span className="flex items-baseline gap-4">
                   <span style={{ fontFamily: "var(--font-cormorant)", fontSize: "30px", fontWeight: 300, color: STONE, lineHeight: 1 }}>
                     {floor.id}
-                  </span>
-                  <span className="annot" style={{ fontSize: "9px", color: "rgba(242,237,230,0.35)" }}>
-                    {floor.level}
                   </span>
                 </span>
 

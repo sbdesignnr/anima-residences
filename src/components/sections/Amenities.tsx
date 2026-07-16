@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
-import { ArchMark, SheetRef } from "@/components/ui/brand";
+import { SheetRef } from "@/components/ui/brand";
 import SketchCanvas from "@/components/ui/SketchCanvas";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
@@ -317,10 +317,6 @@ export default function Amenities() {
               <div className="am-plate-title">
                 <span className="annot" style={{ fontSize: "9px", color: "rgba(28,28,26,0.5)" }}>
                   {sheet.title.toUpperCase()}
-                </span>
-                <span className="flex items-center gap-4">
-                  <span className="annot" style={{ fontSize: "9px", color: GOLD }}>SKICA</span>
-                  <ArchMark size={13} color={GOLD} />
                 </span>
               </div>
 
