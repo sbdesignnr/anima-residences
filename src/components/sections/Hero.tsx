@@ -14,6 +14,7 @@ ScrollTrigger.config({ ignoreMobileResize: true });
 const isCoarse = () =>
   typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
 
+const VIDEO_FPS = 12;
 const isPhone = () => window.matchMedia("(max-width: 767px)").matches;
 const HERO_MOBILE = media.heroMobile;
 const MOBILE_FILL = HERO_MOBILE.w / HERO_MOBILE.h <= 0.62;
@@ -28,13 +29,16 @@ const SOURCES: { src: string; type: string; media: string }[] = [
 const posterFor = () =>
   isPhone() ? "/images/hero-poster-mobile.avif" : "/images/hero-poster.avif";
 
-/** The share of the pinned scroll spent pushing INTO the I; the rest holds the film. */
-const INTRO = 0.6;
+/** The share of the pinned scroll spent pushing INTO the I; the rest scrubs the film. */
+const INTRO = 0.42;
+/** The clip at rest — collapsed to nothing, so the white I is pristine until scroll. */
+const REST_SCALE = 0.001;
+
+type Pt = [number, number];
 
 export default function Hero() {
   const heroRef = useRef<HTMLElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const creamRef = useRef<HTMLDivElement>(null);
   const wordRef = useRef<HTMLDivElement>(null);
   const finalRef = useRef<HTMLDivElement>(null);
@@ -42,158 +46,135 @@ export default function Hero() {
   const waveRef = useRef<WaveHandle>(null);
 
   /**
-   * Everything the canvas needs to paint the I-window: the glyph's centre (also
-   * the wordmark's vanishing point), its font, and how far it must grow for the
-   * stem alone to fill the screen. Measured from the real <i>, never guessed.
+   * The clip is the letter I itself: its outline is traced from the real glyph
+   * (Hero renders the I to a canvas and reads its silhouette), placed on the
+   * measured I, and grown about the I's centre. `grow` is how far it must scale
+   * for the stem alone to fill the screen.
    */
-  const geom = useRef({ cx: 0, cy: 0, F: 160, family: "serif", weight: "600", grow: 60 });
-  const dpr = useRef(1);
-  /** Live dive state the render loop reads: opacity of the window, and its scale. */
-  const op = useRef(0);
-  const g = useRef(1);
-  const active = useRef(false);
-  const raf = useRef(0);
+  const geom = useRef({ cx: 0, cy: 0, base: [] as Pt[], grow: 60 });
+  /** Live clip scale the timeline drives (kept so a resize can re-apply it). */
+  const clip = useRef(REST_SCALE);
 
-  /** Cover-fit the video's current (playing) frame into w×h. */
-  const drawCover = (ctx: CanvasRenderingContext2D, W: number, H: number) => {
-    const v = videoRef.current;
-    if (!v || !v.videoWidth || !v.videoHeight) return;
-    const s = Math.max(W / v.videoWidth, H / v.videoHeight);
-    const dw = v.videoWidth * s;
-    const dh = v.videoHeight * s;
-    try {
-      ctx.drawImage(v, (W - dw) / 2, (H - dh) / 2, dw, dh);
-    } catch {
-      /* frame not decodable yet */
-    }
-  };
+  /** Trace the real glyph to a polygon (viewport px, centred on the I). */
+  const buildPoly = (cx: number, cy: number, F: number, family: string, weight: string): Pt[] => {
+    const SUP = 3;
+    const Fp = F * SUP;
+    const probe = document.createElement("canvas").getContext("2d");
+    if (!probe) return [];
+    probe.font = `${weight} ${Fp}px ${family}`;
+    const m = probe.measureText("I");
+    const left = m.actualBoundingBoxLeft ?? 0;
+    const right = m.actualBoundingBoxRight ?? m.width;
+    const asc = m.actualBoundingBoxAscent ?? Fp * 0.7;
+    const desc = m.actualBoundingBoxDescent ?? 0;
+    const gw = Math.max(1, Math.ceil(left + right));
+    const gh = Math.max(1, Math.ceil(asc + desc));
 
-  /**
-   * Paint the window: the playing video, kept only where the letter I is. The I
-   * is drawn here in the wordmark's own font at the measured glyph centre, so the
-   * video sits exactly on the real white I — the same letter filling with film
-   * and growing, never a second glyph. Past `grow`, the stem covers the frame and
-   * the clip is dropped: pure film.
-   */
-  const render = () => {
-    const cv = canvasRef.current;
-    if (!cv) return;
+    const cv = document.createElement("canvas");
+    cv.width = gw;
+    cv.height = gh;
     const ctx = cv.getContext("2d");
-    if (!ctx) return;
-    const W = cv.width;
-    const H = cv.height;
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.clearRect(0, 0, W, H);
-    const o = op.current;
-    if (o <= 0.001) return;
+    if (!ctx) return [];
+    ctx.font = `${weight} ${Fp}px ${family}`;
+    ctx.textBaseline = "alphabetic";
+    ctx.fillStyle = "#fff";
+    ctx.fillText("I", left, asc);
+    const px = ctx.getImageData(0, 0, gw, gh).data;
 
-    const { cx, cy, F, family, weight, grow } = geom.current;
-    const d = dpr.current;
-
-    ctx.globalCompositeOperation = "source-over";
-    ctx.globalAlpha = o;
-    drawCover(ctx, W, H);
-
-    if (g.current < grow * 0.999) {
-      // keep the film only inside the glyph (a hair larger, to cover the white I)
-      ctx.globalAlpha = 1;
-      ctx.globalCompositeOperation = "destination-in";
-      ctx.fillStyle = "#fff";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.font = `${weight} ${F * g.current * 1.05 * d}px ${family}`;
-      ctx.fillText("I", cx * d, cy * d);
-      ctx.globalCompositeOperation = "source-over";
+    // Each row of an I is a single horizontal run, so the left/right ink edges
+    // per row ARE its exact silhouette — the serifs' width and the stem's waist.
+    const leftEdge: Pt[] = [];
+    const rightEdge: Pt[] = [];
+    const step = Math.max(1, Math.floor(gh / 56));
+    for (let y = 0; y < gh; y += step) {
+      let lx = -1, rx = -1;
+      for (let x = 0; x < gw; x++) {
+        if (px[(y * gw + x) * 4 + 3] > 128) {
+          if (lx < 0) lx = x;
+          rx = x;
+        }
+      }
+      if (lx >= 0) {
+        leftEdge.push([lx, y]);
+        rightEdge.push([rx + 1, y]);
+      }
     }
-    ctx.globalAlpha = 1;
+    if (!leftEdge.length) return [];
+    const ring = [...leftEdge, ...rightEdge.reverse()];
+    // Centre on the actual INK, not the canvas box: the I has no descender, so
+    // the box centre sits below the glyph and would drop the clip low.
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const [gx, gy] of ring) {
+      if (gx < minX) minX = gx;
+      if (gx > maxX) maxX = gx;
+      if (gy < minY) minY = gy;
+      if (gy > maxY) maxY = gy;
+    }
+    const inkCx = (minX + maxX) / 2;
+    const inkCy = (minY + maxY) / 2;
+    // → viewport px, the glyph's ink centred on the measured I centre
+    return ring.map(([gx, gy]) => [cx + (gx - inkCx) / SUP, cy + (gy - inkCy) / SUP] as Pt);
   };
 
-  const loop = () => {
-    if (!active.current) {
-      raf.current = 0;
-      return;
-    }
-    render();
-    raf.current = requestAnimationFrame(loop);
-  };
-  const kick = () => {
-    if (!raf.current && active.current) raf.current = requestAnimationFrame(loop);
+  /** Scale the traced I about its centre and clip the video to it. */
+  const applyClip = (scale: number) => {
+    const v = videoRef.current;
+    const { cx, cy, base } = geom.current;
+    if (!v || !base.length) return;
+    const pts = base.map(([x, y]) => `${(cx + (x - cx) * scale).toFixed(1)}px ${(cy + (y - cy) * scale).toFixed(1)}px`);
+    const poly = `polygon(${pts.join(",")})`;
+    v.style.clipPath = poly;
+    (v.style as CSSStyleDeclaration & { webkitClipPath?: string }).webkitClipPath = poly;
   };
 
   /**
-   * Measure the I. Its centre is the growth origin and the wordmark's vanishing
-   * point; from its stem width we learn how far the window must grow to fill the
-   * screen. The canvas is sized to the viewport here too.
+   * Measure the I: its centre (the growth origin and the wordmark's vanishing
+   * point), the traced outline, and how far to grow to fill the screen.
    */
   const measure = () => {
     const sec = heroRef.current;
     const el = iRef.current;
-    const cv = canvasRef.current;
-    if (!sec || !el || !cv) return;
+    if (!sec || !el) return;
 
     const r = el.getBoundingClientRect();
     const cs = getComputedStyle(el);
     const F = parseFloat(cs.fontSize) || 160;
     const ls = parseFloat(cs.letterSpacing) || 0; // trailing space sits to the glyph's right
     const cx = r.left + r.width / 2 - ls / 2;
-    const cy = r.top + r.height / 2;
+    // The line box carries the font's descent space below the cap I, so its centre
+    // sits a touch low; lift the clip onto the glyph's true optical middle.
+    const cy = r.top + r.height / 2 - F * 0.05;
     const vw = sec.clientWidth || 1;
     const vh = sec.clientHeight || 1;
 
-    // Stem width, as a fraction of font-size — the narrow waist that must clear
-    // the screen (the serifs clear long before).
-    let stemRatio = 0.12;
-    try {
-      const S = 220;
-      const oc = document.createElement("canvas");
-      const octx = oc.getContext("2d")!;
-      octx.font = `${cs.fontWeight} ${S}px ${cs.fontFamily}`;
-      const m = octx.measureText("I");
-      const left = m.actualBoundingBoxLeft ?? 0;
-      const right = m.actualBoundingBoxRight ?? m.width;
-      const asc = m.actualBoundingBoxAscent ?? S * 0.7;
-      const desc = m.actualBoundingBoxDescent ?? 0;
-      const gw = Math.max(1, Math.ceil(left + right));
-      const gh = Math.max(1, Math.ceil(asc + desc));
-      oc.width = gw;
-      oc.height = gh;
-      octx.font = `${cs.fontWeight} ${S}px ${cs.fontFamily}`;
-      octx.textBaseline = "alphabetic";
-      octx.fillStyle = "#fff";
-      octx.fillText("I", left, asc);
-      const rowpx = octx.getImageData(0, Math.floor(gh / 2), gw, 1).data;
-      let f = -1, l = -1;
-      for (let x = 0; x < gw; x++) {
-        if (rowpx[x * 4 + 3] > 128) {
-          if (f < 0) f = x;
-          l = x;
+    const base = buildPoly(cx, cy, F, cs.fontFamily, cs.fontWeight || "600");
+
+    // Grow until the stem (the narrowest run, near the vertical middle) clears
+    // the screen; the serifs clear well before.
+    let stem = F * 0.12;
+    if (base.length) {
+      const midY = cy;
+      let nearest = Infinity;
+      let w = stem;
+      // pair up left/right edges by row via the ring's symmetry
+      const half = base.length / 2;
+      for (let i = 0; i < half; i++) {
+        const l = base[i];
+        const rgt = base[base.length - 1 - i];
+        const dy = Math.abs((l[1] + rgt[1]) / 2 - midY);
+        if (dy < nearest) {
+          nearest = dy;
+          w = Math.abs(rgt[0] - l[0]);
         }
       }
-      if (f >= 0) stemRatio = (l - f + 1) / S;
-    } catch {
-      /* keep the default */
+      stem = Math.max(2, w);
     }
-
-    geom.current = {
-      cx,
-      cy,
-      F,
-      family: cs.fontFamily,
-      weight: cs.fontWeight || "600",
-      grow: Math.max((vw / (F * stemRatio)) * 1.12, (vh / F) * 1.1),
-    };
-
-    const d = Math.min(window.devicePixelRatio || 1, 2);
-    dpr.current = d;
-    cv.width = Math.round(vw * d);
-    cv.height = Math.round(vh * d);
-    cv.style.width = vw + "px";
-    cv.style.height = vh + "px";
+    geom.current = { cx, cy, base, grow: Math.max((vw / stem) * 1.15, (vh / (F * 1.02)) * 1.15) };
 
     sec.style.setProperty("--ix", ((cx / vw) * 100).toFixed(2) + "%");
     sec.style.setProperty("--iy", ((cy / vh) * 100).toFixed(2) + "%");
 
-    render();
+    applyClip(clip.current);
   };
 
   // ── The wordmark settles onto the plaster on load. ──
@@ -221,7 +202,7 @@ export default function Hero() {
     { scope: heroRef }
   );
 
-  // ── Scroll: the white I fills with the playing film, then that I grows in ──
+  // ── Scroll: the white I opens into the film, the I grows in, then it scrubs ──
   useGSAP(
     () => {
       const video = videoRef.current;
@@ -230,93 +211,107 @@ export default function Hero() {
 
       video.poster = posterFor();
       video.muted = true;
-      video.loop = true;
       video.playsInline = true;
       video.setAttribute("playsinline", "");
       video.setAttribute("webkit-playsinline", "");
+      applyClip(REST_SCALE);
 
-      // The film PLAYS the whole time — a playing, on-screen (but occluded) video
-      // is the only kind Safari keeps decoding for the canvas to draw.
-      const play = () => {
+      // Wake the decoder once so scroll-seeks paint immediately (Safari needs a
+      // play before a seeked frame will render); then hold on frame 0.
+      let primed = false;
+      const prime = () => {
+        if (primed) return;
         const p = video.play();
-        if (p) p.then(() => render()).catch(() => {});
+        if (p) {
+          p.then(() => {
+            video.pause();
+            video.currentTime = 0.001;
+            primed = true;
+          }).catch(() => {});
+        } else {
+          video.pause();
+          primed = true;
+        }
       };
-      play();
+
+      const scrub = { t: 0 };
+      let lastFrame = -1;
+      const applySeek = () => {
+        if (video.readyState < 1 || video.seeking) return;
+        const d = video.duration;
+        if (!Number.isFinite(d) || d <= 0) return;
+        const maxFrame = Math.floor(d * VIDEO_FPS) - 1;
+        const frame = Math.max(0, Math.min(Math.round(scrub.t * VIDEO_FPS), maxFrame));
+        if (frame === lastFrame) return;
+        lastFrame = frame;
+        video.currentTime = (frame + 0.5) / VIDEO_FPS;
+      };
 
       const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       const dive = { v: 0 };
-      const state = { op: 0, g: 1 };
-      const mark = () => {
-        op.current = state.op;
-        g.current = state.g;
+      const state = { s: REST_SCALE };
+      const applyState = () => {
+        clip.current = state.s;
+        applyClip(state.s);
       };
 
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: sec,
           start: "top top",
-          end: () => "+=" + window.innerHeight * (isCoarse() ? 1.6 : 2),
+          end: () => "+=" + window.innerHeight * (isCoarse() ? 2.2 : 3),
           scrub: 0.8,
           pin: true,
           anticipatePin: 1,
           invalidateOnRefresh: true,
           onRefresh: measure,
-          onToggle: (self) => {
-            active.current = self.isActive;
-            if (self.isActive) {
-              kick();
-              play();
-            }
-          },
         },
       });
-      active.current = true;
-      kick();
+
+      // The film scrubs across the WHOLE pinned scroll, so it plays by scroll
+      // both as the camera enters the I and once inside it.
+      tl.to(scrub, {
+        t: () => (Number.isFinite(video.duration) ? video.duration : 0),
+        ease: "none",
+        duration: 1,
+        onUpdate: applySeek,
+      }, 0);
 
       if (reduce) {
-        state.g = geom.current.grow;
-        tl.to(state, { op: 1, ease: "none", duration: 0.4, onUpdate: mark }, 0)
-          .to([creamRef.current, wordRef.current], { opacity: 0, ease: "none", duration: 0.6 }, 0)
-          .fromTo(finalRef.current, { opacity: 0 }, { opacity: 1, ease: "none", duration: 0.6 }, 0)
-          .to(dive, { v: 1, ease: "none", duration: 0.6, onUpdate: () => waveRef.current?.setDive(dive.v) }, 0)
-          .to({}, { duration: 0.4 }, 0.6); // hold on the film
+        state.s = geom.current.grow;
+        applyState();
+        tl.to(".hw-line", { opacity: 0, ease: "none", duration: 0.4 }, 0)
+          .to(creamRef.current, { opacity: 0, ease: "none", duration: 0.5 }, 0)
+          .fromTo(finalRef.current, { opacity: 0 }, { opacity: 1, ease: "none", duration: 0.5 }, 0)
+          .to(dive, { v: 1, ease: "none", duration: 0.5, onUpdate: () => waveRef.current?.setDive(dive.v) }, 0);
       } else {
-        // 1) THE FILL — the white I dissolves as the film rises inside that very
-        //    glyph. The wordmark holds still so the two coincide exactly.
-        const FILL = INTRO * 0.32;
-        const DIVE = INTRO - FILL;
+        // The I opens into the film and grows toward you across the whole INTRO,
+        // accelerating in. The white I dissolves early (the reveal); A, N, M, A
+        // rush forward and sweep off; the plaster parallaxes and bleaches.
+        const REVEAL = INTRO * 0.42;
         tl
-          .to(state, { op: 1, ease: "power1.out", duration: FILL, onUpdate: mark }, 0)
-          .to(iRef.current, { opacity: 0, ease: "power1.out", duration: FILL }, 0)
-          // 2) THE DIVE — the video-filled I grows from its centre until the stem
-          //    is the whole screen; the wordmark rushes forward (vanishing point
-          //    on the I) so A, N, M, A sweep off the edges; the plaster bleaches.
-          .to(state, { g: () => geom.current.grow, ease: "power2.in", duration: DIVE, onUpdate: mark }, FILL)
-          .to(wordRef.current, { z: 660, ease: "power2.in", duration: DIVE }, FILL)
-          .to(creamRef.current, { z: 320, scale: 1.16, ease: "power2.in", duration: DIVE }, FILL)
-          .to(dive, { v: 1, ease: "power2.in", duration: DIVE, onUpdate: () => waveRef.current?.setDive(dive.v) }, FILL)
-          .to(wordRef.current, { opacity: 0, ease: "power1.in", duration: DIVE * 0.5 }, FILL + DIVE * 0.5)
-          .to(creamRef.current, { opacity: 0, ease: "power1.in", duration: DIVE * 0.5 }, FILL + DIVE * 0.5)
-          .fromTo(finalRef.current, { opacity: 0 }, { opacity: 1, ease: "none", duration: DIVE }, FILL)
-          // 3) THE HOLD — pinned a while longer on the full, playing film.
-          .to({}, { duration: 1 - INTRO }, INTRO);
+          .to(state, { s: () => geom.current.grow, ease: "power2.in", duration: INTRO, onUpdate: applyState }, 0)
+          .to(iRef.current, { opacity: 0, ease: "power1.out", duration: REVEAL }, 0)
+          .to(wordRef.current, { z: 680, ease: "power2.in", duration: INTRO }, 0)
+          .to(creamRef.current, { z: 320, scale: 1.16, ease: "power2.in", duration: INTRO }, 0)
+          .to(dive, { v: 1, ease: "power2.in", duration: INTRO, onUpdate: () => waveRef.current?.setDive(dive.v) }, 0)
+          .to(wordRef.current, { opacity: 0, ease: "power1.in", duration: INTRO * 0.45 }, INTRO * 0.55)
+          .to(creamRef.current, { opacity: 0, ease: "power1.in", duration: INTRO * 0.45 }, INTRO * 0.55)
+          .fromTo(finalRef.current, { opacity: 0 }, { opacity: 1, ease: "none", duration: INTRO * 0.6 }, INTRO * 0.4);
       }
 
       const onLoaded = () => {
-        play();
+        prime();
         ScrollTrigger.refresh();
       };
       if (video.readyState >= 1) onLoaded();
       video.addEventListener("loadedmetadata", onLoaded);
 
-      const onGesture = () => play();
+      const onGesture = () => prime();
       window.addEventListener("pointerdown", onGesture, { once: true });
       window.addEventListener("touchstart", onGesture, { once: true });
 
       return () => {
-        active.current = false;
-        cancelAnimationFrame(raf.current);
-        raf.current = 0;
         video.removeEventListener("loadedmetadata", onLoaded);
         window.removeEventListener("pointerdown", onGesture);
         window.removeEventListener("touchstart", onGesture);
@@ -337,15 +332,20 @@ export default function Hero() {
 
       <h1 className="sr-only">Anima Residences</h1>
 
-      {/* z0 — the video, PLAYING, at the very bottom and occluded by the plaster.
-             It is only a frame source for the canvas; Safari keeps decoding it
-             because it is on-screen and playing, but it is never seen directly. */}
+      {/* z2 — the living plaster, flying past on the dive (and occluding the video) */}
+      <div ref={creamRef} className="hero-cream" aria-hidden>
+        <WaveCanvas ref={waveRef} className="hero-bg-canvas" />
+        <div className="hero-bg-fallback" />
+      </div>
+
+      {/* z4 — the film itself, shown and scrubbed, clipped to the letter I. Clipped
+             just inside the white I at rest, so the wordmark's I hides it until it
+             opens. clip-path on a <video> is honoured by Safari; a mask is not. */}
       <video
         ref={videoRef}
         className="hero-src"
-        autoPlay
+        autoPlay={false}
         muted
-        loop
         playsInline
         controls={false}
         preload="auto"
@@ -356,13 +356,8 @@ export default function Hero() {
         ))}
       </video>
 
-      {/* z2 — the living plaster, flying past on the dive (and occluding the video) */}
-      <div ref={creamRef} className="hero-cream" aria-hidden>
-        <WaveCanvas ref={waveRef} className="hero-bg-canvas" />
-        <div className="hero-bg-fallback" />
-      </div>
-
-      {/* z3 — the white wordmark. Its I dissolves as the film fills that glyph. */}
+      {/* z5 — the white wordmark, over the film. Its I dissolves so the film shows
+             through that very glyph; then the whole word rushes forward and away. */}
       <div ref={wordRef} className="hero-word" aria-hidden>
         <span className="hw-line hw-anima">
           AN<i ref={iRef} className="hw-i">I</i>MA
@@ -374,11 +369,7 @@ export default function Hero() {
         </span>
       </div>
 
-      {/* z4 — the canvas: the video painted and clipped to the I, growing into
-             the screen. A canvas, so Safari cannot leak the video past its mask. */}
-      <canvas ref={canvasRef} className="hero-ivideo" aria-hidden />
-
-      {/* z5 — the cinematic grade over the arrived film */}
+      {/* z6 — the cinematic grade over the arrived film */}
       <div ref={finalRef} className="hero-final" style={{ opacity: 0 }} aria-hidden>
         <div className="cine-vignette" aria-hidden />
         <div className="cine-grain" aria-hidden />
