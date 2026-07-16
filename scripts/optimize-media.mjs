@@ -42,6 +42,9 @@ const CACHE = path.join(ROOT, "assets/.media-cache.json");
 const LQIP_OUT = path.join(ROOT, "src/lib/lqip.json");
 const GALLERY_OUT = path.join(ROOT, "src/lib/gallery.json");
 const MEDIA_OUT = path.join(ROOT, "src/lib/media.json");
+const SRC_RES = path.join(ROOT, "assets/images/residences");
+const OUT_RES = path.join(ROOT, "public/images/residences");
+const RESIDENCES_OUT = path.join(ROOT, "src/lib/residences.json");
 
 const MAX_W = 2000; // nothing on this site is displayed wider than this
 // Per-asset caps. The logo renders at 38–48 px tall; shipping 1348 px of it is
@@ -433,6 +436,73 @@ async function galleries(cache) {
   return out;
 }
 
+/**
+ * Residence renders — the exterior gallery for /ponuka-bytov.
+ *
+ * `assets/images/residences/<angle>-<phase>.jpeg` (phase = day | night) → AVIF +
+ * WebP + a JPEG fallback with an inline blur, listed in `src/lib/residences.json`
+ * with its angle, phase and Slovak label so the gallery can pair day with night.
+ */
+const RES_LABEL = {
+  front: "Predná fasáda",
+  corner: "Nárožný pohľad",
+  side: "Bočná fasáda",
+  rear: "Záhradná strana",
+};
+const RES_ORDER = ["corner", "front", "side", "rear"];
+
+async function residences(cache) {
+  if (!fs.existsSync(SRC_RES)) {
+    fs.mkdirSync(path.dirname(RESIDENCES_OUT), { recursive: true });
+    fs.writeFileSync(RESIDENCES_OUT, JSON.stringify([], null, 2));
+    log("· no assets/images/residences — gallery empty");
+    return;
+  }
+  fs.mkdirSync(OUT_RES, { recursive: true });
+  const files = fs.readdirSync(SRC_RES).filter((f) => /\.(png|jpe?g|webp|tiff?)$/i.test(f)).sort();
+  const items = [];
+
+  for (const file of files) {
+    const src = path.join(SRC_RES, file);
+    const base = file.replace(/\.[^.]+$/, "");
+    const [angle, phase] = base.split("-");
+    const hash = hashOf(src);
+    const key = `res:${file}`;
+    const meta = await sharp(src).metadata();
+
+    const preview = await sharp(src).resize(24).webp({ quality: 42 }).toBuffer();
+    items.push({
+      angle,
+      phase: phase === "night" ? "night" : "day",
+      label: RES_LABEL[angle] ?? angle,
+      src: `/images/residences/${base}.jpg`,
+      avif: `/images/residences/${base}.avif`,
+      webp: `/images/residences/${base}.webp`,
+      lqip: `data:image/webp;base64,${preview.toString("base64")}`,
+      width: meta.width,
+      height: meta.height,
+    });
+
+    if (cache[key] === hash && fs.existsSync(path.join(OUT_RES, `${base}.avif`))) continue;
+    const pipe = () => sharp(src).resize({ width: Math.min(meta.width ?? MAX_W, MAX_W), withoutEnlargement: true });
+    await pipe().avif({ quality: QUALITY.avif, effort: 5 }).toFile(path.join(OUT_RES, `${base}.avif`));
+    await pipe().webp({ quality: QUALITY.webp }).toFile(path.join(OUT_RES, `${base}.webp`));
+    await pipe().jpeg({ quality: QUALITY.jpeg, mozjpeg: true }).toFile(path.join(OUT_RES, `${base}.jpg`));
+    log(`✓ residences/${file}  ${mb(src)} → avif ${kb(path.join(OUT_RES, `${base}.avif`))}`);
+    cache[key] = hash;
+  }
+
+  // Order by angle (corner → front → side → rear), day before night.
+  items.sort((a, b) => {
+    const ai = RES_ORDER.indexOf(a.angle), bi = RES_ORDER.indexOf(b.angle);
+    if (ai !== bi) return ai - bi;
+    return a.phase === b.phase ? 0 : a.phase === "day" ? -1 : 1;
+  });
+  fs.mkdirSync(path.dirname(RESIDENCES_OUT), { recursive: true });
+  fs.writeFileSync(RESIDENCES_OUT, JSON.stringify(items, null, 2));
+  log(`· residences.json  ${items.length} render(s)`);
+}
+
 /*
  * NO MASTERS, NO RUN.
  *
@@ -447,7 +517,7 @@ async function galleries(cache) {
  * of an empty object and the build dies. A pipeline with nothing to do must do
  * nothing, not do it emptily.
  */
-const ARTEFACTS = [LQIP_OUT, MEDIA_OUT, GALLERY_OUT];
+const ARTEFACTS = [LQIP_OUT, MEDIA_OUT, GALLERY_OUT, RESIDENCES_OUT];
 if (!fs.existsSync(path.join(ROOT, "assets"))) {
   const missing = ARTEFACTS.filter((f) => !fs.existsSync(f));
   if (missing.length) {
@@ -473,6 +543,8 @@ console.log("hero-fill");
 await heroFill(cache);
 console.log("galleries");
 await galleries(cache);
+console.log("residences");
+await residences(cache);
 console.log("video");
 /*
  * Optional portrait master for the phone. The landscape hero can't fill a phone

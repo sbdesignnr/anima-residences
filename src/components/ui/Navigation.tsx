@@ -12,6 +12,7 @@ const STONE = "#F2EDE6";
 // next/link navigates home and scrolls to the anchor.
 const LINKS = [
   { label: "Projekt", href: "/#building" },
+  { label: "Ponuka bytov", href: "/ponuka-bytov" },
   { label: "Vybavenie", href: "/#amenities" },
   { label: "Financovanie", href: "/financovanie" },
   { label: "Harmonogram", href: "/#timeline" },

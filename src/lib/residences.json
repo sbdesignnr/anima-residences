@@ -1,0 +1,90 @@
+[
+  {
+    "angle": "corner",
+    "phase": "day",
+    "label": "Nárožný pohľad",
+    "src": "/images/residences/corner-day.jpg",
+    "avif": "/images/residences/corner-day.avif",
+    "webp": "/images/residences/corner-day.webp",
+    "lqip": "data:image/webp;base64,UklGRrgAAABXRUJQVlA4IKwAAAAQBQCdASoYABEAPuloqlCpJaOiqAqpIB0JQBWAAiFaNB1gAp+4fFjTJCS6KK8lOuM4AP7nMt8HeWI9qNSQsQfwhrDHPu9QyWKBXMLGXO2BCd3ZtzHaHE33DKfrqdlOYv8bPikRtdYr4Y4Zi9DCSc60aB/KP9pEriCZFBvgdUUT+j3eaF9mXSBsa75TGspwwm+iuiZkO67uwTSQTjYOHo/6ZqM61B0CRoRm7eAA",
+    "width": 1600,
+    "height": 1131
+  },
+  {
+    "angle": "corner",
+    "phase": "night",
+    "label": "Nárožný pohľad",
+    "src": "/images/residences/corner-night.jpg",
+    "avif": "/images/residences/corner-night.avif",
+    "webp": "/images/residences/corner-night.webp",
+    "lqip": "data:image/webp;base64,UklGRogAAABXRUJQVlA4IHwAAADwBACdASoYABEAPulmrk+pJaSiKAqpIB0JQBOgAiOSJ6DyIJq6jNXwWaJIXrgDsAAA/vKiGz9GBINilJ/fpSJ+IyX26tXLhwyCtZnNQ7sIAMRwtWlUC/J4ZDxxiaxVsLKBk8JLfdy8swQkYp2cOmy2/vQag+wRMC9wRAAA",
+    "width": 1491,
+    "height": 1055
+  },
+  {
+    "angle": "front",
+    "phase": "day",
+    "label": "Predná fasáda",
+    "src": "/images/residences/front-day.jpg",
+    "avif": "/images/residences/front-day.avif",
+    "webp": "/images/residences/front-day.webp",
+    "lqip": "data:image/webp;base64,UklGRsIAAABXRUJQVlA4ILYAAABQBQCdASoYABEAPuleq0+pJKOiMBgIASAdCUAABiy30qoUfvL7NJPYvAyPpj8EHLPhI0AAyvKf0E+g7LBJaHpYBA05EO82Dh0Afd66Crz4V1RkgXusz2bJMMH/DPkLVPJm156Df4jb5OBDRpUEnWTvaH9XNEQQoPYZC/tBprE7umdCp6KYQKkIPavxATcngPwmqKLmrDbpdu9KCXiNCTCAqrTHt1KHjCyzP15eKHb8FOrGpwAAAA==",
+    "width": 1501,
+    "height": 1048
+  },
+  {
+    "angle": "front",
+    "phase": "night",
+    "label": "Predná fasáda",
+    "src": "/images/residences/front-night.jpg",
+    "avif": "/images/residences/front-night.avif",
+    "webp": "/images/residences/front-night.webp",
+    "lqip": "data:image/webp;base64,UklGRo4AAABXRUJQVlA4IIIAAACwBACdASoYABEAPuliqU8pJSOiMBgIASAdCWIArAAQ7+OD9qdDet2jzhs55lsAAP7yq6KtD6i/4cPbwjhQqCVDVy0b1NHOhd85TToOnQ5ZgboFp8f6uAYahSsBNNnUojSq53KUTxE02YQWsZI6QltEPUL77j9rt4UZEUj1dgwA/sAA",
+    "width": 1501,
+    "height": 1048
+  },
+  {
+    "angle": "side",
+    "phase": "day",
+    "label": "Bočná fasáda",
+    "src": "/images/residences/side-day.jpg",
+    "avif": "/images/residences/side-day.avif",
+    "webp": "/images/residences/side-day.webp",
+    "lqip": "data:image/webp;base64,UklGRpYAAABXRUJQVlA4IIoAAAAQBQCdASoYABEAPulep00pJSOiMAgBIB0JZQC90CHf4tSVQs3sSZoES2HDVpocbWEAAP7tlltDekDKumyOGIe7atnWn8xm6PA8NHE/Sylp29qzJTH+VDRml2ctTiUSTd6yTtJAUI33Sok9f3kOHNze3jFNu8ZF6GQQt/aGEhmGFXx6p+2AZUBZ8AA=",
+    "width": 1600,
+    "height": 1131
+  },
+  {
+    "angle": "side",
+    "phase": "night",
+    "label": "Bočná fasáda",
+    "src": "/images/residences/side-night.jpg",
+    "avif": "/images/residences/side-night.avif",
+    "webp": "/images/residences/side-night.webp",
+    "lqip": "data:image/webp;base64,UklGRo4AAABXRUJQVlA4IIIAAADQBACdASoYABEAPulgp00pJaOiMAgBIB0JYgCdMtpDTpzko5EyWuNral5W7LTD6AD+8qIPH1fIbbUNvM7BPS40bxAXi4WDpbvZOV+Yn+fI2LeihYBB7U3lKoSti3SG8jDjWBBwTmqH6KkwmWKkEgywawr4gNfjDQdWKgAcneEOINAA",
+    "width": 1491,
+    "height": 1055
+  },
+  {
+    "angle": "rear",
+    "phase": "day",
+    "label": "Záhradná strana",
+    "src": "/images/residences/rear-day.jpg",
+    "avif": "/images/residences/rear-day.avif",
+    "webp": "/images/residences/rear-day.webp",
+    "lqip": "data:image/webp;base64,UklGRqoAAABXRUJQVlA4IJ4AAACwBACdASoYABEAPulorFApJaQiqAqpIB0JQBZwAen4gfvWnQ2O6oYH1YVNZDAAAOJlrC14nqECLPRopvDE7JJAM/kUfHnEKdjCSFrzZz5zcnQef2yWn/k0+VTw0qtTlx08m4z5qqejwNzaOzZ+AFEd+AXhBvfz13th/q2sale5fs3/klBX5j0qFIYO96ROzDSCk+IBbFPErF0YJ5SAAA==",
+    "width": 1600,
+    "height": 1131
+  },
+  {
+    "angle": "rear",
+    "phase": "night",
+    "label": "Záhradná strana",
+    "src": "/images/residences/rear-night.jpg",
+    "avif": "/images/residences/rear-night.avif",
+    "webp": "/images/residences/rear-night.webp",
+    "lqip": "data:image/webp;base64,UklGRnwAAABXRUJQVlA4IHAAAADQBACdASoYABEAPulkpU0pJaMiMBgMASAdCUbgAGcsClH1QEghnGZpspMaFa8QtAD+8qIgdzL5ivqLhakc1yRHxwPsFJ9NkrnY9HEJcdSk69Gz7Lqw9EHWgzh10oKAsrX3Wqv+/ESUEzgBVpQGHTAA",
+    "width": 1493,
+    "height": 1054
+  }
+]
