@@ -571,22 +571,21 @@ body {
 
 /* ─── The film lives INSIDE the letter I ─────────────────────────────────────
  * The site opens on the living plaster with ANIMA raised on it, ALL of it white.
- * The film is a full-screen video, but it is CLIPPED to the exact outline of the
- * letter I in the wordmark (an SVG clip-path built from the real Cinzel glyph —
- * see Hero.tsx). At rest it is invisible.
+ * The video is drawn onto a CANVAS and clipped there to the exact outline of the
+ * real Cinzel I (see Hero.tsx) — a canvas, not a masked <video>, because Safari
+ * composites <video> on its own layer that ignores CSS masks and opacity, which
+ * made the glyph leak and drift. The canvas behaves identically everywhere.
  *
- * On scroll the white I fills with the video (the film fades up inside the glyph)
- * and that I-shaped window grows — the camera pushing straight into the letter —
- * until it is larger than the screen and nothing is left but the film, which then
- * scrubs. NOTHING is ever drawn beside the I; the window is the I itself.
+ * At rest the canvas is blank and the real white I shows. On scroll the white I
+ * dissolves as the video fills that very glyph, then the I-shaped window grows —
+ * the camera pushing straight into the letter — until it is the whole screen and
+ * only the film is left, which then scrubs. Nothing is drawn beside the I.
  *
- * The wordmark rushes forward on translateZ with the vanishing point pinned to
- * the I (perspective-origin --ix/--iy), so ANIMA comes at you while A, N, M, A
- * diverge off the edges and the I — which the window tracks — stays dead centre.
- *
+ *   .hero-src    z0  the <video>, hidden — a frame source for the canvas only
  *   .hero-cream  z2  the plaster — flies past and gives way
  *   .hero-word   z3  the white letters — ANIMA, rushing forward
- *   .hero-film   z4  the video, clipped to the I, growing over the white I
+ *   .hero-ivideo z4  the canvas: the video, clipped to the I, growing over it
+ *   .hero-final  z5  the cinematic grade (vignette, grain) over the arrived film
  */
 .hero-persp {
   perspective: 720px;
@@ -597,10 +596,27 @@ body {
   --iy: 48%;
 }
 
-.hero-film {
+.hero-src {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.hero-ivideo {
   position: absolute;
   inset: 0;
   z-index: 4;
+  pointer-events: none;
+}
+.hero-final {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
 }
 
 .hero-cream {
