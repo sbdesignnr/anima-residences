@@ -655,26 +655,17 @@ body {
   background: linear-gradient(to right, rgba(182,154,120,0) 0%, rgba(214,184,124,0.55) 50%, rgba(182,154,120,0) 100%);
   box-shadow: 0 0 16px rgba(214,184,124,0.35);
 }
-.hero-bolt {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  height: 240px;
-  width: 100%;
-  transform: translateY(-50%);
-  z-index: 4;
-  pointer-events: none;
-}
-/* The strike's light thrown across the whole hero — SCREEN so it lifts the
-   scene the way real lightning does, brightest along the seam. */
-.hero-flash {
+/* Apollo's radiance over the whole hero (z5, above the parting halves), blooming
+   from the threshold. SCREEN so the gold reads as light lifting the scene —
+   plaster, wordmark and film alike — rather than paint laid over it. */
+.hero-aperture {
   position: absolute;
   inset: 0;
+  width: 100%;
+  height: 100%;
   z-index: 5;
   pointer-events: none;
   mix-blend-mode: screen;
-  background: radial-gradient(130% 62% at 50% 50%, rgba(255,246,220,0.98) 0%, rgba(238,206,152,0.55) 24%, rgba(214,184,124,0) 62%);
 }
 .hero-bg-canvas,
 .hero-bg-fallback {
