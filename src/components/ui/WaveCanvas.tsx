@@ -41,6 +41,7 @@ uniform vec2 uRes;
 uniform float uTime;
 uniform float uDive;    // 0 at rest .. 1 fully dived through
 uniform float uReduce;  // 1 = the visitor asked for less motion
+uniform float uGlow;    // 0 at rest .. 1 as the opening quickens the gold shimmer
 
 const vec3 C_LO    = vec3(0.826, 0.734, 0.586);  // beige in shade
 const vec3 C_MID   = vec3(0.910, 0.848, 0.728);  // sand
@@ -93,19 +94,26 @@ void main() {
   base = mix(base, C_HI, smoothstep(0.56, 0.94, lev));
   base *= 0.90 + 0.17 * diff;
 
-  // Gold contour where two bands meet, with a glint travelling along it.
+  // Gold contour where two bands meet, with a glint travelling along it. As the
+  // opening quickens (uGlow), the glint runs faster, the veins brighten and
+  // bloom, and a soft shimmer breathes through the whole plaster.
   float N = 2.4;
   float band = fract(h * N);
   float edge = min(band, 1.0 - band);
   float aa = fwidth(h * N) * 1.1 + 0.006;
   float line = 1.0 - smoothstep(0.0, aa, edge);
-  float glint = 0.55 + 0.45 * sin(h * 22.0 - uTime * 1.0 + uv.x * 5.0);
-  vec3 goldc = mix(GOLD, GOLD_HI, glint);
-  vec3 col = mix(base, goldc, line * 0.88);
-  col += goldc * line * 0.24;
+  float glint = 0.55 + 0.45 * sin(h * 22.0 - uTime * (1.0 + uGlow * 3.0) + uv.x * 5.0);
+  vec3 goldc = mix(GOLD, GOLD_HI, clamp(glint + uGlow * 0.45, 0.0, 1.0));
+  vec3 col = mix(base, goldc, line * (0.88 + uGlow * 0.1));
+  col += goldc * line * (0.24 + uGlow * 0.85);
+  // a gold shimmer that rises through the whole field, not just the veins
+  col += goldc * uGlow * 0.07 * (0.5 + 0.5 * sin(uTime * 3.0 + h * 30.0));
 
   // A whisper darker at the very corners only.
   col *= 0.95 + 0.06 * smoothstep(1.05, 0.35, dc);
+
+  // A gentle overall lift as it intensifies.
+  col *= 1.0 + uGlow * 0.1;
 
   // The dive bleaches it into light as it melts away.
   col = mix(col, C_HI * 1.03, uDive * 0.55);
@@ -129,6 +137,8 @@ function compile(gl: WebGL2RenderingContext, type: number, src: string) {
 export type WaveHandle = {
   /** Drive the dive from scroll: 0 at rest, 1 fully dived through. */
   setDive: (v: number) => void;
+  /** Intensify the gold shimmer as the plaster opens: 0 at rest, 1 at full. */
+  setGlow: (v: number) => void;
 };
 
 const WaveCanvas = forwardRef<WaveHandle, { className?: string; startTime?: number }>(function WaveCanvas(
@@ -137,11 +147,16 @@ const WaveCanvas = forwardRef<WaveHandle, { className?: string; startTime?: numb
 ) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const diveRef = useRef(0);
+  const glowRef = useRef(0);
   const kickRef = useRef<() => void>(() => {});
 
   useImperativeHandle(ref, () => ({
     setDive: (v: number) => {
       diveRef.current = v;
+      kickRef.current();
+    },
+    setGlow: (v: number) => {
+      glowRef.current = v;
       kickRef.current();
     },
   }));
@@ -183,6 +198,7 @@ const WaveCanvas = forwardRef<WaveHandle, { className?: string; startTime?: numb
       time: gl.getUniformLocation(prog, "uTime"),
       dive: gl.getUniformLocation(prog, "uDive"),
       reduce: gl.getUniformLocation(prog, "uReduce"),
+      glow: gl.getUniformLocation(prog, "uGlow"),
     };
     gl.uniform1f(U.reduce, reduce ? 1 : 0);
 
@@ -220,6 +236,7 @@ const WaveCanvas = forwardRef<WaveHandle, { className?: string; startTime?: numb
       gl.uniform2f(U.res, w, h);
       gl.uniform1f(U.time, (performance.now() - t0) / 1000);
       gl.uniform1f(U.dive, diveRef.current);
+      gl.uniform1f(U.glow, glowRef.current);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
 
       // Reduced motion is a still: draw one frame, then rest until scroll moves

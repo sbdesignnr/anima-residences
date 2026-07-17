@@ -5,8 +5,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import media from "@/lib/media.json";
-import WaveCanvas from "@/components/ui/WaveCanvas";
-import { createAperture, type Aperture } from "@/lib/heroAperture";
+import WaveCanvas, { type WaveHandle } from "@/components/ui/WaveCanvas";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
@@ -38,11 +37,11 @@ export default function Hero() {
   const topRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const seamRef = useRef<HTMLDivElement>(null);
-  const apRef = useRef<HTMLCanvasElement>(null);
   const grainRef = useRef<HTMLDivElement>(null);
+  const waveTop = useRef<WaveHandle>(null);
+  const waveBottom = useRef<WaveHandle>(null);
   /** One origin for both plaster halves, so they render the same living field. */
   const [start] = useState(() => (typeof performance !== "undefined" ? performance.now() : 0));
-  const aperture = useRef<Aperture | null>(null);
 
   // ── Load: the wordmark settles onto the plaster ──
   useGSAP(
@@ -82,14 +81,12 @@ export default function Hero() {
       };
       play();
 
-      if (apRef.current && !aperture.current) aperture.current = createAperture(apRef.current);
-      aperture.current?.start();
-      const onResize = () => aperture.current?.resize();
-      window.addEventListener("resize", onResize);
-
       const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       const glow = { v: 0 };
-      const setGlow = () => aperture.current?.setIntensity(glow.v);
+      const setGlow = () => {
+        waveTop.current?.setGlow(glow.v);
+        waveBottom.current?.setGlow(glow.v);
+      };
 
       const tl = gsap.timeline({
         scrollTrigger: {
@@ -107,25 +104,22 @@ export default function Hero() {
       });
 
       if (reduce) {
-        glow.v = 0.9;
-        setGlow();
         tl.to([topRef.current], { yPercent: -100, ease: "none", duration: 1 }, 0)
           .to([bottomRef.current], { yPercent: 100, ease: "none", duration: 1 }, 0)
           .to(seamRef.current, { opacity: 0, ease: "none", duration: 0.3 }, 0)
           .fromTo(grainRef.current, { opacity: 0 }, { opacity: 0.26, ease: "none", duration: 1 }, 0);
       } else {
-        // 1) APOLLO'S LIGHT — as the seam cracks, golden radiance pours through
-        //    the gap: it floods in fast, then softens as the film takes over. The
-        //    seam's hairline gives way to that light.
-        tl.to(glow, { v: 1, ease: "power2.out", duration: 0.16, onUpdate: setGlow }, 0.02)
-          .to(glow, { v: 0.72, ease: "sine.inOut", duration: 0.26, onUpdate: setGlow }, 0.18)
-          .to(glow, { v: 0, ease: "power2.in", duration: 0.24, onUpdate: setGlow }, 0.46)
-          .to(seamRef.current, { opacity: 0, ease: "power1.out", duration: 0.14 }, 0.04)
+        // 1) THE PLASTER QUICKENS — as the opening begins, the living field's gold
+        //    veins brighten and the shimmer runs faster (uGlow), then eases back
+        //    as the halves fly off. No flash — just the plaster coming alive.
+        tl.to(glow, { v: 1, ease: "power2.out", duration: 0.34, onUpdate: setGlow }, 0.02)
+          .to(glow, { v: 0.4, ease: "sine.inOut", duration: 0.3, onUpdate: setGlow }, 0.42)
+          .to(seamRef.current, { opacity: 0, ease: "power1.out", duration: 0.16 }, 0.05)
           // 2) THE OPENING — the plaster parts from the centre; ANIMA rises,
           //    RESIDENCES descends, and the film widens between them.
-          .to(topRef.current, { yPercent: -102, ease: "power2.in", duration: INTRO }, 0.04)
-          .to(bottomRef.current, { yPercent: 102, ease: "power2.in", duration: INTRO }, 0.04)
-          .fromTo(videoRef.current, { scale: 1.12 }, { scale: 1, ease: "power2.out", duration: INTRO + 0.1 }, 0.04)
+          .to(topRef.current, { yPercent: -102, ease: "power2.in", duration: INTRO }, 0.05)
+          .to(bottomRef.current, { yPercent: 102, ease: "power2.in", duration: INTRO }, 0.05)
+          .fromTo(videoRef.current, { scale: 1.12 }, { scale: 1, ease: "power2.out", duration: INTRO + 0.1 }, 0.05)
           .fromTo(grainRef.current, { opacity: 0 }, { opacity: 0.26, ease: "none", duration: 0.4 }, INTRO * 0.55)
           // 3) hold on the film for the rest of the pin
           .to({}, { duration: 1 - INTRO }, INTRO);
@@ -142,8 +136,6 @@ export default function Hero() {
       window.addEventListener("touchstart", onGesture, { once: true });
 
       return () => {
-        aperture.current?.stop();
-        window.removeEventListener("resize", onResize);
         video.removeEventListener("loadedmetadata", onLoaded);
         window.removeEventListener("pointerdown", onGesture);
         window.removeEventListener("touchstart", onGesture);
@@ -177,7 +169,7 @@ export default function Hero() {
 
       {/* z2 — the top half of the plaster, carrying ANIMA upward */}
       <div ref={topRef} className="hero-half hero-half--top" aria-hidden>
-        <WaveCanvas className="hero-bg-canvas" startTime={start} />
+        <WaveCanvas ref={waveTop} className="hero-bg-canvas" startTime={start} />
         <div className="hero-bg-fallback" />
         <div className="hero-word-top">
           <span className="hw-line hw-anima">ANIMA</span>
@@ -186,7 +178,7 @@ export default function Hero() {
 
       {/* z2 — the bottom half, carrying RESIDENCES downward */}
       <div ref={bottomRef} className="hero-half hero-half--bottom" aria-hidden>
-        <WaveCanvas className="hero-bg-canvas" startTime={start} />
+        <WaveCanvas ref={waveBottom} className="hero-bg-canvas" startTime={start} />
         <div className="hero-bg-fallback" />
         <div className="hero-word-bottom">
           <span className="hw-sub">
@@ -197,12 +189,8 @@ export default function Hero() {
         </div>
       </div>
 
-      {/* z3 — the seam: a gold hairline that gives way to the light on scroll */}
+      {/* z3 — the seam: a gold hairline that gives way as the plaster opens */}
       <div ref={seamRef} className="hero-seamline" aria-hidden />
-
-      {/* z5 — Apollo's radiance: a golden sun blooming from the threshold over
-             the whole scene as it opens, then softening into the film */}
-      <canvas ref={apRef} className="hero-aperture" aria-hidden />
 
       {/* Nav legibility */}
       <div className="hero-topscrim" aria-hidden />
