@@ -13,6 +13,7 @@ const STONE = "#F2EDE6";
 const LINKS = [
   { label: "Projekt", href: "/#building" },
   { label: "Ponuka bytov", href: "/ponuka-bytov" },
+  { label: "Lokalita", href: "/lokalita" },
   { label: "Vybavenie", href: "/#amenities" },
   { label: "Financovanie", href: "/financovanie" },
   { label: "Harmonogram", href: "/#timeline" },
@@ -110,7 +111,7 @@ export default function Navigation() {
         </Link>
 
         {/* Desktop links */}
-        <ul className="hidden items-center gap-10 lg:flex">
+        <ul className="hidden items-center gap-7 lg:flex xl:gap-9">
           {LINKS.map((link) => (
             <li key={link.href} className="nav-anim">
               <Link
