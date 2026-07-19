@@ -40,6 +40,7 @@ const INTRO = 0.5;
 export default function Hero() {
   const heroRef = useRef<HTMLElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const framesRef = useRef<HTMLCanvasElement>(null);
   const topRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const seamRef = useRef<HTMLDivElement>(null);
@@ -76,15 +77,43 @@ export default function Hero() {
       if (!video || !sec) return;
 
       video.poster = posterFor();
+      const canvas = framesRef.current;
       video.muted = true;
       video.playsInline = true;
       video.setAttribute("playsinline", "");
       video.setAttribute("webkit-playsinline", "");
       video.pause();
 
-      // Wake the decoder once (Safari won't render a seeked frame until a play
-      // has happened), then hold on frame 0. The film never auto-plays — scroll
-      // drives every frame.
+      // Draw the video's CURRENT frame onto the canvas (cover-fit). The canvas is
+      // what the visitor sees, so the picture updates even where Safari would not
+      // repaint a paused <video> on seek.
+      const draw = () => {
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        if (!ctx || !video.videoWidth) return;
+        const W = canvas.width;
+        const H = canvas.height;
+        const s = Math.max(W / video.videoWidth, H / video.videoHeight);
+        const dw = video.videoWidth * s;
+        const dh = video.videoHeight * s;
+        try {
+          ctx.drawImage(video, (W - dw) / 2, (H - dh) / 2, dw, dh);
+        } catch {
+          /* frame not ready */
+        }
+      };
+      const sizeCanvas = () => {
+        if (!canvas) return;
+        // Size from the viewport (the hero is full-screen) rather than the
+        // element box, which may not be laid out yet when this first runs.
+        const d = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.max(1, Math.round(window.innerWidth * d));
+        canvas.height = Math.max(1, Math.round(window.innerHeight * d));
+        draw();
+      };
+
+      // Wake the decoder once — Safari won't produce a seeked frame until a play
+      // has happened — then hold. The film never auto-plays; scroll drives it.
       let primed = false;
       const prime = () => {
         if (primed) return;
@@ -92,8 +121,8 @@ export default function Hero() {
         if (p) {
           p.then(() => {
             video.pause();
-            video.currentTime = 0.001;
             primed = true;
+            draw();
           }).catch(() => {});
         } else {
           video.pause();
@@ -101,20 +130,28 @@ export default function Hero() {
         }
       };
 
-      // Scroll → frame. Quantise to whole frames so we only seek when the frame
-      // actually changes, and land mid-frame so the decoder picks the right one.
-      const scrub = { t: 0 };
-      let lastFrame = -1;
-      const applySeek = () => {
-        if (video.readyState < 1 || video.seeking) return;
+      // Scroll → target time. Seeks are SERIALISED: we only issue the next seek
+      // once the last finished, always toward the latest target — so a slow
+      // Safari seek can never strand us on an old frame.
+      const target = { t: 0 };
+      const applyTarget = () => {
+        if (video.readyState < 2 || video.seeking) return;
         const d = video.duration;
         if (!Number.isFinite(d) || d <= 0) return;
         const maxFrame = Math.floor(d * VIDEO_FPS) - 1;
-        const frame = Math.max(0, Math.min(Math.round(scrub.t * VIDEO_FPS), maxFrame));
-        if (frame === lastFrame) return;
-        lastFrame = frame;
-        video.currentTime = (frame + 0.5) / VIDEO_FPS;
+        const frame = Math.max(0, Math.min(Math.round(target.t * VIDEO_FPS), maxFrame));
+        const ct = (frame + 0.5) / VIDEO_FPS;
+        if (Math.abs(video.currentTime - ct) < 0.5 / VIDEO_FPS) return;
+        video.currentTime = ct;
       };
+      const onSeeked = () => {
+        draw();
+        applyTarget();
+      };
+      video.addEventListener("seeked", onSeeked);
+      video.addEventListener("loadeddata", draw);
+      window.addEventListener("resize", sizeCanvas);
+      sizeCanvas();
 
       const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       const glow = { v: 0 };
@@ -141,12 +178,12 @@ export default function Hero() {
       // The film scrubs across the WHOLE pinned scroll: it is revealed as the
       // plaster parts and then advances frame-by-frame with the scroll.
       tl.to(
-        scrub,
+        target,
         {
           t: () => (Number.isFinite(video.duration) ? video.duration : 0),
           ease: "none",
           duration: 1,
-          onUpdate: applySeek,
+          onUpdate: applyTarget,
         },
         0
       );
@@ -167,7 +204,7 @@ export default function Hero() {
           //    RESIDENCES descends, and the film widens between them.
           .to(topRef.current, { yPercent: -102, ease: "power2.in", duration: INTRO }, 0.05)
           .to(bottomRef.current, { yPercent: 102, ease: "power2.in", duration: INTRO }, 0.05)
-          .fromTo(videoRef.current, { scale: 1.12 }, { scale: 1, ease: "power2.out", duration: INTRO + 0.1 }, 0.05)
+          .fromTo(framesRef.current, { scale: 1.12 }, { scale: 1, ease: "power2.out", duration: INTRO + 0.1 }, 0.05)
           .fromTo(grainRef.current, { opacity: 0 }, { opacity: 0.26, ease: "none", duration: 0.4 }, INTRO * 0.55)
           // 3) hold on the film for the rest of the pin
           .to({}, { duration: 1 - INTRO }, INTRO);
@@ -175,18 +212,27 @@ export default function Hero() {
 
       const onLoaded = () => {
         prime();
+        sizeCanvas();
         ScrollTrigger.refresh();
       };
       if (video.readyState >= 1) onLoaded();
       video.addEventListener("loadedmetadata", onLoaded);
-      const onGesture = () => prime();
-      window.addEventListener("pointerdown", onGesture, { once: true });
-      window.addEventListener("touchstart", onGesture, { once: true });
+
+      // Prime on the first real interaction of any kind — wheel/trackpad scroll
+      // included, since that is how a desktop visitor first moves the page.
+      const onGesture = () => {
+        prime();
+        applyTarget();
+      };
+      const gestures = ["wheel", "pointerdown", "touchstart", "keydown"];
+      gestures.forEach((g) => window.addEventListener(g, onGesture, { once: true, passive: true }));
 
       return () => {
         video.removeEventListener("loadedmetadata", onLoaded);
-        window.removeEventListener("pointerdown", onGesture);
-        window.removeEventListener("touchstart", onGesture);
+        video.removeEventListener("seeked", onSeeked);
+        video.removeEventListener("loadeddata", draw);
+        window.removeEventListener("resize", sizeCanvas);
+        gestures.forEach((g) => window.removeEventListener(g, onGesture));
       };
     },
     { scope: heroRef }
@@ -212,6 +258,10 @@ export default function Hero() {
             <source key={s.src} src={s.src} type={s.type} media={s.media} />
           ))}
         </video>
+        {/* the canvas the visitor actually sees — each seeked frame is drawn here,
+            so the picture advances on scroll even where Safari would not repaint
+            the paused <video> itself */}
+        <canvas ref={framesRef} className="hero-frames" aria-hidden />
         <div className="cine-vignette" aria-hidden />
         <div ref={grainRef} className="cine-grain" style={{ opacity: 0 }} aria-hidden />
       </div>
