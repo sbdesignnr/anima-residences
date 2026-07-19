@@ -21,8 +21,8 @@ const MOBILE_FILL = HERO_MOBILE.w / HERO_MOBILE.h <= 0.62;
 const SOURCES: { src: string; type: string; media: string }[] = [
   { src: "/videos/hero-mobile.hevc.mp4", type: `video/mp4; codecs="hvc1.1.6.L93.B0"`, media: "(max-width: 767px)" },
   { src: "/videos/hero-mobile.mp4", type: "video/mp4", media: "(max-width: 767px)" },
-  { src: "/videos/hero-desktop.hevc.mp4", type: `video/mp4; codecs="hvc1.1.6.L93.B0"`, media: "(min-width: 768px)" },
-  { src: "/videos/hero-desktop.mp4", type: "video/mp4", media: "(min-width: 768px)" },
+  { src: "/videos/hero_desktop.hevc.mp4", type: `video/mp4; codecs="hvc1"`, media: "(min-width: 768px)" },
+  { src: "/videos/hero_desktop.mp4", type: "video/mp4", media: "(min-width: 768px)" },
 ];
 
 const posterFor = () =>
