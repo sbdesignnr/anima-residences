@@ -21,15 +21,21 @@ const MOBILE_FILL = HERO_MOBILE.w / HERO_MOBILE.h <= 0.62;
 const SOURCES: { src: string; type: string; media: string }[] = [
   { src: "/videos/hero-mobile.hevc.mp4", type: `video/mp4; codecs="hvc1.1.6.L93.B0"`, media: "(max-width: 767px)" },
   { src: "/videos/hero-mobile.mp4", type: "video/mp4", media: "(max-width: 767px)" },
-  { src: "/videos/hero_desktop.hevc.mp4", type: `video/mp4; codecs="hvc1"`, media: "(min-width: 768px)" },
+  // Desktop scrub source is H.264 only — it seeks smoothly in every browser
+  // (Safari included); the file is all-keyframe (keyint=1) so each scroll frame
+  // decodes exactly one frame.
   { src: "/videos/hero_desktop.mp4", type: "video/mp4", media: "(min-width: 768px)" },
 ];
 
 const posterFor = () =>
   isPhone() ? "/images/hero-poster-mobile.avif" : "/images/hero-poster.avif";
 
-/** The share of the pinned scroll spent on the opening, before the film holds. */
-const INTRO = 0.72;
+/** Every source is encoded at this rate with every frame a keyframe, so scroll
+ *  quantises to whole frames and each seek is a single-frame decode. */
+const VIDEO_FPS = 12;
+
+/** The share of the pinned scroll spent on the opening, before the film scrubs on. */
+const INTRO = 0.5;
 
 export default function Hero() {
   const heroRef = useRef<HTMLElement>(null);
@@ -71,15 +77,44 @@ export default function Hero() {
 
       video.poster = posterFor();
       video.muted = true;
-      video.loop = true;
       video.playsInline = true;
       video.setAttribute("playsinline", "");
       video.setAttribute("webkit-playsinline", "");
-      const play = () => {
+      video.pause();
+
+      // Wake the decoder once (Safari won't render a seeked frame until a play
+      // has happened), then hold on frame 0. The film never auto-plays — scroll
+      // drives every frame.
+      let primed = false;
+      const prime = () => {
+        if (primed) return;
         const p = video.play();
-        if (p) p.catch(() => {});
+        if (p) {
+          p.then(() => {
+            video.pause();
+            video.currentTime = 0.001;
+            primed = true;
+          }).catch(() => {});
+        } else {
+          video.pause();
+          primed = true;
+        }
       };
-      play();
+
+      // Scroll → frame. Quantise to whole frames so we only seek when the frame
+      // actually changes, and land mid-frame so the decoder picks the right one.
+      const scrub = { t: 0 };
+      let lastFrame = -1;
+      const applySeek = () => {
+        if (video.readyState < 1 || video.seeking) return;
+        const d = video.duration;
+        if (!Number.isFinite(d) || d <= 0) return;
+        const maxFrame = Math.floor(d * VIDEO_FPS) - 1;
+        const frame = Math.max(0, Math.min(Math.round(scrub.t * VIDEO_FPS), maxFrame));
+        if (frame === lastFrame) return;
+        lastFrame = frame;
+        video.currentTime = (frame + 0.5) / VIDEO_FPS;
+      };
 
       const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       const glow = { v: 0 };
@@ -92,16 +127,29 @@ export default function Hero() {
         scrollTrigger: {
           trigger: sec,
           start: "top top",
-          end: () => "+=" + window.innerHeight * (isCoarse() ? 1.6 : 2),
+          end: () => "+=" + window.innerHeight * (isCoarse() ? 2.4 : 3),
           scrub: 0.7,
           pin: true,
           anticipatePin: 1,
           invalidateOnRefresh: true,
           onToggle: (self) => {
-            if (self.isActive) play();
+            if (self.isActive) prime();
           },
         },
       });
+
+      // The film scrubs across the WHOLE pinned scroll: it is revealed as the
+      // plaster parts and then advances frame-by-frame with the scroll.
+      tl.to(
+        scrub,
+        {
+          t: () => (Number.isFinite(video.duration) ? video.duration : 0),
+          ease: "none",
+          duration: 1,
+          onUpdate: applySeek,
+        },
+        0
+      );
 
       if (reduce) {
         tl.to([topRef.current], { yPercent: -100, ease: "none", duration: 1 }, 0)
@@ -126,12 +174,12 @@ export default function Hero() {
       }
 
       const onLoaded = () => {
-        play();
+        prime();
         ScrollTrigger.refresh();
       };
       if (video.readyState >= 1) onLoaded();
       video.addEventListener("loadedmetadata", onLoaded);
-      const onGesture = () => play();
+      const onGesture = () => prime();
       window.addEventListener("pointerdown", onGesture, { once: true });
       window.addEventListener("touchstart", onGesture, { once: true });
 
@@ -156,9 +204,10 @@ export default function Hero() {
 
       <h1 className="sr-only">Anima Residences</h1>
 
-      {/* z1 — the film (with its grade), revealed as the plaster parts */}
+      {/* z1 — the film (with its grade), revealed as the plaster parts and
+             scrubbed frame-by-frame by the scroll — never auto-played */}
       <div className="hero-openfilm" aria-hidden>
-        <video ref={videoRef} className="hero-openvid" autoPlay muted loop playsInline controls={false} preload="auto" aria-hidden>
+        <video ref={videoRef} className="hero-openvid" autoPlay={false} muted playsInline controls={false} preload="auto" aria-hidden>
           {SOURCES.map((s) => (
             <source key={s.src} src={s.src} type={s.type} media={s.media} />
           ))}
