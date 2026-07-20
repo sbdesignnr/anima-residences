@@ -51,11 +51,15 @@ const RED = "#9C6B5C";    // muted brick (chosen: the render contains no red)
 const DETAIL_BG = "#101109";
 
 /**
- * Where the level scale stands, as a % of the image width. It hugs the facade
- * (which starts at ~30.4%) so its leader lines are short and the left column
- * stays free for the heading and the figures.
+ * Where the level scale stands, as a % of the image width.
+ *
+ * `predok`'s front-left edge runs down ~24.5% (the leftmost point of every floor
+ * polygon in FLOOR_GEOMETRY). The scale sits just OUTSIDE it, so the hairline
+ * traces the building's own corner against the sky rather than crossing the
+ * facade, its short leaders reach in to each band, and the left column stays
+ * free for the heading and the figures.
  */
-const SCALE_X = 26.5;
+const SCALE_X = 23.4;
 
 /**
  * The chosen floor is CALLED OUT, not just lit.

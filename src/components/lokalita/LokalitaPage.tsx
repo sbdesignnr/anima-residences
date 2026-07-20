@@ -6,7 +6,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import { SheetRef } from "@/components/ui/brand";
-import LocationOrbit from "@/components/lokalita/LocationOrbit";
+import LocationPlaces from "@/components/lokalita/LocationPlaces";
 import { CONNECTIONS, POIS } from "@/lib/lokalita";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
@@ -58,11 +58,11 @@ function Header() {
   );
 }
 
-function Orbit() {
+function Places() {
   const ref = useRef<HTMLElement>(null);
   useGSAP(
     () => {
-      gsap.fromTo(".lo-rise", { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: 1, stagger: 0.08, ease: "power3.out", scrollTrigger: { trigger: ref.current, start: "top 78%" } });
+      gsap.fromTo(".lo-rise", { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: 1, stagger: 0.08, ease: "power3.out", scrollTrigger: { trigger: ref.current, start: "top 82%" } });
     },
     { scope: ref }
   );
@@ -70,16 +70,17 @@ function Orbit() {
     <section ref={ref} id="okolie" className="relative w-full" style={{ backgroundColor: "#141510" }}>
       <div className="mx-auto max-w-[1400px] px-[6%] py-24 md:py-32">
         <div className="lo-rise mb-4"><SheetRef label="Všetko na dosah" /></div>
-        <h2 className="lo-rise max-w-[720px]" style={{ fontFamily: "var(--font-cormorant)", fontSize: "clamp(30px, 4.6vw, 56px)", fontWeight: 300, lineHeight: 1.04, color: STONE }}>
-          Sledujte, ako sa mesto priblíži
+        <h2 className="lo-rise max-w-[760px]" style={{ fontFamily: "var(--font-cormorant)", fontSize: "clamp(30px, 4.6vw, 56px)", fontWeight: 300, lineHeight: 1.04, color: STONE }}>
+          Čo máte za dverami
         </h2>
         <p className="lo-rise mt-5 max-w-[560px]" style={{ fontFamily: "var(--font-dm-sans)", fontSize: 13, fontWeight: 300, lineHeight: 1.9, color: "rgba(242,237,230,0.6)" }}>
-          Prepnite spôsob dopravy a body okolia sa presunú podľa skutočného času
-          cesty. Vyberte kategóriu, prejdite myšou po bodoch — a uvidíte, čo všetko
-          máte v pätnástich minútach.
+          Prejdite myšou po zozname a miesto sa otvorí v náhľade — fotka, čas cesty
+          pešo, na bicykli aj autom, a tlačidlo <b style={{ color: GOLD, fontWeight: 400 }}>Trasa</b>,
+          ktoré vás rovno navedie v Google Mapách. Prepnite spôsob dopravy a časy
+          sa prepočítajú.
         </p>
         <div className="lo-rise mt-14">
-          <LocationOrbit />
+          <LocationPlaces />
         </div>
       </div>
     </section>
@@ -170,7 +171,7 @@ export default function LokalitaPage() {
   return (
     <>
       <Header />
-      <Orbit />
+      <Places />
       <Connections />
       <Story />
     </>

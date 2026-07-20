@@ -45,6 +45,9 @@ const MEDIA_OUT = path.join(ROOT, "src/lib/media.json");
 const SRC_RES = path.join(ROOT, "assets/images/residences");
 const OUT_RES = path.join(ROOT, "public/images/residences");
 const RESIDENCES_OUT = path.join(ROOT, "src/lib/residences.json");
+const SRC_LOK = path.join(ROOT, "assets/images/lokalita");
+const OUT_LOK = path.join(ROOT, "public/images/lokalita");
+const LOKALITA_OUT = path.join(ROOT, "src/lib/lokalita-photos.json");
 
 const MAX_W = 2000; // nothing on this site is displayed wider than this
 // Per-asset caps. The logo renders at 38–48 px tall; shipping 1348 px of it is
@@ -503,6 +506,60 @@ async function residences(cache) {
   log(`· residences.json  ${items.length} render(s)`);
 }
 
+/**
+ * Lokalita photos — one image per place for /lokalita.
+ *
+ * `assets/images/lokalita/<slug>.jpeg` (slug matches POI.slug in lokalita.ts) →
+ * AVIF + WebP + JPEG fallback + inline blur, recorded in `lokalita-photos.json`
+ * as `{ [slug]: { src, avif, webp, lqip, width, height } }`. The explorer shows
+ * a place's real photo when its slug appears here, and an elegant category
+ * placeholder otherwise — so no photo is ever a broken image or a 404.
+ */
+async function lokalita(cache) {
+  if (!fs.existsSync(SRC_LOK)) {
+    // Never clobber a populated manifest with {} — same guard the run-gate uses.
+    if (!fs.existsSync(LOKALITA_OUT)) {
+      fs.mkdirSync(path.dirname(LOKALITA_OUT), { recursive: true });
+      fs.writeFileSync(LOKALITA_OUT, JSON.stringify({}, null, 2));
+    }
+    log("· no assets/images/lokalita — placeholders only");
+    return;
+  }
+  fs.mkdirSync(OUT_LOK, { recursive: true });
+  const files = fs.readdirSync(SRC_LOK).filter((f) => /\.(png|jpe?g|webp|tiff?)$/i.test(f)).sort();
+  const map = {};
+
+  for (const file of files) {
+    const src = path.join(SRC_LOK, file);
+    const base = file.replace(/\.[^.]+$/, "");
+    const hash = hashOf(src);
+    const key = `lok:${file}`;
+    const meta = await sharp(src).metadata();
+
+    const preview = await sharp(src).resize(24).webp({ quality: 42 }).toBuffer();
+    map[base] = {
+      src: `/images/lokalita/${base}.jpg`,
+      avif: `/images/lokalita/${base}.avif`,
+      webp: `/images/lokalita/${base}.webp`,
+      lqip: `data:image/webp;base64,${preview.toString("base64")}`,
+      width: meta.width,
+      height: meta.height,
+    };
+
+    if (cache[key] === hash && fs.existsSync(path.join(OUT_LOK, `${base}.avif`))) continue;
+    const pipe = () => sharp(src).resize({ width: Math.min(meta.width ?? 1400, 1400), withoutEnlargement: true });
+    await pipe().avif({ quality: QUALITY.avif, effort: 5 }).toFile(path.join(OUT_LOK, `${base}.avif`));
+    await pipe().webp({ quality: QUALITY.webp }).toFile(path.join(OUT_LOK, `${base}.webp`));
+    await pipe().jpeg({ quality: QUALITY.jpeg, mozjpeg: true }).toFile(path.join(OUT_LOK, `${base}.jpg`));
+    log(`✓ lokalita/${file}  ${mb(src)} → avif ${kb(path.join(OUT_LOK, `${base}.avif`))}`);
+    cache[key] = hash;
+  }
+
+  fs.mkdirSync(path.dirname(LOKALITA_OUT), { recursive: true });
+  fs.writeFileSync(LOKALITA_OUT, JSON.stringify(map, null, 2));
+  log(`· lokalita-photos.json  ${Object.keys(map).length} photo(s)`);
+}
+
 /*
  * NO MASTERS, NO RUN.
  *
@@ -517,7 +574,7 @@ async function residences(cache) {
  * of an empty object and the build dies. A pipeline with nothing to do must do
  * nothing, not do it emptily.
  */
-const ARTEFACTS = [LQIP_OUT, MEDIA_OUT, GALLERY_OUT, RESIDENCES_OUT];
+const ARTEFACTS = [LQIP_OUT, MEDIA_OUT, GALLERY_OUT, RESIDENCES_OUT, LOKALITA_OUT];
 if (!fs.existsSync(path.join(ROOT, "assets"))) {
   const missing = ARTEFACTS.filter((f) => !fs.existsSync(f));
   if (missing.length) {
@@ -545,6 +602,8 @@ console.log("galleries");
 await galleries(cache);
 console.log("residences");
 await residences(cache);
+console.log("lokalita");
+await lokalita(cache);
 console.log("video");
 /*
  * Optional portrait master for the phone. The landscape hero can't fill a phone
