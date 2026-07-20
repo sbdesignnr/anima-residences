@@ -90,6 +90,10 @@ export default function Hero() {
         if (!canvas) return;
         const ctx = canvas.getContext("2d");
         if (!ctx || !video.videoWidth) return;
+        // The film is 1080p; a Retina canvas is larger, so ask for the best
+        // resampling the browser has rather than the default (fastest) one.
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
         const W = canvas.width;
         const H = canvas.height;
         const s = Math.max(W / video.videoWidth, H / video.videoHeight);
