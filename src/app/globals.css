@@ -1481,7 +1481,7 @@ textarea.ct-input {
 /* residence core pin */
 .lm-core-pin { overflow: visible; }
 .lm-core-aura2 {
-  position: absolute; left: 50%; top: 50%; width: 132px; height: 132px; border-radius: 50%;
+  position: absolute; left: 50%; top: 50%; width: 96px; height: 96px; border-radius: 50%;
   transform: translate(-50%, -50%); pointer-events: none;
   background: radial-gradient(circle, rgba(214,184,124,0.4) 0%, rgba(214,184,124,0) 62%);
   animation: lmCorePulse 4.6s ease-in-out infinite;
@@ -1516,12 +1516,15 @@ textarea.ct-input {
   70% { opacity: 0; }
   100% { transform: translate(-50%,-50%) scale(3); opacity: 0; }
 }
+/* Labels appear on hover — the map stays a clean field of glowing beacons, and
+   nearby pins never collide with each other's names. */
 .lm-pin-lab {
-  position: absolute; left: 50%; top: 16px; transform: translateX(-50%); white-space: nowrap;
-  font-family: var(--font-cormorant); font-size: 16px; font-weight: 300; color: rgba(242,237,230,0.92);
-  text-shadow: 0 1px 5px rgba(0,0,0,0.95), 0 0 3px rgba(0,0,0,0.9); pointer-events: none; transition: color .3s ease;
+  position: absolute; left: 50%; top: 15px; transform: translateX(-50%); white-space: nowrap;
+  font-family: var(--font-cormorant); font-size: 17px; font-weight: 300; color: #fff;
+  text-shadow: 0 1px 5px rgba(0,0,0,0.98), 0 0 4px rgba(0,0,0,0.95); pointer-events: none;
+  opacity: 0; transition: opacity .25s ease;
 }
-.lm-pin:hover .lm-pin-lab { color: #fff; }
+.lm-pin:hover .lm-pin-lab { opacity: 1; }
 @media (prefers-reduced-motion: reduce) { .lm-pin-pulse, .lm-core-aura2 { animation: none; } .lm-pin-pulse { opacity: 0.22; } }
 
 /* the floating preview */
