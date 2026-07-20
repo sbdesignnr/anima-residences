@@ -58,13 +58,22 @@ export type Poi = {
   note: string;
   /** Google Maps destination — a place name or "lat,lng". Defaults to name + Nitra. */
   maps?: string;
+  /** Real-world position — set for the places pinned on the map. */
+  lat?: number;
+  lng?: number;
 };
+
+/**
+ * The development's own position on the map. Best-estimate for the Zobor
+ * foothills — replace with the exact pin and every marker reframes around it.
+ */
+export const RESIDENCE = { lat: 48.3247, lng: 18.0975, label: "Anima Residences" };
 
 export const POIS: Poi[] = [
   // Príroda & šport
-  { name: "Mestský park Sihoť", cat: "priroda", slug: "sihot", dir: 18, walk: 6, bike: 3, car: 3, note: "Zeleň a promenáda hneď za rohom — najbližší kus prírody.", maps: "Mestský park Sihoť, Nitra" },
-  { name: "Nábrežie rieky Nitra", cat: "priroda", slug: "nabrezie", dir: 300, walk: 8, bike: 3, car: 4, note: "Súvislý cyklochodník pozdĺž vody až do centra.", maps: "Nábrežie rieky Nitra" },
-  { name: "Zobor — vyhliadka", cat: "priroda", slug: "zobor", dir: 44, walk: 24, bike: 11, car: 9, note: "Lesné chodníky a výhľad na celú Nitru nad mestom.", maps: "Zoborská vyhliadka Pyramída, Nitra" },
+  { name: "Mestský park Sihoť", cat: "priroda", slug: "sihot", lat: 48.3116, lng: 18.0808, dir: 18, walk: 6, bike: 3, car: 3, note: "Zeleň a promenáda hneď za rohom — najbližší kus prírody.", maps: "Mestský park Sihoť, Nitra" },
+  { name: "Nábrežie rieky Nitra", cat: "priroda", slug: "nabrezie", lat: 48.3049, lng: 18.0847, dir: 300, walk: 8, bike: 3, car: 4, note: "Súvislý cyklochodník pozdĺž vody až do centra.", maps: "Nábrežie rieky Nitra" },
+  { name: "Zobor — vyhliadka", cat: "priroda", slug: "zobor", lat: 48.3345, lng: 18.1035, dir: 44, walk: 24, bike: 11, car: 9, note: "Lesné chodníky a výhľad na celú Nitru nad mestom.", maps: "Zoborská vyhliadka Pyramída, Nitra" },
   { name: "Tenisový areál", cat: "priroda", slug: "tenis", dir: 124, walk: 12, bike: 5, car: 4, note: "Antukové kurty a šport na pár minút od domova.", maps: "Tenisový klub Nitra" },
   { name: "Wellness & fitness", cat: "priroda", slug: "wellness", dir: 152, walk: 9, bike: 4, car: 4, note: "Sauna, bazén a posilňovňa pre každodennú kondíciu.", maps: "wellness fitness Nitra" },
 
@@ -76,14 +85,14 @@ export const POIS: Poi[] = [
 
   // Nákupy
   { name: "Potraviny", cat: "nakupy", slug: "potraviny", dir: 182, walk: 6, bike: 3, car: 3, note: "Denný nákup vybavíte bez auta.", maps: "potraviny Nitra Zobor" },
-  { name: "OC Mlyny", cat: "nakupy", slug: "mlyny", dir: 332, walk: 24, bike: 9, car: 7, note: "Najväčšie nákupné centrum mesta pod jednou strechou.", maps: "OC Mlyny Nitra" },
+  { name: "OC Mlyny", cat: "nakupy", slug: "mlyny", lat: 48.3076, lng: 18.0844, dir: 332, walk: 24, bike: 9, car: 7, note: "Najväčšie nákupné centrum mesta pod jednou strechou.", maps: "OC Mlyny Nitra" },
   { name: "Galéria Nitra", cat: "nakupy", slug: "galeria", dir: 316, walk: 21, bike: 8, car: 6, note: "Móda, služby a stravovanie v centre mesta.", maps: "Galéria Mlyny Nitra" },
 
   // Vzdelanie
   { name: "Materská škola", cat: "vzdelanie", slug: "materska", dir: 162, walk: 7, bike: 3, car: 3, note: "Škôlka v dochádzkovej vzdialenosti pre najmenších.", maps: "materská škola Nitra" },
   { name: "Základná škola", cat: "vzdelanie", slug: "zakladna", dir: 138, walk: 10, bike: 4, car: 4, note: "Deti do školy bezpečne a pešo.", maps: "základná škola Nitra" },
   { name: "Gymnázium", cat: "vzdelanie", slug: "gymnazium", dir: 62, walk: 16, bike: 7, car: 6, note: "Stredná škola na dosah pre starších študentov.", maps: "gymnázium Nitra" },
-  { name: "Univerzita (UKF · SPU)", cat: "vzdelanie", slug: "univerzita", dir: 30, walk: 18, bike: 7, car: 6, note: "Dve univerzity a študentský život v meste.", maps: "Univerzita Konštantína Filozofa v Nitre" },
+  { name: "Univerzita (UKF · SPU)", cat: "vzdelanie", slug: "univerzita", lat: 48.3208, lng: 18.0965, dir: 30, walk: 18, bike: 7, car: 6, note: "Dve univerzity a študentský život v meste.", maps: "Univerzita Konštantína Filozofa v Nitre" },
 
   // Zdravie
   { name: "Lekáreň", cat: "zdravie", slug: "lekaren", dir: 214, walk: 5, bike: 2, car: 2, note: "Lieky a prvá pomoc pár minút od domu.", maps: "lekáreň Nitra" },
@@ -97,7 +106,7 @@ export const POIS: Poi[] = [
 
   // Kultúra
   { name: "Historické centrum", cat: "kultura", slug: "centrum", dir: 306, walk: 16, bike: 7, car: 6, note: "Staré uličky, kaviarne a život mesta.", maps: "Svätoplukovo námestie, Nitra" },
-  { name: "Nitriansky hrad", cat: "kultura", slug: "hrad", dir: 312, walk: 19, bike: 8, car: 7, note: "Dominanta mesta s tisícročnou históriou.", maps: "Nitriansky hrad" },
+  { name: "Nitriansky hrad", cat: "kultura", slug: "hrad", lat: 48.3178, lng: 18.0866, dir: 312, walk: 19, bike: 8, car: 7, note: "Dominanta mesta s tisícročnou históriou.", maps: "Nitriansky hrad" },
   { name: "Divadlo A. Bagara", cat: "kultura", slug: "divadlo", dir: 296, walk: 17, bike: 7, car: 6, note: "Najväčšie divadlo v regióne — kultúra na večer.", maps: "Divadlo Andreja Bagara Nitra" },
 ];
 

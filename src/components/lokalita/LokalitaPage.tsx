@@ -6,7 +6,13 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import { SheetRef } from "@/components/ui/brand";
-import LocationMap from "@/components/lokalita/LocationMap";
+import dynamic from "next/dynamic";
+
+// Leaflet reaches for `window` at import, so the map is client-only.
+const LocationMap = dynamic(() => import("@/components/lokalita/LocationMap"), {
+  ssr: false,
+  loading: () => <div className="lm-stage" />,
+});
 import { CONNECTIONS, POIS } from "@/lib/lokalita";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
@@ -74,8 +80,9 @@ function Places() {
           Celé okolie na jednej mape
         </h2>
         <p className="lo-rise mt-5 max-w-[560px]" style={{ fontFamily: "var(--font-dm-sans)", fontSize: 13, fontWeight: 300, lineHeight: 1.9, color: "rgba(242,237,230,0.6)" }}>
-          Anima žiari v strede, Zobor a rieka okolo nej. Prejdite myšou po
-          rozsvietenom mieste a otvorí sa náhľad — fotka, časy cesty, a tlačidlo{" "}
+          Skutočná mapa okolia — Anima žiari na svojej adrese, Zobor a rieka Nitra
+          okolo nej. Prejdite myšou po rozsvietenom mieste a otvorí sa náhľad —
+          fotka, časy cesty, a tlačidlo{" "}
           <b style={{ color: GOLD, fontWeight: 400 }}>Trasa</b>, ktoré vás rovno
           navedie v Google Mapách.
         </p>
