@@ -19,11 +19,10 @@ const HERO_MOBILE = media.heroMobile;
 const MOBILE_FILL = HERO_MOBILE.w / HERO_MOBILE.h <= 0.62;
 
 const SOURCES: { src: string; type: string; media: string }[] = [
-  { src: "/videos/hero-mobile.hevc.mp4", type: `video/mp4; codecs="hvc1.1.6.L93.B0"`, media: "(max-width: 767px)" },
-  { src: "/videos/hero-mobile.mp4", type: "video/mp4", media: "(max-width: 767px)" },
-  // Desktop scrub source is H.264 only — it seeks smoothly in every browser
-  // (Safari included); the file is all-keyframe (keyint=1) so each scroll frame
-  // decodes exactly one frame.
+  // Both scrub sources are H.264 only — H.264 seeks smoothly in every browser
+  // (Safari included). No HEVC sibling: an old .hevc would win on iOS Safari and
+  // strand the phone on the previous cut, so the new file is the single source.
+  { src: "/videos/hero_mobile.mp4", type: "video/mp4", media: "(max-width: 767px)" },
   { src: "/videos/hero_desktop.mp4", type: "video/mp4", media: "(min-width: 768px)" },
 ];
 
