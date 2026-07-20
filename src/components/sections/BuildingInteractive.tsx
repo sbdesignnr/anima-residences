@@ -14,6 +14,8 @@ import {
   buildFloors,
   centerOf,
   centroidOf,
+  edgeCenterOf,
+  leftEdgeOf,
   FLOOR_GEOMETRY,
   PLAN_H,
   PLAN_W,
@@ -395,10 +397,11 @@ export default function BuildingInteractive() {
         { attr: { x: b.right + b.width * 0.2 }, duration: 1.25, delay: 0.12, ease: "power2.inOut" }
       );
 
-      // Leader line + the marker gliding down the scale.
-      gsap.to(leaderRef.current, { top: `${centerOf(f)}%`, width: `${b.left - SCALE_X}%`, opacity: 1, duration: D, ease });
+      // Leader line + the marker gliding down the scale. Both ride the scale on
+      // the building's left edge, so they anchor to the band's edge centre.
+      gsap.to(leaderRef.current, { top: `${edgeCenterOf(f)}%`, width: `${b.left - SCALE_X}%`, opacity: 1, duration: D, ease });
       gsap.fromTo(leaderRef.current, { scaleX: 0 }, { scaleX: 1, duration: 0.7, ease: "power4.out" });
-      gsap.to(markerRef.current, { top: `${centerOf(f)}%`, duration: 0.7, ease: "power4.out" });
+      gsap.to(markerRef.current, { top: `${edgeCenterOf(f)}%`, duration: 0.7, ease: "power4.out" });
 
       // The figures re-set: block lifts in, the price counts to this floor's.
       gsap.fromTo(".bld-fig", { yPercent: 108, opacity: 0 }, { yPercent: 0, opacity: 1, duration: 0.7, stagger: 0.05, ease });
@@ -670,8 +673,8 @@ export default function BuildingInteractive() {
           className="bld-scale-line pointer-events-none absolute hidden lg:block"
           style={{
             left: `${SCALE_X}%`,
-            top: `${bboxOf(floors[0].poly).top}%`,
-            height: `${bboxOf(floors[3].poly).bottom - bboxOf(floors[0].poly).top}%`,
+            top: `${leftEdgeOf(floors[0].poly).top}%`,
+            height: `${leftEdgeOf(floors[3].poly).bottom - leftEdgeOf(floors[0].poly).top}%`,
             width: "1px",
             background: "linear-gradient(to bottom, rgba(242,237,230,0), rgba(242,237,230,0.22) 12%, rgba(242,237,230,0.22) 88%, rgba(242,237,230,0))",
           }}
@@ -680,7 +683,7 @@ export default function BuildingInteractive() {
         <div
           ref={markerRef}
           className="pointer-events-none absolute hidden lg:block"
-          style={{ left: `${SCALE_X}%`, top: `${centerOf(floors[0])}%`, width: "1px", height: "38px", marginTop: "-19px", background: GOLD, boxShadow: `0 0 12px ${GOLD}` }}
+          style={{ left: `${SCALE_X}%`, top: `${edgeCenterOf(floors[0])}%`, width: "1px", height: "38px", marginTop: "-19px", background: GOLD, boxShadow: `0 0 12px ${GOLD}` }}
           aria-hidden
         />
         {/* the leader line — a dimension called out to the floor */}
@@ -690,7 +693,7 @@ export default function BuildingInteractive() {
           style={{
             left: `${SCALE_X}%`,
             width: `${bboxOf(floors[0].poly).left - SCALE_X}%`,
-            top: `${centerOf(floors[0])}%`,
+            top: `${edgeCenterOf(floors[0])}%`,
             height: "1px",
             opacity: 0,
             transformOrigin: "left center",
@@ -713,7 +716,7 @@ export default function BuildingInteractive() {
               className="bld-level absolute hidden items-center justify-end gap-4 lg:flex"
               style={{
                 right: `${100 - SCALE_X}%`,
-                top: `${centerOf(floor)}%`,
+                top: `${edgeCenterOf(floor)}%`,
                 transform: "translateY(-50%)",
                 paddingRight: "12px",
                 cursor: "pointer",

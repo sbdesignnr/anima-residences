@@ -90,10 +90,27 @@ export type Floor = FloorData & FloorGeometry;
 export const buildFloors = (geometry: Record<FloorId, FloorGeometry>): Floor[] =>
   FLOOR_DATA.map((f) => ({ ...f, ...geometry[f.id] }));
 
-/** Vertical centre of a floor band, % of the photo — anchors the leader line. */
+/** Vertical centre of a floor band, % of the photo — the zoom focal point. */
 export const centerOf = (f: FloorGeometry) => {
   const b = bboxOf(f.poly);
   return b.top + b.height / 2;
+};
+
+/**
+ * The band's vertical extent AT ITS LEFT EDGE — the Y range of the two leftmost
+ * vertices. On a 3/4 view the bands slant, so the bbox spans the far, higher
+ * corner and its centre rides high; the scale, marker, leader and floor labels
+ * all live on the building's left corner and must anchor to THIS instead.
+ */
+export const leftEdgeOf = (poly: Pt[]) => {
+  const [a, b] = [...poly].sort((p, q) => p[0] - q[0]);
+  return { top: Math.min(a[1], b[1]), bottom: Math.max(a[1], b[1]) };
+};
+
+/** Vertical centre of a floor band where the scale meets it (its left edge). */
+export const edgeCenterOf = (f: FloorGeometry) => {
+  const e = leftEdgeOf(f.poly);
+  return (e.top + e.bottom) / 2;
 };
 
 /* ─────────────────────── floorplan (podorys.png) ───────────────────────
