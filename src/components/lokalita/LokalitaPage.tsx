@@ -6,7 +6,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import { SheetRef } from "@/components/ui/brand";
-import LocationPlaces from "@/components/lokalita/LocationPlaces";
+import LocationMap from "@/components/lokalita/LocationMap";
 import { CONNECTIONS, POIS } from "@/lib/lokalita";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
@@ -71,16 +71,16 @@ function Places() {
       <div className="mx-auto max-w-[1400px] px-[6%] py-24 md:py-32">
         <div className="lo-rise mb-4"><SheetRef label="Všetko na dosah" /></div>
         <h2 className="lo-rise max-w-[760px]" style={{ fontFamily: "var(--font-cormorant)", fontSize: "clamp(30px, 4.6vw, 56px)", fontWeight: 300, lineHeight: 1.04, color: STONE }}>
-          Čo máte za dverami
+          Celé okolie na jednej mape
         </h2>
         <p className="lo-rise mt-5 max-w-[560px]" style={{ fontFamily: "var(--font-dm-sans)", fontSize: 13, fontWeight: 300, lineHeight: 1.9, color: "rgba(242,237,230,0.6)" }}>
-          Prejdite myšou po zozname a miesto sa otvorí v náhľade — fotka, čas cesty
-          pešo, na bicykli aj autom, a tlačidlo <b style={{ color: GOLD, fontWeight: 400 }}>Trasa</b>,
-          ktoré vás rovno navedie v Google Mapách. Prepnite spôsob dopravy a časy
-          sa prepočítajú.
+          Anima žiari v strede, Zobor a rieka okolo nej. Prejdite myšou po
+          rozsvietenom mieste a otvorí sa náhľad — fotka, časy cesty, a tlačidlo{" "}
+          <b style={{ color: GOLD, fontWeight: 400 }}>Trasa</b>, ktoré vás rovno
+          navedie v Google Mapách.
         </p>
-        <div className="lo-rise mt-14">
-          <LocationPlaces />
+        <div className="lo-rise mt-12">
+          <LocationMap />
         </div>
       </div>
     </section>
