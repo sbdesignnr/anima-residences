@@ -13,20 +13,34 @@ const LocationMap = dynamic(() => import("@/components/lokalita/LocationMap"), {
   ssr: false,
   loading: () => <div className="lm-stage" />,
 });
-import { CONNECTIONS, POIS } from "@/lib/lokalita";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 const GOLD = "#B69A78";
 const STONE = "#F2EDE6";
 
-const WALK15 = POIS.filter((p) => p.walk <= 15).length;
 const STATS = [
-  { n: String(WALK15), l: "miest do 15 min pešo" },
-  { n: "2", l: "km do centra Nitry" },
-  { n: "6", l: "min na diaľnicu R1" },
-  { n: "Zobor", l: "les nad domovom", small: true },
+  { n: "4", l: "min pešo k OC Mlyny" },
+  { n: "8", l: "min k univerzite" },
+  { n: "6", l: "min na mestskú tržnicu" },
+  { n: "Staré Mesto", l: "priamo v centre", small: true },
 ];
+
+/** One responsive photo from the lokalita set — used across the Prostredie section. */
+function Pic({ slug, alt }: { slug: string; alt: string }) {
+  return (
+    <picture>
+      <source srcSet={`/images/lokalita/${slug}.avif`} type="image/avif" />
+      <source srcSet={`/images/lokalita/${slug}.webp`} type="image/webp" />
+      <img
+        src={`/images/lokalita/${slug}.jpg`}
+        alt={alt}
+        loading="lazy"
+        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+      />
+    </picture>
+  );
+}
 
 function Header() {
   const ref = useRef<HTMLElement>(null);
@@ -42,20 +56,21 @@ function Header() {
     <section ref={ref} className="relative w-full overflow-hidden" style={{ backgroundColor: "#181913" }}>
       <div className="lk-glow pointer-events-none absolute inset-0" aria-hidden />
       <div className="mx-auto max-w-[1400px] px-[6%] pb-14 pt-36 md:pb-16 md:pt-44">
-        <div className="lh-rise"><SheetRef label="Anima Residences · Nitra" /></div>
+        <div className="lh-rise"><SheetRef label="Anima Residences · Smetanova 26, Nitra" /></div>
         <h1 className="lh-rise mt-7" style={{ fontFamily: "var(--font-cormorant)", fontSize: "clamp(46px, 9vw, 128px)", fontWeight: 300, lineHeight: 0.98, letterSpacing: "-0.015em", color: STONE }}>
           Lokalita
         </h1>
-        <p className="lh-rise mt-8 max-w-[560px]" style={{ fontFamily: "var(--font-dm-sans)", fontSize: 14, fontWeight: 300, lineHeight: 2, letterSpacing: "0.01em", color: "rgba(242,237,230,0.66)" }}>
-          Pod zalesneným Zoborom, na dohľad od rieky a pár minút od historického
-          centra najstaršieho mesta na Slovensku. Miesto, kde máte pokoj zelene aj
-          všetko potrebné na dosah — presvedčte sa sami nižšie.
+        <p className="lh-rise mt-8 max-w-[600px]" style={{ fontFamily: "var(--font-dm-sans)", fontSize: 16, fontWeight: 300, lineHeight: 1.9, letterSpacing: "0.01em", color: "rgba(242,237,230,0.72)" }}>
+          V srdci nitrianskeho Starého Mesta — na Smetanovej 26, kúsok od
+          Svätoplukovho námestia a s OC Mlyny hneď za rohom. Obchody, tržnica,
+          škola aj univerzita na pár minút pešo, rieka a mestský park na dosah.
+          Bývanie, kde máte celé mesto pod nohami.
         </p>
-        <div className="mt-14 grid max-w-[760px] grid-cols-2 gap-x-8 gap-y-8 sm:grid-cols-4">
+        <div className="mt-14 grid max-w-[820px] grid-cols-2 gap-x-8 gap-y-8 sm:grid-cols-4">
           {STATS.map((s) => (
             <div key={s.l} className="lh-stat" style={{ borderTop: "1px solid rgba(182,154,120,0.28)", paddingTop: 14 }}>
               <p style={{ fontFamily: "var(--font-cormorant)", fontSize: s.small ? "clamp(26px,3vw,38px)" : "clamp(34px,4vw,52px)", fontWeight: 300, lineHeight: 1, color: STONE }}>{s.n}</p>
-              <p className="annot mt-2" style={{ fontSize: 9, color: GOLD, lineHeight: 1.6 }}>{s.l.toUpperCase()}</p>
+              <p className="annot mt-2" style={{ fontSize: 10, color: GOLD, lineHeight: 1.6 }}>{s.l.toUpperCase()}</p>
             </div>
           ))}
         </div>
@@ -79,9 +94,9 @@ function Places() {
         <h2 className="lo-rise max-w-[760px]" style={{ fontFamily: "var(--font-cormorant)", fontSize: "clamp(30px, 4.6vw, 56px)", fontWeight: 300, lineHeight: 1.04, color: STONE }}>
           Celé okolie na jednej mape
         </h2>
-        <p className="lo-rise mt-5 max-w-[560px]" style={{ fontFamily: "var(--font-dm-sans)", fontSize: 13, fontWeight: 300, lineHeight: 1.9, color: "rgba(242,237,230,0.6)" }}>
-          Skutočná mapa okolia — Anima žiari na svojej adrese, Zobor a rieka Nitra
-          okolo nej. Prejdite myšou po rozsvietenom mieste a otvorí sa náhľad —
+        <p className="lo-rise mt-5 max-w-[600px]" style={{ fontFamily: "var(--font-dm-sans)", fontSize: 15, fontWeight: 300, lineHeight: 1.85, color: "rgba(242,237,230,0.66)" }}>
+          Anima na Smetanovej 26 žiari v strede — obchody, tržnica, hrad, park aj
+          rieka naokolo. Prejdite myšou po rozsvietenom mieste a otvorí sa náhľad:
           fotka, časy cesty, a tlačidlo{" "}
           <b style={{ color: GOLD, fontWeight: 400 }}>Trasa</b>, ktoré vás rovno
           navedie v Google Mapách.
@@ -94,68 +109,50 @@ function Places() {
   );
 }
 
-function Connections() {
-  const ref = useRef<HTMLElement>(null);
-  useGSAP(
-    () => {
-      gsap.fromTo(".cn-rise", { y: 22, opacity: 0 }, { y: 0, opacity: 1, duration: 0.9, stagger: 0.06, ease: "power3.out", scrollTrigger: { trigger: ref.current, start: "top 74%" } });
-      gsap.fromTo(".cn-bar > span", { scaleX: 0 }, { scaleX: 1, transformOrigin: "left center", duration: 1.2, stagger: 0.08, ease: "power3.out", scrollTrigger: { trigger: ref.current, start: "top 62%" } });
-    },
-    { scope: ref }
-  );
-  const maxKm = Math.max(...CONNECTIONS.map((c) => c.km));
-  return (
-    <section ref={ref} className="relative w-full" style={{ backgroundColor: "#181913" }}>
-      <div className="mx-auto max-w-[1100px] px-[6%] py-24 md:py-32">
-        <div className="cn-rise"><SheetRef label="Spojenie" /></div>
-        <h2 className="cn-rise mt-6 mb-10" style={{ fontFamily: "var(--font-cormorant)", fontSize: "clamp(28px, 4vw, 48px)", fontWeight: 300, lineHeight: 1.05, color: STONE }}>
-          A svet za rohom
-        </h2>
-        <div>
-          {CONNECTIONS.map((c) => (
-            <div key={c.to} className="cn-row cn-rise">
-              <div>
-                <p style={{ fontFamily: "var(--font-cormorant)", fontSize: "clamp(20px,2.4vw,28px)", fontWeight: 300, color: STONE }}>{c.to}</p>
-                <div className="cn-bar mt-3" style={{ height: 2, background: "rgba(182,154,120,0.12)", position: "relative" }}>
-                  <span style={{ position: "absolute", inset: 0, width: `${(c.km / maxKm) * 100}%`, background: `linear-gradient(to right, ${GOLD}, rgba(182,154,120,0.3))`, display: "block" }} />
-                </div>
-              </div>
-              <p className="annot" style={{ fontSize: 11, color: "rgba(242,237,230,0.5)", textAlign: "right", minWidth: 64 }}>{c.km} km</p>
-              <p style={{ fontFamily: "var(--font-cormorant)", fontSize: "clamp(20px,2.4vw,28px)", fontWeight: 300, color: GOLD, textAlign: "right", minWidth: 84 }}>
-                {c.min} <span className="annot" style={{ fontSize: 10, color: "rgba(242,237,230,0.4)" }}>min</span>
-              </p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
 function Story() {
   const ref = useRef<HTMLElement>(null);
   useGSAP(
     () => {
-      gsap.fromTo(".sy-rise", { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: 1, stagger: 0.1, ease: "power3.out", scrollTrigger: { trigger: ref.current, start: "top 72%" } });
+      gsap.fromTo(".sy-rise", { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: 1, stagger: 0.1, ease: "power3.out", scrollTrigger: { trigger: ref.current, start: "top 78%" } });
+      gsap.fromTo(".sy-lead-img", { scale: 1.08 }, { scale: 1, duration: 1.8, ease: "power3.out", scrollTrigger: { trigger: ref.current, start: "top 85%" } });
     },
     { scope: ref }
   );
   const blocks = [
-    { k: "Zobor", t: "Les namiesto susedov za oknom", d: "Zalesnený masív Zobor dýcha mestu za chrbtom — ráno vybeh do lesa, cez víkend výhľad z vyhliadky na celú Nitru a Podunajskú nížinu." },
-    { k: "Rieka", t: "Voda a promenáda na krok", d: "Nábrežie Nitry so súvislým cyklochodníkom vás bez jediného auta dovedie do parku aj do centra. Zeleň, ktorá pokračuje ďalej, než dovidíte." },
-    { k: "Mesto", t: "Najstaršie mesto, na dosah ruky", d: "Nitriansky hrad, staré uličky, kaviarne a divadlo — história a život mesta sú vzdialené pár minút, no hluk zostáva za nimi." },
+    { k: "Staré Mesto", t: "Celé mesto máte pod nohami", d: "Svätoplukovo námestie, staré uličky, kaviarne aj Nitriansky hrad sú na pešo. Bývate priamo tam, kam ostatní chodia — v živom srdci najstaršieho mesta na Slovensku.", img: "hrad", alt: "Nitriansky hrad nad Starým Mestom" },
+    { k: "Vzdelanie & služby", t: "Nákup, škola aj univerzita vedľa", d: "OC Mlyny za rohom, mestská tržnica pár krokov, dve univerzity aj zastávka MHD na dosah. Každodenný život vybavíte pešo — bez dochádzania a bez kompromisov.", img: "univerzita", alt: "Univerzita v Nitre" },
+    { k: "Rieka & výhľady", t: "Zeleň a rieka Nitra okolo vás", d: "Mestský park a nábrežie so súvislým cyklochodníkom, Kalvária aj zalesnený Zobor nad mestom — z centra sa za pár minút dostanete k vode aj do lesa, bez auta.", img: "zobor", alt: "Nitra a rieka z výšky" },
   ];
   return (
     <section ref={ref} className="relative w-full" style={{ backgroundColor: "#141510" }}>
       <div className="mx-auto max-w-[1400px] px-[6%] py-24 md:py-32">
-        <div className="sy-rise mb-14"><SheetRef label="Prostredie" /></div>
-        <div className="grid gap-x-10 gap-y-14 md:grid-cols-3">
+        <div className="sy-rise mb-10"><SheetRef label="Prostredie" /></div>
+
+        {/* Emotional lead image — the river, the park, the castle at golden hour */}
+        <div className="sy-rise relative w-full overflow-hidden" style={{ aspectRatio: "21 / 9", marginBottom: "clamp(48px, 7vw, 88px)" }}>
+          <div className="sy-lead-img absolute inset-0">
+            <Pic slug="sihot" alt="Mestský park a nábrežie rieky Nitra pri západe slnka" />
+          </div>
+          <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(10,11,7,0.9) 0%, rgba(10,11,7,0.25) 52%, rgba(10,11,7,0.15) 100%)" }} aria-hidden />
+          <div className="absolute" style={{ left: "6%", right: "6%", bottom: "8%" }}>
+            <h3 style={{ fontFamily: "var(--font-cormorant)", fontSize: "clamp(26px, 3.6vw, 48px)", fontWeight: 300, lineHeight: 1.1, color: STONE, maxWidth: 680 }}>
+              Domov v centre — a predsa s riekou, parkom a zeleňou na dosah ruky.
+            </h3>
+          </div>
+        </div>
+
+        <div className="grid gap-x-10 gap-y-16 md:grid-cols-3">
           {blocks.map((b, i) => (
             <div key={b.k} className="sy-rise">
-              <p style={{ fontFamily: "var(--font-cormorant)", fontSize: 60, fontWeight: 300, lineHeight: 1, color: "rgba(182,154,120,0.5)" }}>{String(i + 1).padStart(2, "0")}</p>
-              <p className="annot mt-5" style={{ fontSize: 9, color: GOLD }}>{b.k.toUpperCase()}</p>
-              <h3 className="mt-3" style={{ fontFamily: "var(--font-cormorant)", fontSize: "clamp(22px,2.6vw,30px)", fontWeight: 300, lineHeight: 1.15, color: STONE }}>{b.t}</h3>
-              <p className="mt-4" style={{ fontFamily: "var(--font-dm-sans)", fontSize: 13, fontWeight: 300, lineHeight: 1.95, color: "rgba(242,237,230,0.6)" }}>{b.d}</p>
+              <div className="relative w-full overflow-hidden" style={{ aspectRatio: "16 / 11", marginBottom: 24 }}>
+                <Pic slug={b.img} alt={b.alt} />
+                <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(10,11,7,0.4) 0%, rgba(10,11,7,0) 45%)" }} aria-hidden />
+                <span className="annot absolute" style={{ left: 14, bottom: 12, fontSize: 9, color: STONE, textShadow: "0 1px 4px rgba(0,0,0,0.9)" }}>
+                  {String(i + 1).padStart(2, "0")} · {b.k.toUpperCase()}
+                </span>
+              </div>
+              <h3 style={{ fontFamily: "var(--font-cormorant)", fontSize: "clamp(23px,2.7vw,31px)", fontWeight: 300, lineHeight: 1.15, color: STONE }}>{b.t}</h3>
+              <p className="mt-4" style={{ fontFamily: "var(--font-dm-sans)", fontSize: 15, fontWeight: 300, lineHeight: 1.85, color: "rgba(242,237,230,0.66)" }}>{b.d}</p>
             </div>
           ))}
         </div>
@@ -179,7 +176,6 @@ export default function LokalitaPage() {
     <>
       <Header />
       <Places />
-      <Connections />
       <Story />
     </>
   );

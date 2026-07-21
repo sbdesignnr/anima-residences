@@ -34,7 +34,7 @@ type Photo = { src: string; avif: string; webp: string; lqip: string; width: num
 const PHOTOS = photosRaw as Record<string, Photo>;
 
 /** The flagship places shown on the map — those that carry real coordinates. */
-const FEATURED = ["sihot", "zobor", "univerzita", "nabrezie", "mlyny", "hrad"];
+const FEATURED = ["sihot", "zobor", "univerzita", "nabrezie", "mlyny", "hrad", "centrum", "synagoga", "trznica", "kalvaria"];
 const featuredPois = () =>
   FEATURED.map((s) => POIS.find((p) => p.slug === s)).filter(
     (p): p is Poi => !!p && p.lat != null && p.lng != null

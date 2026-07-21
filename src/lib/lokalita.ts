@@ -105,9 +105,14 @@ export const POIS: Poi[] = [
   { name: "Nájazd na R1", cat: "doprava", slug: "r1", dir: 322, walk: 32, bike: 12, car: 6, note: "Bratislava aj Trnava rýchlo po rýchlostnej ceste.", maps: "R1 Nitra" },
 
   // Kultúra
-  { name: "Historické centrum", cat: "kultura", slug: "centrum", dir: 306, walk: 16, bike: 7, car: 6, note: "Staré uličky, kaviarne a život mesta.", maps: "Svätoplukovo námestie, Nitra" },
+  { name: "Historické centrum", cat: "kultura", slug: "centrum", lat: 48.31383, lng: 18.08847, dir: 3, walk: 16, bike: 5, car: 4, note: "Svätoplukovo námestie, staré uličky, kaviarne a život mesta.", maps: "Svätoplukovo námestie, Nitra" },
   { name: "Nitriansky hrad", cat: "kultura", slug: "hrad", lat: 48.31814, lng: 18.08676, dir: 357, walk: 24, bike: 7, car: 6, note: "Dominanta mesta s tisícročnou históriou.", maps: "Nitriansky hrad" },
+  { name: "Synagóga", cat: "kultura", slug: "synagoga", lat: 48.31158, lng: 18.08634, dir: 352, walk: 12, bike: 4, car: 4, note: "Secesná pamiatka a koncertná sieň pár minút pešo.", maps: "Synagóga Nitra" },
   { name: "Divadlo A. Bagara", cat: "kultura", slug: "divadlo", dir: 296, walk: 17, bike: 7, car: 6, note: "Najväčšie divadlo v regióne — kultúra na večer.", maps: "Divadlo Andreja Bagara Nitra" },
+
+  // Ďalšie body v bezprostrednej blízkosti (Staré Mesto)
+  { name: "Mestská tržnica", cat: "nakupy", slug: "trznica", lat: 48.30772, lng: 18.0847, dir: 322, walk: 6, bike: 2, car: 3, note: "Čerstvá zelenina a lokálne potraviny pár minút pešo.", maps: "Mestská tržnica Nitra" },
+  { name: "Kalvária", cat: "priroda", slug: "kalvaria", lat: 48.29643, lng: 18.08933, dir: 173, walk: 17, bike: 5, car: 4, note: "Pútnický vŕšok s lesoparkom a výhľadom nad mestom.", maps: "Kalvária Nitra" },
 ];
 
 /** Google Maps directions to a place — user's location as origin. */
