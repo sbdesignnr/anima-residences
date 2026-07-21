@@ -20,8 +20,8 @@ export const COMPANY = {
   name: "Anima Residences",
   street: "Smetanova 26",
   city: "949 01 Nitra",
-  phone: "+421 900 000 000", // TODO: the real sales line
-  phoneHref: "+421900000000",
+  phone: "+421 948 341 154",
+  phoneHref: "+421948341154",
   email: "info@animaresidences.sk",
   /** The address, spelled once — the map, the link and the footer all read it. */
   query: "Smetanova 26, 949 01 Nitra",

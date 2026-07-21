@@ -286,8 +286,8 @@ export default function ApartmentDetail({
                   ["Úžitková plocha", apartment.vymera],
                   ["Podlažie", `${floor.id} · ${floor.level}`],
                   ["Orientácia", copy.orientation],
-                  ["Balkón / loggia", apartment.balkon],
-                  ["Pivnica", apartment.pivnica],
+                  ["Balkón / terasa", apartment.balkon],
+                  ["Kobka", apartment.pivnica],
                   ["Parkovanie", apartment.parkovanie],
                   ["Stav", apartment.stav],
                   ["Cena", apartment.cena],
@@ -371,7 +371,7 @@ export default function ApartmentDetail({
                   ODOSLAŤ DOPYT
                 </button>
                 <p className="annot" style={{ fontSize: 8, color: "rgba(242,237,230,0.3)", lineHeight: 1.9 }}>
-                  ALEBO VOLAJTE +421 900 000 000
+                  ALEBO VOLAJTE +421 948 341 154
                 </p>
               </form>
             )}

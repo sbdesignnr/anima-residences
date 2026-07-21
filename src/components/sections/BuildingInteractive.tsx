@@ -1037,7 +1037,7 @@ export default function BuildingInteractive() {
                           {apt.dispozicia} · {apt.vymera}
                         </text>
                         <text x={cx} y={cy + 32} textAnchor="middle" style={{ fontFamily: "var(--font-dm-sans)", fontSize: 12, letterSpacing: "0.22em", fill: free ? GREEN : RED }}>
-                          {free ? "VOĽNÝ" : "REZERVOVANÝ"}
+                          {free ? "VOĽNÝ" : "PREDANÝ"}
                         </text>
                       </g>
                     </g>
@@ -1079,7 +1079,7 @@ export default function BuildingInteractive() {
                     <span className="flex items-center gap-3">
                       <span style={{ display: "block", width: "6px", height: "8px", borderRadius: "3px 3px 0 0", backgroundColor: free ? GREEN : RED }} />
                       <span className="annot" style={{ fontSize: "9px", color: free ? GREEN : RED, minWidth: "96px", textAlign: "right" }}>
-                        {free ? "VOĽNÝ" : "REZERVOVANÝ"}
+                        {free ? "VOĽNÝ" : "PREDANÝ"}
                       </span>
                     </span>
                   </button>

@@ -14,7 +14,6 @@ import {
   buildFloors,
   FLOOR_DATA,
   FLOOR_GEOMETRY,
-  plural,
 } from "@/lib/building";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
@@ -23,12 +22,11 @@ const GOLD = "#B69A78";
 const STONE = "#F2EDE6";
 
 const FLATS = buildFloors(FLOOR_GEOMETRY).flatMap(apartmentsFor);
-const FREE = FLATS.filter((a) => a.stav === "Voľný").length;
 const PRICE_FROM = Math.min(...FLATS.map((a) => Number(a.cena.replace(/[^\d]/g, ""))));
 const STATS = [
   { n: String(FLATS.length), l: "bytov" },
   { n: String(FLOOR_DATA.length), l: "podlažia" },
-  { n: String(FREE), l: plural(FREE, "voľný", "voľné", "voľných") },
+  { n: "100", l: "% predané" },
   { n: PRICE_FROM.toLocaleString("sk-SK"), l: "€ od", small: true },
 ];
 
@@ -58,9 +56,9 @@ function Header() {
           className="oh-rise mt-8 max-w-[540px]"
           style={{ fontFamily: "var(--font-dm-sans)", fontSize: 14, fontWeight: 300, lineHeight: 2, letterSpacing: "0.01em", color: "rgba(242,237,230,0.66)" }}
         >
-          Jedenásť bytov v štyroch podlažiach — od tichých dvojizbových po priechodné
-          trojizbové s loggiou do zelene. Vyberte si podlažie na fasáde, prejdite si
-          pôdorysy a porovnajte ceny v prehľadnom cenníku.
+          Desať bytov v štyroch podlažiach — od tichých dvojizbových po priestranný
+          strešný trojizbový s terasou. Projekt je vypredaný; prezrite si podlažia
+          na fasáde, pôdorysy aj kompletný cenník realizovaných bytov.
         </p>
 
         <div className="mt-14 grid max-w-[720px] grid-cols-2 gap-x-8 gap-y-8 sm:grid-cols-4">

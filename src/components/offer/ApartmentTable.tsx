@@ -126,8 +126,8 @@ export default function ApartmentTable() {
     const val: Record<SortKey, (r: Row) => number | string> = {
       id: (r) => r.apt.id,
       floor: (r) => npNum(r.apt.floorId),
-      rooms: (r) => r.apt.unit.area, // by size within a disposition
-      area: (r) => r.apt.unit.area,
+      rooms: (r) => parseFloat(r.apt.vymera), // by size within a disposition
+      area: (r) => parseFloat(r.apt.vymera),
       price: (r) => priceNum(r.apt),
       stav: (r) => (r.apt.stav === "Voľný" ? 0 : 1),
     };
@@ -169,7 +169,7 @@ export default function ApartmentTable() {
             </h2>
             <p className="annot" style={{ fontSize: 10, color: "rgba(242,237,230,0.5)" }}>
               {rows.length} {plural(rows.length, "BYT", "BYTY", "BYTOV")}
-              <span style={{ color: freeCount > 0 ? GREEN : RED }}>{"  ·  "}{freeCount} {plural(freeCount, "VOĽNÝ", "VOĽNÉ", "VOĽNÝCH")}</span>
+              <span style={{ color: RED }}>{"  ·  "}{freeCount > 0 ? `${freeCount} ${plural(freeCount, "VOĽNÝ", "VOĽNÉ", "VOĽNÝCH")}` : "VYPREDANÉ"}</span>
             </p>
           </div>
         </div>
@@ -192,7 +192,7 @@ export default function ApartmentTable() {
             label="DOSTUPNOSŤ"
             value={availF}
             onChange={setAvailF}
-            options={[{ v: "all", t: "Všetky" }, { v: "Voľný", t: "Voľné" }, { v: "Rezervovaný", t: "Rezervované" }]}
+            options={[{ v: "all", t: "Všetky" }, { v: "Predané", t: "Predané" }]}
           />
           <div>
             <p className="annot mb-2.5" style={{ fontSize: 9, color: "rgba(242,237,230,0.4)" }}>
@@ -232,12 +232,12 @@ export default function ApartmentTable() {
                     <td>{apt.floorId}</td>
                     <td>{apt.dispozicia}</td>
                     <td className="tbl-num">{apt.vymera}</td>
-                    <td style={{ color: apt.balkon === "Nie" ? "rgba(242,237,230,0.35)" : undefined }}>{apt.balkon}</td>
+                    <td style={{ color: apt.balkon === "—" ? "rgba(242,237,230,0.35)" : undefined }}>{apt.balkon}</td>
                     <td className="tbl-num" style={{ color: STONE }}>{apt.cena}</td>
                     <td>
                       <span className="inline-flex items-center gap-2.5">
                         <Dot free={free} />
-                        <span style={{ color: free ? GREEN : RED }}>{free ? "Voľný" : "Rezervovaný"}</span>
+                        <span style={{ color: free ? GREEN : RED }}>{free ? "Voľný" : "Predané"}</span>
                       </span>
                     </td>
                     <td className="tbl-cta"><span className="annot">DETAIL →</span></td>
@@ -257,7 +257,7 @@ export default function ApartmentTable() {
               <button key={apt.id} onClick={() => setOpen({ apt, floor })} className="tbl-card">
                 <div className="flex items-baseline justify-between">
                   <span style={{ fontFamily: "var(--font-cormorant)", fontSize: 30, fontWeight: 300, color: STONE }}>{apt.id}</span>
-                  <span className="annot inline-flex items-center gap-2" style={{ fontSize: 9, color: free ? GREEN : RED }}><Dot free={free} />{free ? "VOĽNÝ" : "REZERVOVANÝ"}</span>
+                  <span className="annot inline-flex items-center gap-2" style={{ fontSize: 9, color: free ? GREEN : RED }}><Dot free={free} />{free ? "VOĽNÝ" : "PREDANÝ"}</span>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1">
                   <span className="annot" style={{ fontSize: 9, color: "rgba(242,237,230,0.55)" }}>{apt.floorId}</span>

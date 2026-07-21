@@ -79,10 +79,10 @@ export type FloorData = {
 };
 
 export const FLOOR_DATA: FloorData[] = [
-  { id: "4NP", byty: 2, volne: 2, vymera: "62 – 84 m²", cena: "od 268 000 €", cenaOd: 268000, level: "+9,300", areas: [62, 84] },
-  { id: "3NP", byty: 3, volne: 1, vymera: "45 – 70 m²", cena: "od 198 000 €", cenaOd: 198000, level: "+6,200", areas: [45, 70, 50] },
-  { id: "2NP", byty: 3, volne: 2, vymera: "45 – 70 m²", cena: "od 185 000 €", cenaOd: 185000, level: "+3,100", areas: [45, 70, 50] },
-  { id: "1NP", byty: 3, volne: 0, vymera: "45 – 70 m²", cena: "od 175 000 €", cenaOd: 175000, level: "±0,000", areas: [45, 70, 50] },
+  { id: "4NP", byty: 1, volne: 0, vymera: "65 m²", cena: "294 250 €", cenaOd: 294250, level: "+9,300", areas: [65] },
+  { id: "3NP", byty: 3, volne: 0, vymera: "50 – 70 m²", cena: "od 198 790 €", cenaOd: 198790, level: "+6,200", areas: [50, 70, 55] },
+  { id: "2NP", byty: 3, volne: 0, vymera: "50 – 70 m²", cena: "od 198 790 €", cenaOd: 198790, level: "+3,100", areas: [50, 70, 55] },
+  { id: "1NP", byty: 3, volne: 0, vymera: "45 – 70 m²", cena: "od 174 000 €", cenaOd: 174000, level: "±0,000", areas: [45, 50, 70] },
 ];
 
 export type Floor = FloorData & FloorGeometry;
@@ -179,6 +179,8 @@ export const UNIT_COPY: Record<UnitLetter, { orientation: string; lead: string; 
   },
 };
 
+export type Stav = "Voľný" | "Rezervovaný" | "Predané";
+
 export type Apartment = {
   id: string;
   floorId: FloorId;
@@ -189,24 +191,62 @@ export type Apartment = {
   pivnica: string;
   parkovanie: string;
   cena: string;
-  stav: "Voľný" | "Rezervovaný";
+  stav: Stav;
 };
 
+/**
+ * The real offer, straight from the sales table. The development is SOLD OUT, so
+ * every row's `stav` is "Predané". `unitIndex` is the plan bay it occupies
+ * (0 = A/left, 1 = B/centre, 2 = C/right). Prices: obytná = obytná m² × 3 700,
+ * balkón/terasa = m² × 1 850, kobka = 7 500; `cenaCelkom` is byt + balkón + kobka
+ * (the table's "Spolu byt+kobka"). Parking is 15 000 €/state, shown separately.
+ */
+export type AptSpec = {
+  id: string;
+  floorId: FloorId;
+  unitIndex: number;
+  rooms: string;
+  obytna: number;
+  balkonM2: number;
+  balkonKind: "Balkón" | "Terasa";
+  cenaByt: number;
+  cenaBalkon: number;
+  cenaCelkom: number;
+  parkovanie: number;
+  stav: Stav;
+};
+
+export const KOBKA_PRICE = 7500;
+export const PARK_PRICE = 15000;
+
+export const APARTMENTS: AptSpec[] = [
+  { id: "A1", floorId: "1NP", unitIndex: 0, rooms: "2-izbový", obytna: 45, balkonM2: 0,   balkonKind: "Balkón", cenaByt: 166500, cenaBalkon: 0,     cenaCelkom: 174000, parkovanie: 1, stav: "Predané" },
+  { id: "A2", floorId: "1NP", unitIndex: 1, rooms: "2-izbový", obytna: 50, balkonM2: 0,   balkonKind: "Balkón", cenaByt: 185000, cenaBalkon: 0,     cenaCelkom: 192500, parkovanie: 1, stav: "Predané" },
+  { id: "A3", floorId: "1NP", unitIndex: 2, rooms: "3-izbový", obytna: 70, balkonM2: 0,   balkonKind: "Balkón", cenaByt: 259000, cenaBalkon: 0,     cenaCelkom: 266500, parkovanie: 1, stav: "Predané" },
+  { id: "B1", floorId: "2NP", unitIndex: 0, rooms: "2-izbový", obytna: 50, balkonM2: 3.4, balkonKind: "Balkón", cenaByt: 185000, cenaBalkon: 6290,  cenaCelkom: 198790, parkovanie: 1, stav: "Predané" },
+  { id: "B2", floorId: "2NP", unitIndex: 1, rooms: "3-izbový", obytna: 70, balkonM2: 3.4, balkonKind: "Balkón", cenaByt: 259000, cenaBalkon: 6290,  cenaCelkom: 272790, parkovanie: 1, stav: "Predané" },
+  { id: "B3", floorId: "2NP", unitIndex: 2, rooms: "2-izbový", obytna: 55, balkonM2: 3.4, balkonKind: "Balkón", cenaByt: 203500, cenaBalkon: 6290,  cenaCelkom: 217290, parkovanie: 1, stav: "Predané" },
+  { id: "C1", floorId: "3NP", unitIndex: 0, rooms: "2-izbový", obytna: 50, balkonM2: 3.4, balkonKind: "Balkón", cenaByt: 185000, cenaBalkon: 6290,  cenaCelkom: 198790, parkovanie: 1, stav: "Predané" },
+  { id: "C2", floorId: "3NP", unitIndex: 1, rooms: "3-izbový", obytna: 70, balkonM2: 3.4, balkonKind: "Balkón", cenaByt: 259000, cenaBalkon: 6290,  cenaCelkom: 272790, parkovanie: 1, stav: "Predané" },
+  { id: "C3", floorId: "3NP", unitIndex: 2, rooms: "2-izbový", obytna: 55, balkonM2: 3.4, balkonKind: "Balkón", cenaByt: 203500, cenaBalkon: 6290,  cenaCelkom: 217290, parkovanie: 1, stav: "Predané" },
+  { id: "D1", floorId: "4NP", unitIndex: 0, rooms: "3-izbový", obytna: 65, balkonM2: 25,  balkonKind: "Terasa", cenaByt: 240500, cenaBalkon: 46250, cenaCelkom: 294250, parkovanie: 2, stav: "Predané" },
+];
+
+const fmtNum = (n: number) => n.toLocaleString("sk-SK");
+const fmtM2 = (n: number) => String(n).replace(".", ",");
+
 export function apartmentsFor(floor: Floor): Apartment[] {
-  const n = floor.id.replace("NP", "");
-  // Each floor takes the first `byty` units — the top floor is two penthouses,
-  // the rest three. 2 + 3 + 3 + 3 = 11.
-  return UNITS.slice(0, floor.byty).map((unit, i) => ({
-    id: `${n}${unit.letter}`,
-    floorId: floor.id,
-    unit,
-    dispozicia: unit.rooms,
-    vymera: `${unit.area} m²`,
-    balkon: i === 0 ? "Nie" : `${6 + i * 2} m²`,
-    pivnica: `${3 + i} m²`,
-    parkovanie: i === 0 ? "1 státie" : "2 státia",
-    cena: `${(floor.cenaOd + i * 18000).toLocaleString("sk-SK")} €`,
-    stav: i < floor.volne ? "Voľný" : "Rezervovaný",
+  return APARTMENTS.filter((a) => a.floorId === floor.id).map((a) => ({
+    id: a.id,
+    floorId: a.floorId,
+    unit: UNITS[a.unitIndex] ?? UNITS[0],
+    dispozicia: a.rooms,
+    vymera: `${a.obytna} m²`,
+    balkon: a.balkonM2 > 0 ? `${a.balkonKind} · ${fmtM2(a.balkonM2)} m²` : "—",
+    pivnica: "Kobka · 1 ks",
+    parkovanie: `${a.parkovanie} ${plural(a.parkovanie, "státie", "státia", "státí")}`,
+    cena: `${fmtNum(a.cenaCelkom)} €`,
+    stav: a.stav,
   }));
 }
 
