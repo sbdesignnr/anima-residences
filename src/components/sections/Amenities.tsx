@@ -31,9 +31,10 @@ const SHEETS: Sheet[] = [
     sketch: "/images/sketches/sketch-konstrukcia",
     items: [
       "Nízkoenergetický štandard budovy",
-      "Tepelné čerpadlo pre celý objekt",
+      "Plynový kondenzačný kotol pre každý byt",
       "Riadené vetranie s rekuperáciou tepla",
-      "Izolačné trojsklá v hliníkových rámoch",
+      "Podlahové vykurovanie",
+      "Individuálna regulácia vykurovania v každom byte",
     ],
   },
   {
@@ -42,10 +43,12 @@ const SHEETS: Sheet[] = [
     note: "Povrchy, ktoré nemusíte po prevzatí meniť.",
     sketch: "/images/sketches/sketch-interier",
     items: [
-      "Veľkoformátová dlažba a drevené podlahy",
-      "Interiérové dvere v nadštandardnej výške",
+      "Kvalitné podlahy",
+      "Interiérové dvere",
       "Dizajnové zariadenie kúpeľní",
-      "Príprava pre klimatizáciu v obytných izbách",
+      "Veľké presklené okná",
+      "Príprava na klimatizáciu v obytných izbách",
+      "Nadštandardné materiály a prevedenie interiéru",
     ],
   },
   {
@@ -56,8 +59,7 @@ const SHEETS: Sheet[] = [
     items: [
       "Reprezentatívna vstupná hala",
       "Bezbariérový výťah do všetkých podlaží",
-      "Zelený vnútroblok s posedením",
-      "Kryté miesto pre bicykle a kočíky",
+      "Bezpečný vstup do bytového domu",
     ],
   },
   {
@@ -67,7 +69,7 @@ const SHEETS: Sheet[] = [
     sketch: "/images/sketches/sketch-bezpecnost",
     items: [
       "Kamerový systém spoločných priestorov",
-      "Videovrátnik s mobilnou aplikáciou",
+      "Videovrátnik",
       "Bezkľúčový prístup do objektu",
       "Samostatné meranie energií pre každý byt",
     ],
@@ -79,8 +81,9 @@ const SHEETS: Sheet[] = [
     sketch: "/images/sketches/sketch-parkovanie",
     items: [
       "Parkovacie státie ku každému bytu",
+      "Komfortné parkovanie priamo pri bytovom dome",
       "Pivničná kobka v cene bytu",
-      "Príprava pre nabíjanie elektromobilov",
+      "Praktické úložné priestory ku každému bytu",
     ],
   },
   {
@@ -89,9 +92,11 @@ const SHEETS: Sheet[] = [
     note: "Tichá adresa, mesto na dosah.",
     sketch: "/images/sketches/sketch-lokalita",
     items: [
-      "Pokojné miesto v srdci Nitry",
-      "Občianska vybavenosť v pešej dochádzke",
-      "Parky a zeleň v bezprostrednom okolí",
+      "Tichá lokalita s výbornou dostupnosťou do centra Nitry",
+      "Kompletná občianska vybavenosť v pešej dostupnosti",
+      "Školy, škôlky a obchody v bezprostrednom okolí",
+      "Parky a zeleň na každodenný oddych",
+      "Rýchle napojenie na hlavné dopravné ťahy",
     ],
   },
 ];
@@ -224,7 +229,7 @@ export default function Amenities() {
           <Mask>
             <p
               className="max-w-[420px] lg:justify-self-end"
-              style={{ fontFamily: "var(--font-dm-sans)", fontSize: "12.5px", fontWeight: 300, lineHeight: 2, letterSpacing: "0.02em", color: "rgba(28,28,26,0.7)" }}
+              style={{ fontFamily: "var(--font-dm-sans)", fontSize: "14.5px", fontWeight: 300, lineHeight: 2, letterSpacing: "0.02em", color: "rgba(28,28,26,0.7)" }}
             >
               To, čo nevidno, je tu urobené rovnako poctivo ako to, čo vidno. Skice
               sú z rúk architekta — prejdite po nich myšou.
@@ -263,7 +268,7 @@ export default function Amenities() {
                       aria-hidden
                       style={{ display: "block", width: 7, height: 9, marginTop: 5, flexShrink: 0, borderRadius: "3.5px 3.5px 0 0", border: `1px solid ${GOLD}` }}
                     />
-                    <span style={{ fontFamily: "var(--font-dm-sans)", fontSize: "13px", fontWeight: 300, lineHeight: 1.6, color: "rgba(28,28,26,0.8)" }}>
+                    <span style={{ fontFamily: "var(--font-dm-sans)", fontSize: "15px", fontWeight: 300, lineHeight: 1.6, color: "rgba(28,28,26,0.8)" }}>
                       {item}
                     </span>
                   </li>

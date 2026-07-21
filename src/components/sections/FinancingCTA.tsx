@@ -126,7 +126,7 @@ export default function FinancingCTA() {
           <div style={{ overflow: "hidden" }}>
             <p
               className="fx-reveal mt-8 max-w-[470px]"
-              style={{ fontFamily: "var(--font-dm-sans)", fontSize: "13px", fontWeight: 300, lineHeight: 2.1, letterSpacing: "0.02em", color: "rgba(242,237,230,0.68)" }}
+              style={{ fontFamily: "var(--font-dm-sans)", fontSize: "15px", fontWeight: 300, lineHeight: 2.1, letterSpacing: "0.02em", color: "rgba(242,237,230,0.68)" }}
             >
               Poradca porovná ponuky partnerských bánk, vybaví papierovanie a nájde
               splátku, ktorá dáva zmysel. Prvá konzultácia je nezáväzná a zdarma —

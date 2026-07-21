@@ -188,7 +188,7 @@ function Fact({ head, children }: { head: string; children: React.ReactNode }) {
       </p>
       <p
         className="mt-2.5"
-        style={{ fontFamily: "var(--font-dm-sans)", fontSize: "13px", fontWeight: 300, lineHeight: 1.85, color: "rgba(242,237,230,0.82)" }}
+        style={{ fontFamily: "var(--font-dm-sans)", fontSize: "15px", fontWeight: 300, lineHeight: 1.85, color: "rgba(242,237,230,0.82)" }}
       >
         {children}
       </p>
