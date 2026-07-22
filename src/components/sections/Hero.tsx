@@ -28,8 +28,12 @@ const MOBILE_FILL = HERO_MOBILE.w / HERO_MOBILE.h <= 0.62;
  * quality is unchanged.
  */
 const FRAMES = {
-  desktop: { dir: "/images/hero-frames/desktop", count: 203, w: 1928, h: 1072 },
-  mobile: { dir: "/images/hero-frames/mobile", count: 132, w: 1072, h: 1928 },
+  // Counts stop at the last real construction frame: the masters graft a finished
+  // CGI render onto the end (desktop 191+, mobile 113+), and the hard cut to it —
+  // the building "finishing again" — read as a glitch/repeat. The film now runs
+  // as one continuous timelapse and ends on the near-complete building.
+  desktop: { dir: "/images/hero-frames/desktop", count: 190, w: 1928, h: 1072 },
+  mobile: { dir: "/images/hero-frames/mobile", count: 112, w: 1072, h: 1928 },
 };
 
 /** The share of the pinned scroll spent on the opening, before the film scrubs on. */
