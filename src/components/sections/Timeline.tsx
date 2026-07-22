@@ -9,27 +9,27 @@ gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 const MILESTONES = [
   {
-    date: "2024",
+    date: "Q3 2025",
     title: "Zahájenie výstavby",
     body: "Príprava územia a základová doska v srdci Nitry.",
   },
   {
-    date: "2025 · Q1",
+    date: "Q4 2026",
     title: "Hrubá stavba",
-    body: "Nosná konštrukcia všetkých šiestich podlaží.",
+    body: "Nosná konštrukcia všetkých podlaží.",
   },
   {
-    date: "2025 · Q4",
+    date: "Q1 2027",
     title: "Fasáda a opláštenie",
     body: "Prírodné materiály definujú tvár budovy.",
   },
   {
-    date: "2026 · Q3",
+    date: "Q2 2027",
     title: "Dokončovacie práce",
     body: "Interiéry, spoločné priestory a záhrada.",
   },
   {
-    date: "2027 · Q1",
+    date: "Q3 2027",
     title: "Kolaudácia a odovzdanie",
     body: "Vaše nové bývanie je pripravené.",
   },
