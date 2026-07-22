@@ -165,7 +165,7 @@ export default function Navigation() {
       {/* Phone drawer */}
       <div
         ref={drawerRef}
-        className="fixed inset-0 top-16 hidden flex-col justify-between px-6 pb-12 pt-10 lg:!hidden"
+        className="fixed left-0 right-0 top-16 hidden h-[calc(100svh-4rem)] flex-col overflow-y-auto px-6 pb-8 pt-5 lg:!hidden"
         style={{ backgroundColor: "#181913", display: "none" }}
       >
         <ul>
@@ -174,13 +174,13 @@ export default function Navigation() {
               <Link
                 href={link.href}
                 onClick={() => setOpen(false)}
-                className="drawer-item flex items-baseline gap-5 py-5"
+                className="drawer-item flex items-baseline gap-5 py-4"
                 style={{ borderBottom: "1px solid rgba(182,154,120,0.18)" }}
               >
                 <span className="annot" style={{ fontSize: "9px", color: BRASS }}>
                   {String(i + 1).padStart(2, "0")}
                 </span>
-                <span style={{ fontFamily: "var(--font-cormorant)", fontSize: "34px", fontWeight: 300, color: STONE }}>
+                <span style={{ fontFamily: "var(--font-cormorant)", fontSize: "28px", fontWeight: 300, color: STONE }}>
                   {link.label}
                 </span>
               </Link>
@@ -188,7 +188,7 @@ export default function Navigation() {
           ))}
         </ul>
 
-        <div className="drawer-item flex flex-col items-center gap-6">
+        <div className="drawer-item mt-auto flex flex-col items-center gap-6 pt-6">
           <Link
             href="/#contact"
             onClick={() => setOpen(false)}
