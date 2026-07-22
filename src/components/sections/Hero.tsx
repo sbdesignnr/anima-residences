@@ -28,8 +28,8 @@ const MOBILE_FILL = HERO_MOBILE.w / HERO_MOBILE.h <= 0.62;
  * quality is unchanged.
  */
 const FRAMES = {
-  desktop: { dir: "/images/hero-frames/desktop", count: 112 },
-  mobile: { dir: "/images/hero-frames/mobile", count: 89 },
+  desktop: { dir: "/images/hero-frames/desktop", count: 203 },
+  mobile: { dir: "/images/hero-frames/mobile", count: 132 },
 };
 
 /** The share of the pinned scroll spent on the opening, before the film scrubs on. */
@@ -78,23 +78,19 @@ export default function Hero() {
       const framePath = (i: number) => `${cfg.dir}/${String(i + 1).padStart(3, "0")}.webp`;
       const imgs: HTMLImageElement[] = new Array(N);
 
-      /** Which frame the canvas currently shows (−1 = nothing yet). */
-      let curIdx = -1;
-
-      // Draw a frame onto the canvas (cover-fit). If the exact frame has not
-      // loaded yet, fall back to the nearest one that has — so scrubbing is never
-      // blank, only progressively sharper as the sequence streams in.
-      const draw = (idx: number) => {
-        let img: HTMLImageElement | undefined = imgs[idx];
-        if (!img || !img.complete || !img.naturalWidth) {
-          img = undefined;
-          for (let d = 1; d < N; d++) {
-            const lo = imgs[idx - d];
-            if (lo && lo.complete && lo.naturalWidth) { img = lo; break; }
-            const hi = imgs[idx + d];
-            if (hi && hi.complete && hi.naturalWidth) { img = hi; break; }
-          }
+      /** The fractional frame the canvas currently shows (−1 = nothing yet). */
+      let curF = -1;
+      const ok = (im?: HTMLImageElement) => !!im && im.complete && im.naturalWidth > 0;
+      const nearest = (idx: number) => {
+        for (let d = 0; d < N; d++) {
+          if (ok(imgs[idx - d])) return imgs[idx - d];
+          if (ok(imgs[idx + d])) return imgs[idx + d];
         }
+        return null;
+      };
+
+      // Paint one frame cover-fit at a given opacity.
+      const paint = (img: HTMLImageElement | null, alpha: number) => {
         if (!img || !img.naturalWidth) return;
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
@@ -102,31 +98,33 @@ export default function Hero() {
         // resampling the browser has rather than the default (fastest) one.
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = "high";
+        ctx.globalAlpha = alpha;
         const W = canvas.width, H = canvas.height;
         const s = Math.max(W / img.naturalWidth, H / img.naturalHeight);
         const dw = img.naturalWidth * s, dh = img.naturalHeight * s;
         ctx.drawImage(img, (W - dw) / 2, (H - dh) / 2, dw, dh);
+        ctx.globalAlpha = 1;
       };
 
-      const ready = (idx: number) => {
-        const im = imgs[idx];
-        return !!im && im.complete && im.naturalWidth > 0;
-      };
-
-      // Scroll → frame index. Only redraws when the whole-frame index changes, so
-      // one image is painted per step — instant, with nothing to decode or seek.
-      const scrubTo = (f: number) => {
-        const idx = Math.max(0, Math.min(N - 1, Math.round(f)));
-        if (idx === curIdx && ready(idx)) return;
-        curIdx = idx;
-        draw(idx);
+      // Render a FRACTIONAL frame position by cross-fading the two frames it lies
+      // between — so the picture flows continuously as the scroll moves, like
+      // video, instead of snapping frame-to-frame. Still zero decode-on-seek: the
+      // frames are already in memory, we just alpha-blend two of them.
+      const render = (f: number) => {
+        const fc = Math.max(0, Math.min(N - 1, f));
+        const i0 = Math.floor(fc);
+        const i1 = Math.min(N - 1, i0 + 1);
+        const t = fc - i0;
+        paint(ok(imgs[i0]) ? imgs[i0] : nearest(i0), 1);
+        if (i1 !== i0 && t > 0.001 && ok(imgs[i1])) paint(imgs[i1], t);
+        curF = fc;
       };
 
       const sizeCanvas = () => {
         const d = Math.min(window.devicePixelRatio || 1, 2);
         canvas.width = Math.max(1, Math.round(window.innerWidth * d));
         canvas.height = Math.max(1, Math.round(window.innerHeight * d));
-        draw(Math.max(0, curIdx));
+        render(curF < 0 ? 0 : curF);
       };
 
       // Kick off every frame at once (HTTP/2 multiplexes them). The first frame
@@ -137,8 +135,7 @@ export default function Hero() {
         img.decoding = "async";
         if (i === 0) img.setAttribute("fetchpriority", "high");
         img.onload = () => {
-          if (curIdx === -1) { curIdx = 0; draw(0); }
-          else if (i === curIdx) draw(curIdx);
+          render(curF < 0 ? 0 : curF);
         };
         img.src = framePath(i);
         imgs[i] = img;
@@ -169,7 +166,7 @@ export default function Hero() {
       // The film scrubs across the WHOLE pinned scroll: it is revealed as the
       // plaster parts and then advances frame-by-frame with the scroll.
       const state = { f: 0 };
-      tl.to(state, { f: N - 1, ease: "none", duration: 1, onUpdate: () => scrubTo(state.f) }, 0);
+      tl.to(state, { f: N - 1, ease: "none", duration: 1, onUpdate: () => render(state.f) }, 0);
 
       if (reduce) {
         tl.to([topRef.current], { yPercent: -100, ease: "none", duration: 1 }, 0)
