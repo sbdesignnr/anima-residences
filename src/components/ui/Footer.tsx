@@ -109,7 +109,7 @@ export default function Footer() {
               <span className="annot" style={{ fontSize: "11px", fontWeight: 500 }}>
                 DOHODNÚŤ OBHLIADKU
               </span>
-              <span aria-hidden className="transition-transform duration-300 group-hover:translate-x-1" style={{ fontFamily: "var(--font-dm-sans)", fontSize: "17px" }}>
+              <span aria-hidden className="transition-transform duration-300 group-hover:translate-x-1" style={{ fontFamily: "var(--font-dm-sans)", fontSize: "var(--fs-body)" }}>
                 →
               </span>
             </Link>
@@ -188,7 +188,7 @@ function Fact({ head, children }: { head: string; children: React.ReactNode }) {
       </p>
       <p
         className="mt-2.5"
-        style={{ fontFamily: "var(--font-dm-sans)", fontSize: "17px", fontWeight: 300, lineHeight: 1.85, color: "rgba(242,237,230,0.82)" }}
+        style={{ fontFamily: "var(--font-dm-sans)", fontSize: "var(--fs-body)", fontWeight: 300, lineHeight: 1.85, color: "rgba(242,237,230,0.82)" }}
       >
         {children}
       </p>

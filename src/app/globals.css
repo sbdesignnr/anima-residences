@@ -484,11 +484,24 @@
    * just drowns it.
    */
   --spot-scrim: rgba(6, 6, 6, 0.72);
+
+  /*
+   * The running body-copy size. 17px reads well on desktop; on a phone the same
+   * measure feels a touch heavy, so it steps down to 15px. Every body paragraph
+   * and inline label references this one token, so the two sizes stay in lockstep.
+   */
+  --fs-body: 17px;
 }
 
 @media (max-width: 1023px) {
   :root {
     --spot-scrim: rgba(6, 6, 6, 0.4);
+  }
+}
+
+@media (max-width: 767px) {
+  :root {
+    --fs-body: 15px;
   }
 }
 

@@ -126,7 +126,7 @@ export default function FinancingCTA() {
           <div style={{ overflow: "hidden" }}>
             <p
               className="fx-reveal mt-8 max-w-[470px]"
-              style={{ fontFamily: "var(--font-dm-sans)", fontSize: "17px", fontWeight: 300, lineHeight: 2.1, letterSpacing: "0.02em", color: "rgba(242,237,230,0.68)" }}
+              style={{ fontFamily: "var(--font-dm-sans)", fontSize: "var(--fs-body)", fontWeight: 300, lineHeight: 2.1, letterSpacing: "0.02em", color: "rgba(242,237,230,0.68)" }}
             >
               Poradca porovná ponuky partnerských bánk, vybaví papierovanie a nájde
               splátku, ktorá dáva zmysel. Prvá konzultácia je nezáväzná a zdarma —
@@ -173,7 +173,7 @@ export default function FinancingCTA() {
 
           <Link href="/financovanie" className="fx-cta group mt-9">
             <span className="annot" style={{ fontSize: "11px", fontWeight: 500 }}>SPOČÍTAŤ PRE MÔJ BYT</span>
-            <span aria-hidden className="transition-transform duration-300 group-hover:translate-x-1" style={{ fontFamily: "var(--font-dm-sans)", fontSize: "17px" }}>
+            <span aria-hidden className="transition-transform duration-300 group-hover:translate-x-1" style={{ fontFamily: "var(--font-dm-sans)", fontSize: "var(--fs-body)" }}>
               →
             </span>
           </Link>

@@ -268,7 +268,7 @@ export default function Amenities() {
                       aria-hidden
                       style={{ display: "block", width: 7, height: 9, marginTop: 5, flexShrink: 0, borderRadius: "3.5px 3.5px 0 0", border: `1px solid ${GOLD}` }}
                     />
-                    <span style={{ fontFamily: "var(--font-dm-sans)", fontSize: "17px", fontWeight: 300, lineHeight: 1.6, color: "rgba(28,28,26,0.8)" }}>
+                    <span style={{ fontFamily: "var(--font-dm-sans)", fontSize: "var(--fs-body)", fontWeight: 300, lineHeight: 1.6, color: "rgba(28,28,26,0.8)" }}>
                       {item}
                     </span>
                   </li>

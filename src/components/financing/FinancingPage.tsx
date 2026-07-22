@@ -117,7 +117,7 @@ export default function FinancingPage() {
 
             <p
               className="fp-rise max-w-[430px] lg:justify-self-end"
-              style={{ fontFamily: "var(--font-dm-sans)", fontSize: "17px", fontWeight: 300, lineHeight: 2.1, letterSpacing: "0.02em", color: "rgba(242,237,230,0.68)" }}
+              style={{ fontFamily: "var(--font-dm-sans)", fontSize: "var(--fs-body)", fontWeight: 300, lineHeight: 2.1, letterSpacing: "0.02em", color: "rgba(242,237,230,0.68)" }}
             >
               To je jediná otázka, na ktorej naozaj záleží. A odpoveď na ňu
               nezávisí od nejakej abstraktnej „výšky úveru“ — závisí od toho,
@@ -216,7 +216,7 @@ export default function FinancingPage() {
                 <h3 style={{ fontFamily: "var(--font-cormorant)", fontSize: "clamp(22px, 2.2vw, 30px)", fontWeight: 300, lineHeight: 1.25 }}>
                   {head}
                 </h3>
-                <p style={{ fontFamily: "var(--font-dm-sans)", fontSize: "17px", fontWeight: 300, lineHeight: 2, color: "rgba(242,237,230,0.62)" }}>
+                <p style={{ fontFamily: "var(--font-dm-sans)", fontSize: "var(--fs-body)", fontWeight: 300, lineHeight: 2, color: "rgba(242,237,230,0.62)" }}>
                   {body}
                 </p>
               </li>
@@ -235,7 +235,7 @@ export default function FinancingPage() {
               </a>
               <Link href="/kontakt" className="fp-cta group">
                 <span className="annot" style={{ fontSize: "11px", fontWeight: 500 }}>DOHODNÚŤ KONZULTÁCIU</span>
-                <span aria-hidden className="transition-transform duration-300 group-hover:translate-x-1" style={{ fontFamily: "var(--font-dm-sans)", fontSize: "17px" }}>
+                <span aria-hidden className="transition-transform duration-300 group-hover:translate-x-1" style={{ fontFamily: "var(--font-dm-sans)", fontSize: "var(--fs-body)" }}>
                   →
                 </span>
               </Link>
