@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Cinzel, Cormorant_Garamond, DM_Sans } from "next/font/google";
 import "./globals.css";
+import CookieConsent from "@/components/legal/CookieConsent";
 
 const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
@@ -53,7 +54,10 @@ export default function RootLayout({
       className={`${cormorant.variable} ${dmSans.variable} ${cinzel.variable}`}
       data-scroll-behavior="smooth"
     >
-      <body className="bg-charcoal text-stone antialiased">{children}</body>
+      <body className="bg-charcoal text-stone antialiased">
+        {children}
+        <CookieConsent />
+      </body>
     </html>
   );
 }

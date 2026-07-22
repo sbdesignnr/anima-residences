@@ -5,6 +5,7 @@ import Link from "next/link";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
+import { openConsentSettings } from "@/lib/consent";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
@@ -165,10 +166,16 @@ export default function Footer() {
             © 2026 Anima Residences. Všetky práva vyhradené.
           </p>
 
-          <div className="flex items-center gap-8">
-            <Link href="/kontakt#osobne-udaje" className="ft-fine">
+          <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
+            <Link href="/ochrana-osobnych-udajov" className="ft-fine">
               Ochrana osobných údajov
             </Link>
+            <Link href="/cookies" className="ft-fine">
+              Cookies
+            </Link>
+            <button onClick={openConsentSettings} className="ft-fine" type="button">
+              Nastavenia cookies
+            </button>
             <button onClick={toTop} className="ft-top group" aria-label="Späť hore">
               <span className="annot" style={{ fontSize: "9px" }}>HORE</span>
               <span aria-hidden className="ft-top-arrow" />

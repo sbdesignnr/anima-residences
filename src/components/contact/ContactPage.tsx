@@ -7,6 +7,8 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import { ArchMark, SheetRef } from "@/components/ui/brand";
 import { COMPANY } from "@/components/ui/Footer";
+import { useConsent } from "@/components/legal/useConsent";
+import { saveConsent } from "@/lib/consent";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
@@ -24,6 +26,12 @@ export default function ContactPage() {
   const [subject, setSubject] = useState(SUBJECTS[0]);
   const [state, setState] = useState<State>("idle");
   const [error, setError] = useState("");
+
+  // The Google Maps frame is a third party that sets cookies, so it loads only
+  // once the visitor has allowed the "maps" category — here or via the banner.
+  const consent = useConsent();
+  const mapsOk = !!consent?.maps;
+  const enableMaps = () => saveConsent({ analytics: consent?.analytics ?? false, maps: true });
 
   useGSAP(
     () => {
@@ -181,9 +189,9 @@ export default function ContactPage() {
                   <label className="ct-rise ct-consent mt-8">
                     <input type="checkbox" name="consent" required />
                     <span>
-                      Súhlasím so spracovaním osobných údajov na účel vybavenia
+                      Súhlasím so spracúvaním osobných údajov na účel vybavenia
                       môjho dopytu.{" "}
-                      <a href="#osobne-udaje" className="ct-link">Viac</a>
+                      <Link href="/ochrana-osobnych-udajov" className="ct-link">Viac</Link>
                     </span>
                   </label>
 
@@ -269,13 +277,35 @@ export default function ContactPage() {
           </p>
 
           <div className="ct-map ct-rise mt-10">
-            <iframe
-              src={COMPANY.mapEmbed}
-              title={`Mapa — ${COMPANY.query}`}
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-              allowFullScreen
-            />
+            {mapsOk ? (
+              <iframe
+                src={COMPANY.mapEmbed}
+                title={`Mapa — ${COMPANY.query}`}
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                allowFullScreen
+              />
+            ) : (
+              <div className="ct-map-consent">
+                <p className="ct-map-consent-title">Mapa Google</p>
+                <p className="ct-map-consent-body">
+                  Mapu načítame až po vašom súhlase — spoločnosť Google pri jej
+                  zobrazení môže nastaviť vlastné cookies. Adresu si viete otvoriť
+                  aj priamo v Mapách.
+                </p>
+                <div className="ct-map-consent-btns">
+                  <button type="button" className="ct-map-consent-btn" onClick={enableMaps}>
+                    Zobraziť mapu
+                  </button>
+                  <a href={COMPANY.mapHref} target="_blank" rel="noopener noreferrer" className="ct-map-consent-link">
+                    Otvoriť v Mapách →
+                  </a>
+                </div>
+                <p className="ct-map-consent-fine">
+                  Viac v <Link href="/cookies" className="ct-link">Zásadách používania cookies</Link>.
+                </p>
+              </div>
+            )}
             <span className="am-tick am-tick--tl" />
             <span className="am-tick am-tick--tr" />
             <span className="am-tick am-tick--bl" />
@@ -288,7 +318,8 @@ export default function ContactPage() {
           >
             Údaje z formulára spracúvame výhradne na to, aby sme vám odpovedali na
             dopyt. Neposielame ich tretím stranám a na požiadanie ich vymažeme —
-            stačí napísať na {COMPANY.email}.
+            stačí napísať na {COMPANY.email}. Podrobnosti v{" "}
+            <Link href="/ochrana-osobnych-udajov" className="ct-link">Ochrane osobných údajov</Link>.
           </p>
         </div>
       </section>

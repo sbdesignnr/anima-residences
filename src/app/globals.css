@@ -1609,3 +1609,366 @@ textarea.ct-input {
   border-top: 1px solid rgba(182,154,120,0.16);
 }
 .cn-row:last-child { border-bottom: 1px solid rgba(182,154,120,0.16); }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Legal & consent — cookie banner, settings panel, consent-gated map, and the
+   privacy / cookie policy pages. Same palette as the rest: charcoal, stone,
+   brass. Kept quiet — a legal notice should never shout over the work.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* the footer's "Nastavenia cookies" is a <button> wearing .ft-fine */
+button.ft-fine { background: none; border: 0; padding: 0; cursor: pointer; }
+
+/* ── the first-visit banner ─────────────────────────────────────────────── */
+.cc-banner {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 60;
+  padding: 16px;
+  display: flex;
+  justify-content: center;
+  animation: cc-rise 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes cc-rise { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+.cc-banner-in {
+  width: 100%;
+  max-width: 1120px;
+  background: #1c1c1a;
+  border: 1px solid rgba(182, 154, 120, 0.28);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  padding: 22px 24px;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+.cc-banner-text { flex: 1 1 auto; }
+.cc-banner-title {
+  font-family: var(--font-cormorant), serif;
+  font-size: 20px;
+  font-weight: 400;
+  color: #f2ede6;
+  margin-bottom: 6px;
+}
+.cc-banner-body {
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 13px;
+  font-weight: 300;
+  line-height: 1.7;
+  color: rgba(242, 237, 230, 0.62);
+  max-width: 720px;
+}
+.cc-banner-btns { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
+
+@media (max-width: 767px) {
+  .cc-banner-in { flex-direction: column; align-items: stretch; gap: 18px; padding: 20px; }
+  .cc-banner-btns { flex-wrap: wrap; }
+  .cc-banner-btns .cc-btn { flex: 1 1 auto; }
+}
+
+/* ── the settings panel ─────────────────────────────────────────────────── */
+.cc-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: rgba(10, 10, 9, 0.62);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: cc-fade 0.3s ease both;
+}
+@keyframes cc-fade { from { opacity: 0; } to { opacity: 1; } }
+.cc-modal {
+  width: 100%;
+  max-width: 560px;
+  max-height: min(88vh, 760px);
+  overflow-y: auto;
+  background: #1c1c1a;
+  border: 1px solid rgba(182, 154, 120, 0.28);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+  padding: 34px 34px 28px;
+  animation: cc-rise 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.cc-eyebrow { font-size: 10px; letter-spacing: 0.34em; color: #b69a78; }
+.cc-title {
+  font-family: var(--font-cormorant), serif;
+  font-size: 30px;
+  font-weight: 300;
+  color: #f2ede6;
+  margin-top: 10px;
+}
+.cc-lead {
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 13px;
+  font-weight: 300;
+  line-height: 1.7;
+  color: rgba(242, 237, 230, 0.6);
+  margin-top: 12px;
+}
+.cc-rows { margin-top: 22px; }
+.cc-row { padding: 18px 0; border-top: 1px solid rgba(242, 237, 230, 0.1); }
+.cc-row-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.cc-row-title {
+  font-family: var(--font-cormorant), serif;
+  font-size: 19px;
+  font-weight: 400;
+  color: #f2ede6;
+}
+.cc-row-body {
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 12.5px;
+  font-weight: 300;
+  line-height: 1.7;
+  color: rgba(242, 237, 230, 0.55);
+  margin-top: 7px;
+}
+.cc-always {
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(182, 154, 120, 0.75);
+}
+
+/* toggle switch */
+.cc-switch {
+  position: relative;
+  width: 46px; height: 26px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: rgba(242, 237, 230, 0.14);
+  border: 1px solid rgba(242, 237, 230, 0.16);
+  cursor: pointer;
+  transition: background 0.25s ease, border-color 0.25s ease;
+}
+.cc-switch[data-on="true"] { background: #b69a78; border-color: #b69a78; }
+.cc-knob {
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: #f2ede6;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.cc-switch[data-on="true"] .cc-knob { transform: translateX(20px); }
+
+.cc-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
+.cc-actions .cc-btn { flex: 1 1 auto; }
+
+/* buttons shared by banner + panel */
+.cc-btn {
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 13px 20px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+}
+.cc-btn--ghost {
+  background: transparent;
+  color: rgba(242, 237, 230, 0.8);
+  border: 1px solid rgba(242, 237, 230, 0.28);
+}
+.cc-btn--ghost:hover { border-color: #b69a78; color: #f2ede6; }
+.cc-btn--primary {
+  background: #b69a78;
+  color: #1c1c1a;
+  border: 1px solid #b69a78;
+}
+.cc-btn--primary:hover { background: #c8ad8c; border-color: #c8ad8c; }
+.cc-link { color: #b69a78; text-decoration: underline; text-underline-offset: 2px; }
+.cc-link:hover { color: #c8ad8c; }
+
+/* ── consent-gated Google Maps placeholder (on /kontakt) ────────────────── */
+.ct-map-consent {
+  /* stands in for the iframe, so it must carry the same height itself —
+     .ct-map has no intrinsic height without it and would collapse */
+  min-height: clamp(300px, 46vh, 460px);
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 14px;
+  padding: 32px;
+  background:
+    radial-gradient(120% 120% at 50% 0%, rgba(182, 154, 120, 0.08), transparent 60%),
+    #16170f;
+}
+.ct-map-consent-title {
+  font-family: var(--font-cormorant), serif;
+  font-size: 26px;
+  font-weight: 300;
+  color: #f2ede6;
+}
+.ct-map-consent-body {
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 13px;
+  font-weight: 300;
+  line-height: 1.7;
+  color: rgba(242, 237, 230, 0.62);
+  max-width: 440px;
+}
+.ct-map-consent-btns { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; justify-content: center; margin-top: 4px; }
+.ct-map-consent-btn {
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 13px 24px;
+  background: #b69a78;
+  color: #1c1c1a;
+  cursor: pointer;
+  transition: background 0.25s ease;
+}
+.ct-map-consent-btn:hover { background: #c8ad8c; }
+.ct-map-consent-link {
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #b69a78;
+  transition: color 0.25s ease;
+}
+.ct-map-consent-link:hover { color: #c8ad8c; }
+.ct-map-consent-fine {
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 11px;
+  font-weight: 300;
+  color: rgba(242, 237, 230, 0.4);
+  margin-top: 2px;
+}
+
+/* ── legal document pages (privacy + cookies) ───────────────────────────── */
+.legal-lead {
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 16px;
+  font-weight: 300;
+  line-height: 1.75;
+  color: rgba(242, 237, 230, 0.62);
+  max-width: 620px;
+  margin-top: 20px;
+}
+.legal-notice {
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.7;
+  color: #7a5c31;
+  background: rgba(182, 154, 120, 0.12);
+  border-left: 2px solid #b69a78;
+  padding: 14px 18px;
+  margin-bottom: 40px;
+}
+.legal-body {
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 15px;
+  font-weight: 300;
+  line-height: 1.85;
+  color: rgba(28, 28, 26, 0.82);
+}
+.legal-body h2 {
+  font-family: var(--font-cormorant), serif;
+  font-size: clamp(24px, 3vw, 32px);
+  font-weight: 400;
+  line-height: 1.2;
+  color: #1c1c1a;
+  margin: 48px 0 16px;
+  padding-top: 30px;
+  border-top: 1px solid rgba(28, 28, 26, 0.14);
+}
+.legal-body h2:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+.legal-body h3 {
+  font-family: var(--font-cormorant), serif;
+  font-size: 21px;
+  font-weight: 500;
+  color: #1c1c1a;
+  margin: 30px 0 10px;
+}
+.legal-body p { margin: 0 0 16px; }
+.legal-body strong { font-weight: 500; color: #1c1c1a; }
+.legal-body a {
+  color: #8f7658;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.25s ease;
+}
+.legal-body a:hover { color: #b69a78; }
+.legal-body ul { margin: 0 0 16px; padding: 0; list-style: none; }
+.legal-body li {
+  position: relative;
+  padding-left: 20px;
+  margin-bottom: 9px;
+}
+.legal-body li::before {
+  content: "";
+  position: absolute;
+  left: 2px; top: 12px;
+  width: 6px; height: 6px;
+  border: 1px solid #b69a78;
+  transform: rotate(45deg);
+}
+.legal-body code {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  font-size: 0.86em;
+  background: rgba(28, 28, 26, 0.07);
+  padding: 1px 6px;
+  border-radius: 2px;
+}
+.legal-tablewrap { overflow-x: auto; margin: 0 0 20px; }
+.legal-table {
+  width: 100%;
+  min-width: 540px;
+  border-collapse: collapse;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.legal-table th {
+  text-align: left;
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(28, 28, 26, 0.5);
+  padding: 0 16px 10px 0;
+  border-bottom: 1px solid rgba(28, 28, 26, 0.22);
+}
+.legal-table td {
+  vertical-align: top;
+  padding: 14px 16px 14px 0;
+  border-bottom: 1px solid rgba(28, 28, 26, 0.1);
+  color: rgba(28, 28, 26, 0.78);
+}
+.legal-btn {
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 12px 22px;
+  background: #1c1c1a;
+  color: #f2ede6;
+  cursor: pointer;
+  transition: background 0.25s ease;
+}
+.legal-btn:hover { background: #33322d; }
+.legal-btn--inline {
+  display: inline;
+  padding: 0;
+  background: none;
+  color: #8f7658;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: inherit;
+  font-weight: 300;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.legal-btn--inline:hover { background: none; color: #b69a78; }
