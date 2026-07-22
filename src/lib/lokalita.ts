@@ -25,7 +25,8 @@ export type CatKey =
   | "priroda"
   | "zdravie"
   | "doprava"
-  | "kultura";
+  | "kultura"
+  | "sluzby";
 
 export const CATEGORIES: Record<CatKey, { label: string; color: string }> = {
   priroda: { label: "Príroda & šport", color: "#7CA36C" },
@@ -35,6 +36,7 @@ export const CATEGORIES: Record<CatKey, { label: string; color: string }> = {
   zdravie: { label: "Zdravie", color: "#C77A6E" },
   doprava: { label: "Doprava", color: "#8AA8C1" },
   kultura: { label: "Kultúra", color: "#B79AC2" },
+  sluzby: { label: "Služby & úrady", color: "#A79A88" },
 };
 
 export const MODES: Record<Mode, { label: string; verb: string }> = {
@@ -92,7 +94,7 @@ export const POIS: Poi[] = [
   { name: "Materská škola", cat: "vzdelanie", slug: "materska", dir: 162, walk: 7, bike: 3, car: 3, note: "Škôlka v dochádzkovej vzdialenosti pre najmenších.", maps: "materská škola Nitra" },
   { name: "Základná škola", cat: "vzdelanie", slug: "zakladna", dir: 138, walk: 10, bike: 4, car: 4, note: "Deti do školy bezpečne a pešo.", maps: "základná škola Nitra" },
   { name: "Gymnázium", cat: "vzdelanie", slug: "gymnazium", dir: 62, walk: 16, bike: 7, car: 6, note: "Stredná škola na dosah pre starších študentov.", maps: "gymnázium Nitra" },
-  { name: "Univerzita (UKF · SPU)", cat: "vzdelanie", slug: "univerzita", lat: 48.30871, lng: 18.09193, dir: 39, walk: 8, bike: 3, car: 3, note: "Dve univerzity a študentský život v meste.", maps: "Univerzita Konštantína Filozofa v Nitre" },
+  { name: "Univerzita UKF", cat: "vzdelanie", slug: "univerzita", lat: 48.30871, lng: 18.09193, dir: 39, walk: 8, bike: 3, car: 3, note: "Univerzita Konštantína Filozofa — kampus pár minút pešo.", maps: "Univerzita Konštantína Filozofa v Nitre" },
 
   // Zdravie
   { name: "Lekáreň", cat: "zdravie", slug: "lekaren", dir: 214, walk: 5, bike: 2, car: 2, note: "Lieky a prvá pomoc pár minút od domu.", maps: "lekáreň Nitra" },
@@ -113,6 +115,9 @@ export const POIS: Poi[] = [
   // Ďalšie body v bezprostrednej blízkosti (Staré Mesto)
   { name: "Mestská tržnica", cat: "nakupy", slug: "trznica", lat: 48.30772, lng: 18.0847, dir: 322, walk: 6, bike: 2, car: 3, note: "Čerstvá zelenina a lokálne potraviny pár minút pešo.", maps: "Mestská tržnica Nitra" },
   { name: "Kalvária", cat: "priroda", slug: "kalvaria", lat: 48.29643, lng: 18.08933, dir: 173, walk: 17, bike: 5, car: 4, note: "Pútnický vŕšok s lesoparkom a výhľadom nad mestom.", maps: "Kalvária Nitra" },
+  { name: "Billa", cat: "nakupy", slug: "billa", lat: 48.30723, lng: 18.08699, dir: 347, walk: 4, bike: 2, car: 2, note: "Denný nákup pár minút pešo, priamo na Štefánikovej.", maps: "Billa Štefánikova Nitra" },
+  { name: "SPU", cat: "vzdelanie", slug: "spu", lat: 48.3047, lng: 18.09571, dir: 95, walk: 10, bike: 3, car: 3, note: "Slovenská poľnohospodárska univerzita — kampus na dosah.", maps: "Slovenská poľnohospodárska univerzita v Nitre" },
+  { name: "Okresný úrad", cat: "sluzby", slug: "urad", lat: 48.30451, lng: 18.0854, dir: 246, walk: 3, bike: 2, car: 2, note: "Úradné veci vybavíte pár minút pešo od domu.", maps: "Okresný úrad Nitra" },
 ];
 
 /** Google Maps directions to a place — user's location as origin. */

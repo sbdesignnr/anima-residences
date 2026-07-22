@@ -34,7 +34,7 @@ type Photo = { src: string; avif: string; webp: string; lqip: string; width: num
 const PHOTOS = photosRaw as Record<string, Photo>;
 
 /** The flagship places shown on the map — those that carry real coordinates. */
-const FEATURED = ["sihot", "zobor", "univerzita", "nabrezie", "mlyny", "hrad", "centrum", "synagoga", "trznica", "kalvaria"];
+const FEATURED = ["sihot", "zobor", "univerzita", "spu", "nabrezie", "mlyny", "billa", "trznica", "hrad", "centrum", "synagoga", "urad", "kalvaria"];
 const featuredPois = () =>
   FEATURED.map((s) => POIS.find((p) => p.slug === s)).filter(
     (p): p is Poi => !!p && p.lat != null && p.lng != null
@@ -51,6 +51,7 @@ const CAT_ICON: Record<CatKey, React.ReactNode> = {
   zdravie: <><path d="M10 4h4v6h6v4h-6v6h-4v-6H4v-4h6V4z" /></>,
   doprava: <><rect x="4" y="4" width="16" height="12" rx="2" /><path d="M4 11h16" /><circle cx="8" cy="18" r="1.5" /><circle cx="16" cy="18" r="1.5" /></>,
   kultura: <><path d="M4 9l8-5 8 5" /><path d="M6 9.5v8M10 9.5v8M14 9.5v8M18 9.5v8" /><path d="M3.5 20.5h17" /></>,
+  sluzby: <><rect x="5" y="3" width="14" height="18" rx="1" /><path d="M8.5 8h7M8.5 12h7M8.5 16h4" /></>,
 };
 function CatGlyph({ cat, size = 22 }: { cat: CatKey; size?: number }) {
   return (
