@@ -1,28 +1,24 @@
 /**
  * The single source of truth for the legal documents (privacy policy + cookie
- * policy) and the consent UI. Every legal page and notice reads the controller's
- * identity from here, so it is spelled once and finalised in one place.
+ * policy) and the consent UI. Every legal page reads the controller's identity
+ * from here, so it is spelled once and changed in one place.
  *
- * ─────────────────────────────────────────────────────────────────────────────
- *  ⚠️  TO FINALISE — replace the four "[doplniť …]" values below with the real
- *      identification data of the DATA CONTROLLER (the company selling the
- *      project). These are the only things that cannot be inferred; everything
- *      else in the documents is complete. While a placeholder remains, the legal
- *      pages show a discreet "document is being finalised" notice automatically.
- * ─────────────────────────────────────────────────────────────────────────────
+ * If any identity value is ever blanked back to a "[doplniť …]" placeholder,
+ * LEGAL_INCOMPLETE flips true and the legal pages show a discreet "document is
+ * being finalised" notice automatically.
  */
 
 export const LEGAL = {
-  /** Obchodné meno prevádzkovateľa (napr. „Anima Development s. r. o."). */
-  controllerName: "[doplniť: obchodné meno prevádzkovateľa]",
+  /** Obchodné meno prevádzkovateľa. */
+  controllerName: "ST BRAND s. r. o.",
   /** Sídlo — ulica a číslo, PSČ, mesto. */
-  seat: "[doplniť: sídlo prevádzkovateľa]",
+  seat: "Hollého 12, 949 01 Nitra",
   /** IČO. */
-  ico: "[doplniť: IČO]",
+  ico: "53714679",
   /** DIČ — nepovinné; nechajte prázdne, ak sa nemá zobraziť. */
-  dic: "",
-  /** Zápis: napr. „Obchodný register Okresného súdu Nitra, oddiel: Sro, vložka č. …". */
-  register: "[doplniť: zápis v obchodnom / živnostenskom registri]",
+  dic: "2121468195",
+  /** Zápis v obchodnom / živnostenskom registri. */
+  register: "Zapísaná v Obchodnom registri Okresného súdu Nitra, oddiel: Sro, vložka č. 62518/N",
 
   /** Contact particulars — these are known and final. */
   email: "info@animaresidences.sk",

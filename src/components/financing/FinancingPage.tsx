@@ -27,7 +27,7 @@ const STEPS = [
   {
     t: "Konzultácia",
     when: "1 stretnutie",
-    d: "Prejdeme príjem, výdavky a to, na čo reálne dosiahnete. Nezáväzne a zadarmo — aj keď z toho nakoniec nič nebude.",
+    d: "Prejdeme príjem, výdavky a to, na čo reálne dosiahnete.",
   },
   {
     t: "Výber banky",
