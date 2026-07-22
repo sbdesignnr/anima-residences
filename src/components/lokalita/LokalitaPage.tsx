@@ -109,6 +109,46 @@ function Places() {
   );
 }
 
+/**
+ * A cinematic full-bleed beat between the map and the environment blocks — the
+ * emotional turn: this isn't just an address, it's a place to live and grow up.
+ * The image drifts on scroll (parallax) behind a short line of copy.
+ */
+function Life() {
+  const ref = useRef<HTMLElement>(null);
+  useGSAP(
+    () => {
+      gsap.fromTo(
+        ".lf-img",
+        { yPercent: -8 },
+        { yPercent: 8, ease: "none", scrollTrigger: { trigger: ref.current, start: "top bottom", end: "bottom top", scrub: true } }
+      );
+      gsap.fromTo(".lf-rise", { y: 26, opacity: 0 }, { y: 0, opacity: 1, duration: 1, stagger: 0.12, ease: "power3.out", scrollTrigger: { trigger: ref.current, start: "top 72%" } });
+    },
+    { scope: ref }
+  );
+  return (
+    <section ref={ref} className="relative w-full overflow-hidden" style={{ backgroundColor: "#0f100a", height: "clamp(440px, 82vh, 780px)" }}>
+      <div className="lf-img absolute" style={{ top: "-12%", bottom: "-12%", left: 0, right: 0 }}>
+        <Pic slug="rodina" alt="Deti sa hrajú na ihrisku v parku pri domove" />
+      </div>
+      <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(9,10,6,0.9) 0%, rgba(9,10,6,0.32) 46%, rgba(9,10,6,0.42) 100%)" }} aria-hidden />
+      <div className="relative mx-auto flex h-full max-w-[1400px] items-end px-[6%]" style={{ paddingBottom: "clamp(48px, 9vh, 96px)" }}>
+        <div className="max-w-[620px]">
+          <p className="lf-rise annot" style={{ fontSize: 10, color: GOLD, letterSpacing: "0.28em" }}>ŽIVOT V OKOLÍ</p>
+          <h2 className="lf-rise mt-5" style={{ fontFamily: "var(--font-cormorant)", fontSize: "clamp(30px, 4.4vw, 58px)", fontWeight: 300, lineHeight: 1.06, letterSpacing: "-0.01em", color: STONE }}>
+            Miesto, kde sa dá vyrastať.
+          </h2>
+          <p className="lf-rise mt-6" style={{ fontFamily: "var(--font-dm-sans)", fontSize: 17, fontWeight: 300, lineHeight: 1.85, color: "rgba(242,237,230,0.82)", maxWidth: 500 }}>
+            Ihriská, park a zeleň pár krokov od dverí. Najkrajšie chvíle detstva
+            sa nedejú za obrazovkou — dejú sa vonku, na dosah ruky.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function Story() {
   const ref = useRef<HTMLElement>(null);
   useGSAP(
@@ -176,6 +216,7 @@ export default function LokalitaPage() {
     <>
       <Header />
       <Places />
+      <Life />
       <Story />
     </>
   );
