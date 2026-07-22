@@ -18,27 +18,25 @@ const isPhone = () => window.matchMedia("(max-width: 767px)").matches;
 const HERO_MOBILE = media.heroMobile;
 const MOBILE_FILL = HERO_MOBILE.w / HERO_MOBILE.h <= 0.62;
 
-const SOURCES: { src: string; type: string; media: string }[] = [
-  // Both scrub sources are H.264 only — H.264 seeks smoothly in every browser
-  // (Safari included). No HEVC sibling: an old .hevc would win on iOS Safari and
-  // strand the phone on the previous cut, so the new file is the single source.
-  { src: "/videos/hero_mobile.mp4", type: "video/mp4", media: "(max-width: 767px)" },
-  { src: "/videos/hero_desktop.mp4", type: "video/mp4", media: "(min-width: 768px)" },
-];
-
-const posterFor = () =>
-  isPhone() ? "/images/hero-poster-mobile.avif" : "/images/hero-poster.avif";
-
-/** Every source is encoded at this rate with every frame a keyframe, so scroll
- *  quantises to whole frames and each seek is a single-frame decode. */
-const VIDEO_FPS = 12;
+/**
+ * The opening film is a PRELOADED IMAGE SEQUENCE, not a scrubbed <video>.
+ *
+ * Seeking a paused video by scroll never runs smooth: every seek decodes from a
+ * keyframe, the browser cannot keep up, and it stutters. Frames drawn straight
+ * from memory have no decode-on-seek, so the scrub stays buttery on every device
+ * — the whole point. The frames are cut from the ORIGINAL master, so the picture
+ * quality is unchanged.
+ */
+const FRAMES = {
+  desktop: { dir: "/images/hero-frames/desktop", count: 112 },
+  mobile: { dir: "/images/hero-frames/mobile", count: 89 },
+};
 
 /** The share of the pinned scroll spent on the opening, before the film scrubs on. */
 const INTRO = 0.5;
 
 export default function Hero() {
   const heroRef = useRef<HTMLElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
   const framesRef = useRef<HTMLCanvasElement>(null);
   const topRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -71,88 +69,81 @@ export default function Hero() {
   // ── Scroll: the seam sparks, the plaster splits, the film is revealed ──
   useGSAP(
     () => {
-      const video = videoRef.current;
       const sec = heroRef.current;
-      if (!video || !sec) return;
-
-      video.poster = posterFor();
       const canvas = framesRef.current;
-      video.muted = true;
-      video.playsInline = true;
-      video.setAttribute("playsinline", "");
-      video.setAttribute("webkit-playsinline", "");
-      video.pause();
+      if (!sec || !canvas) return;
 
-      // Draw the video's CURRENT frame onto the canvas (cover-fit). The canvas is
-      // what the visitor sees, so the picture updates even where Safari would not
-      // repaint a paused <video> on seek.
-      const draw = () => {
-        if (!canvas) return;
+      const cfg = isPhone() ? FRAMES.mobile : FRAMES.desktop;
+      const N = cfg.count;
+      const framePath = (i: number) => `${cfg.dir}/${String(i + 1).padStart(3, "0")}.webp`;
+      const imgs: HTMLImageElement[] = new Array(N);
+
+      /** Which frame the canvas currently shows (−1 = nothing yet). */
+      let curIdx = -1;
+
+      // Draw a frame onto the canvas (cover-fit). If the exact frame has not
+      // loaded yet, fall back to the nearest one that has — so scrubbing is never
+      // blank, only progressively sharper as the sequence streams in.
+      const draw = (idx: number) => {
+        let img: HTMLImageElement | undefined = imgs[idx];
+        if (!img || !img.complete || !img.naturalWidth) {
+          img = undefined;
+          for (let d = 1; d < N; d++) {
+            const lo = imgs[idx - d];
+            if (lo && lo.complete && lo.naturalWidth) { img = lo; break; }
+            const hi = imgs[idx + d];
+            if (hi && hi.complete && hi.naturalWidth) { img = hi; break; }
+          }
+        }
+        if (!img || !img.naturalWidth) return;
         const ctx = canvas.getContext("2d");
-        if (!ctx || !video.videoWidth) return;
-        // The film is 1080p; a Retina canvas is larger, so ask for the best
+        if (!ctx) return;
+        // The frames are 1080p; a Retina canvas is larger, so ask for the best
         // resampling the browser has rather than the default (fastest) one.
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = "high";
-        const W = canvas.width;
-        const H = canvas.height;
-        const s = Math.max(W / video.videoWidth, H / video.videoHeight);
-        const dw = video.videoWidth * s;
-        const dh = video.videoHeight * s;
-        try {
-          ctx.drawImage(video, (W - dw) / 2, (H - dh) / 2, dw, dh);
-        } catch {
-          /* frame not ready */
-        }
+        const W = canvas.width, H = canvas.height;
+        const s = Math.max(W / img.naturalWidth, H / img.naturalHeight);
+        const dw = img.naturalWidth * s, dh = img.naturalHeight * s;
+        ctx.drawImage(img, (W - dw) / 2, (H - dh) / 2, dw, dh);
       };
+
+      const ready = (idx: number) => {
+        const im = imgs[idx];
+        return !!im && im.complete && im.naturalWidth > 0;
+      };
+
+      // Scroll → frame index. Only redraws when the whole-frame index changes, so
+      // one image is painted per step — instant, with nothing to decode or seek.
+      const scrubTo = (f: number) => {
+        const idx = Math.max(0, Math.min(N - 1, Math.round(f)));
+        if (idx === curIdx && ready(idx)) return;
+        curIdx = idx;
+        draw(idx);
+      };
+
       const sizeCanvas = () => {
-        if (!canvas) return;
-        // Size from the viewport (the hero is full-screen) rather than the
-        // element box, which may not be laid out yet when this first runs.
         const d = Math.min(window.devicePixelRatio || 1, 2);
         canvas.width = Math.max(1, Math.round(window.innerWidth * d));
         canvas.height = Math.max(1, Math.round(window.innerHeight * d));
-        draw();
+        draw(Math.max(0, curIdx));
       };
 
-      // Wake the decoder once — Safari won't produce a seeked frame until a play
-      // has happened — then hold. The film never auto-plays; scroll drives it.
-      let primed = false;
-      const prime = () => {
-        if (primed) return;
-        const p = video.play();
-        if (p) {
-          p.then(() => {
-            video.pause();
-            primed = true;
-            draw();
-          }).catch(() => {});
-        } else {
-          video.pause();
-          primed = true;
-        }
-      };
+      // Kick off every frame at once (HTTP/2 multiplexes them). The first frame
+      // is high-priority so the opening paints immediately; as each other frame
+      // arrives it repaints the current one if it just replaced a fallback.
+      for (let i = 0; i < N; i++) {
+        const img = new Image();
+        img.decoding = "async";
+        if (i === 0) img.setAttribute("fetchpriority", "high");
+        img.onload = () => {
+          if (curIdx === -1) { curIdx = 0; draw(0); }
+          else if (i === curIdx) draw(curIdx);
+        };
+        img.src = framePath(i);
+        imgs[i] = img;
+      }
 
-      // Scroll → target time. Seeks are SERIALISED: we only issue the next seek
-      // once the last finished, always toward the latest target — so a slow
-      // Safari seek can never strand us on an old frame.
-      const target = { t: 0 };
-      const applyTarget = () => {
-        if (video.readyState < 2 || video.seeking) return;
-        const d = video.duration;
-        if (!Number.isFinite(d) || d <= 0) return;
-        const maxFrame = Math.floor(d * VIDEO_FPS) - 1;
-        const frame = Math.max(0, Math.min(Math.round(target.t * VIDEO_FPS), maxFrame));
-        const ct = (frame + 0.5) / VIDEO_FPS;
-        if (Math.abs(video.currentTime - ct) < 0.5 / VIDEO_FPS) return;
-        video.currentTime = ct;
-      };
-      const onSeeked = () => {
-        draw();
-        applyTarget();
-      };
-      video.addEventListener("seeked", onSeeked);
-      video.addEventListener("loadeddata", draw);
       window.addEventListener("resize", sizeCanvas);
       sizeCanvas();
 
@@ -172,24 +163,13 @@ export default function Hero() {
           pin: true,
           anticipatePin: 1,
           invalidateOnRefresh: true,
-          onToggle: (self) => {
-            if (self.isActive) prime();
-          },
         },
       });
 
       // The film scrubs across the WHOLE pinned scroll: it is revealed as the
       // plaster parts and then advances frame-by-frame with the scroll.
-      tl.to(
-        target,
-        {
-          t: () => (Number.isFinite(video.duration) ? video.duration : 0),
-          ease: "none",
-          duration: 1,
-          onUpdate: applyTarget,
-        },
-        0
-      );
+      const state = { f: 0 };
+      tl.to(state, { f: N - 1, ease: "none", duration: 1, onUpdate: () => scrubTo(state.f) }, 0);
 
       if (reduce) {
         tl.to([topRef.current], { yPercent: -100, ease: "none", duration: 1 }, 0)
@@ -213,29 +193,10 @@ export default function Hero() {
           .to({}, { duration: 1 - INTRO }, INTRO);
       }
 
-      const onLoaded = () => {
-        prime();
-        sizeCanvas();
-        ScrollTrigger.refresh();
-      };
-      if (video.readyState >= 1) onLoaded();
-      video.addEventListener("loadedmetadata", onLoaded);
-
-      // Prime on the first real interaction of any kind — wheel/trackpad scroll
-      // included, since that is how a desktop visitor first moves the page.
-      const onGesture = () => {
-        prime();
-        applyTarget();
-      };
-      const gestures = ["wheel", "pointerdown", "touchstart", "keydown"];
-      gestures.forEach((g) => window.addEventListener(g, onGesture, { once: true, passive: true }));
+      ScrollTrigger.refresh();
 
       return () => {
-        video.removeEventListener("loadedmetadata", onLoaded);
-        video.removeEventListener("seeked", onSeeked);
-        video.removeEventListener("loadeddata", draw);
         window.removeEventListener("resize", sizeCanvas);
-        gestures.forEach((g) => window.removeEventListener(g, onGesture));
       };
     },
     { scope: heroRef }
@@ -248,22 +209,16 @@ export default function Hero() {
       className={`relative w-full overflow-hidden bg-charcoal ${MOBILE_FILL ? "hero--fill" : "hero--letterbox"}`}
       style={{ height: "100svh", ["--m-aspect" as string]: `${HERO_MOBILE.w} / ${HERO_MOBILE.h}` }}
     >
-      <link rel="preload" as="image" href="/images/hero-poster.avif" type="image/avif" media="(min-width: 768px)" fetchPriority="high" />
-      <link rel="preload" as="image" href="/images/hero-poster-mobile.avif" type="image/avif" media="(max-width: 767px)" fetchPriority="high" />
+      <link rel="preload" as="image" href="/images/hero-frames/desktop/001.webp" type="image/webp" media="(min-width: 768px)" fetchPriority="high" />
+      <link rel="preload" as="image" href="/images/hero-frames/mobile/001.webp" type="image/webp" media="(max-width: 767px)" fetchPriority="high" />
 
       <h1 className="sr-only">Anima Residences</h1>
 
       {/* z1 — the film (with its grade), revealed as the plaster parts and
-             scrubbed frame-by-frame by the scroll — never auto-played */}
+             scrubbed frame-by-frame by the scroll — a preloaded image sequence */}
       <div className="hero-openfilm" aria-hidden>
-        <video ref={videoRef} className="hero-openvid" autoPlay={false} muted playsInline controls={false} preload="auto" aria-hidden>
-          {SOURCES.map((s) => (
-            <source key={s.src} src={s.src} type={s.type} media={s.media} />
-          ))}
-        </video>
-        {/* the canvas the visitor actually sees — each seeked frame is drawn here,
-            so the picture advances on scroll even where Safari would not repaint
-            the paused <video> itself */}
+        {/* the canvas the visitor actually sees — each scroll step paints one
+            preloaded frame here, so the picture advances with zero decode lag */}
         <canvas ref={framesRef} className="hero-frames" aria-hidden />
         <div className="cine-vignette" aria-hidden />
         <div ref={grainRef} className="cine-grain" style={{ opacity: 0 }} aria-hidden />
