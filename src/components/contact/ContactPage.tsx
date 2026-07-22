@@ -213,15 +213,15 @@ export default function ContactPage() {
 
               <dl className="mt-10">
                 <Row head="Adresa">
-                  <a href={COMPANY.mapHref} target="_blank" rel="noopener noreferrer" className="ct-link">
+                  <a href={COMPANY.mapHref} target="_blank" rel="noopener noreferrer" className="ct-link" style={{ fontSize: "inherit" }}>
                     {COMPANY.street}, {COMPANY.city}
                   </a>
                 </Row>
                 <Row head="Telefón">
-                  <a href={`tel:${COMPANY.phoneHref}`} className="ct-link">{COMPANY.phone}</a>
+                  <a href={`tel:${COMPANY.phoneHref}`} className="ct-link" style={{ fontSize: "inherit" }}>{COMPANY.phone}</a>
                 </Row>
                 <Row head="E-mail">
-                  <a href={`mailto:${COMPANY.email}`} className="ct-link">{COMPANY.email}</a>
+                  <a href={`mailto:${COMPANY.email}`} className="ct-link" style={{ fontSize: "inherit" }}>{COMPANY.email}</a>
                 </Row>
                 <Row head="Otváracie hodiny">
                   Po – Pia · 9:00 – 17:00
