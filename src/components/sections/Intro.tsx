@@ -100,7 +100,7 @@ export default function Intro() {
           <Mask>
             <p
               className="max-w-[440px]"
-              style={{ fontFamily: "var(--font-dm-sans)", fontSize: "15px", fontWeight: 300, lineHeight: 2.1, letterSpacing: "0.02em", color: "rgba(28,28,26,0.7)" }}
+              style={{ fontFamily: "var(--font-dm-sans)", fontSize: "17px", fontWeight: 300, lineHeight: 2.1, letterSpacing: "0.02em", color: "rgba(28,28,26,0.7)" }}
             >
               Anima Residences nevznikla z tabuľky. Vznikla z otázky, ako sa v byte
               naozaj žije — kde ráno dopadá svetlo, kadiaľ prechádza vzduch, čo vidíte,

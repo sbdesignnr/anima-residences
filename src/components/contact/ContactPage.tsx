@@ -109,7 +109,7 @@ export default function ContactPage() {
 
             <p
               className="ct-rise max-w-[430px] lg:justify-self-end"
-              style={{ fontFamily: "var(--font-dm-sans)", fontSize: "15px", fontWeight: 300, lineHeight: 2.1, letterSpacing: "0.02em", color: "rgba(242,237,230,0.68)" }}
+              style={{ fontFamily: "var(--font-dm-sans)", fontSize: "17px", fontWeight: 300, lineHeight: 2.1, letterSpacing: "0.02em", color: "rgba(242,237,230,0.68)" }}
             >
               Pôdorys povie, koľko má byt metrov. Nepovie, ako doň ráno padá
               svetlo. Napíšte nám a prejdeme si ho spolu — nezáväzne, aj cez
@@ -133,7 +133,7 @@ export default function ContactPage() {
                 <div className="ct-rise mt-10 flex flex-col items-start gap-4 border p-10" style={{ borderColor: "rgba(182,154,120,0.4)", background: "rgba(182,154,120,0.06)" }}>
                   <ArchMark size={26} color={GOLD} />
                   <p style={{ fontFamily: "var(--font-cormorant)", fontSize: "32px", fontWeight: 300 }}>Ďakujeme.</p>
-                  <p style={{ fontFamily: "var(--font-dm-sans)", fontSize: "15px", fontWeight: 300, lineHeight: 1.9, color: "rgba(28,28,26,0.7)" }}>
+                  <p style={{ fontFamily: "var(--font-dm-sans)", fontSize: "17px", fontWeight: 300, lineHeight: 1.9, color: "rgba(28,28,26,0.7)" }}>
                     Správu máme. Ozveme sa vám do jedného pracovného dňa — a ak to
                     súri, zavolajte rovno na {COMPANY.phone}.
                   </p>
@@ -197,7 +197,7 @@ export default function ContactPage() {
                     <span className="annot" style={{ fontSize: "11px", fontWeight: 500 }}>
                       {state === "sending" ? "ODOSIELAM…" : "ODOSLAŤ DOPYT"}
                     </span>
-                    <span aria-hidden className="transition-transform duration-300 group-hover:translate-x-1" style={{ fontFamily: "var(--font-dm-sans)", fontSize: "15px" }}>
+                    <span aria-hidden className="transition-transform duration-300 group-hover:translate-x-1" style={{ fontFamily: "var(--font-dm-sans)", fontSize: "17px" }}>
                       →
                     </span>
                   </button>
@@ -358,7 +358,7 @@ function Row({ head, children }: { head: string; children: React.ReactNode }) {
       </dt>
       <dd
         className="sm:text-right"
-        style={{ fontFamily: "var(--font-dm-sans)", fontSize: "15px", fontWeight: 300, lineHeight: 1.85, color: "rgba(28,28,26,0.82)" }}
+        style={{ fontFamily: "var(--font-dm-sans)", fontSize: "17px", fontWeight: 300, lineHeight: 1.85, color: "rgba(28,28,26,0.82)" }}
       >
         {children}
       </dd>

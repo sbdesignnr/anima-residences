@@ -54,7 +54,7 @@ function Header() {
         </h1>
         <p
           className="oh-rise mt-8 max-w-[540px]"
-          style={{ fontFamily: "var(--font-dm-sans)", fontSize: 16, fontWeight: 300, lineHeight: 1.9, letterSpacing: "0.01em", color: "rgba(242,237,230,0.66)" }}
+          style={{ fontFamily: "var(--font-dm-sans)", fontSize: 18, fontWeight: 300, lineHeight: 1.85, letterSpacing: "0.01em", color: "rgba(242,237,230,0.66)" }}
         >
           Desať bytov v štyroch podlažiach — od tichých dvojizbových po priestranný
           strešný trojizbový s terasou. Projekt je vypredaný; prezrite si podlažia

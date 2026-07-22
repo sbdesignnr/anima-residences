@@ -83,7 +83,7 @@ export default function Contact() {
             <div style={{ overflow: "hidden" }}>
               <p
                 className="cn-reveal mt-8 max-w-[460px]"
-                style={{ fontFamily: "var(--font-dm-sans)", fontSize: "15px", fontWeight: 300, lineHeight: 2.1, letterSpacing: "0.02em", color: "rgba(242,237,230,0.68)" }}
+                style={{ fontFamily: "var(--font-dm-sans)", fontSize: "17px", fontWeight: 300, lineHeight: 2.1, letterSpacing: "0.02em", color: "rgba(242,237,230,0.68)" }}
               >
                 Pôdorys povie, koľko má byt metrov. Nepovie, ako doň ráno padá
                 svetlo. Prejdeme si ho s vami — nezáväzne, aj cez víkend.
@@ -95,7 +95,7 @@ export default function Contact() {
                 <span className="annot" style={{ fontSize: "11px", fontWeight: 500 }}>
                   DOHODNÚŤ OBHLIADKU
                 </span>
-                <span aria-hidden className="transition-transform duration-300 group-hover:translate-x-1" style={{ fontFamily: "var(--font-dm-sans)", fontSize: "15px" }}>
+                <span aria-hidden className="transition-transform duration-300 group-hover:translate-x-1" style={{ fontFamily: "var(--font-dm-sans)", fontSize: "17px" }}>
                   →
                 </span>
               </Link>
@@ -136,7 +136,7 @@ function Fact({ head, children }: { head: string; children: React.ReactNode }) {
       </dt>
       <dd
         className="sm:text-right"
-        style={{ fontFamily: "var(--font-dm-sans)", fontSize: "15px", fontWeight: 300, lineHeight: 1.8, color: "rgba(242,237,230,0.85)" }}
+        style={{ fontFamily: "var(--font-dm-sans)", fontSize: "17px", fontWeight: 300, lineHeight: 1.8, color: "rgba(242,237,230,0.85)" }}
       >
         {children}
       </dd>

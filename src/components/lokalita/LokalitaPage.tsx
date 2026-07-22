@@ -60,7 +60,7 @@ function Header() {
         <h1 className="lh-rise mt-7" style={{ fontFamily: "var(--font-cormorant)", fontSize: "clamp(46px, 9vw, 128px)", fontWeight: 300, lineHeight: 0.98, letterSpacing: "-0.015em", color: STONE }}>
           Lokalita
         </h1>
-        <p className="lh-rise mt-8 max-w-[600px]" style={{ fontFamily: "var(--font-dm-sans)", fontSize: 16, fontWeight: 300, lineHeight: 1.9, letterSpacing: "0.01em", color: "rgba(242,237,230,0.72)" }}>
+        <p className="lh-rise mt-8 max-w-[600px]" style={{ fontFamily: "var(--font-dm-sans)", fontSize: 18, fontWeight: 300, lineHeight: 1.85, letterSpacing: "0.01em", color: "rgba(242,237,230,0.72)" }}>
           V srdci nitrianskeho Starého Mesta — na Smetanovej 26, kúsok od
           Svätoplukovho námestia a s OC Mlyny hneď za rohom. Obchody, tržnica,
           škola aj univerzita na pár minút pešo, rieka a mestský park na dosah.
@@ -94,7 +94,7 @@ function Places() {
         <h2 className="lo-rise max-w-[760px]" style={{ fontFamily: "var(--font-cormorant)", fontSize: "clamp(30px, 4.6vw, 56px)", fontWeight: 300, lineHeight: 1.04, color: STONE }}>
           Celé okolie na jednej mape
         </h2>
-        <p className="lo-rise mt-5 max-w-[600px]" style={{ fontFamily: "var(--font-dm-sans)", fontSize: 15, fontWeight: 300, lineHeight: 1.85, color: "rgba(242,237,230,0.66)" }}>
+        <p className="lo-rise mt-5 max-w-[600px]" style={{ fontFamily: "var(--font-dm-sans)", fontSize: 17, fontWeight: 300, lineHeight: 1.8, color: "rgba(242,237,230,0.66)" }}>
           Anima na Smetanovej 26 žiari v strede — obchody, tržnica, hrad, park aj
           rieka naokolo. Prejdite myšou po rozsvietenom mieste a otvorí sa náhľad:
           fotka, časy cesty, a tlačidlo{" "}
@@ -152,7 +152,7 @@ function Story() {
                 </span>
               </div>
               <h3 style={{ fontFamily: "var(--font-cormorant)", fontSize: "clamp(23px,2.7vw,31px)", fontWeight: 300, lineHeight: 1.15, color: STONE }}>{b.t}</h3>
-              <p className="mt-4" style={{ fontFamily: "var(--font-dm-sans)", fontSize: 15, fontWeight: 300, lineHeight: 1.85, color: "rgba(242,237,230,0.66)" }}>{b.d}</p>
+              <p className="mt-4" style={{ fontFamily: "var(--font-dm-sans)", fontSize: 17, fontWeight: 300, lineHeight: 1.8, color: "rgba(242,237,230,0.66)" }}>{b.d}</p>
             </div>
           ))}
         </div>

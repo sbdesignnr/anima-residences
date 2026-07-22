@@ -229,7 +229,7 @@ export default function Amenities() {
           <Mask>
             <p
               className="max-w-[420px] lg:justify-self-end"
-              style={{ fontFamily: "var(--font-dm-sans)", fontSize: "14.5px", fontWeight: 300, lineHeight: 2, letterSpacing: "0.02em", color: "rgba(28,28,26,0.7)" }}
+              style={{ fontFamily: "var(--font-dm-sans)", fontSize: "16.5px", fontWeight: 300, lineHeight: 2, letterSpacing: "0.02em", color: "rgba(28,28,26,0.7)" }}
             >
               To, čo nevidno, je tu urobené rovnako poctivo ako to, čo vidno. Skice
               sú z rúk architekta — prejdite po nich myšou.
@@ -268,7 +268,7 @@ export default function Amenities() {
                       aria-hidden
                       style={{ display: "block", width: 7, height: 9, marginTop: 5, flexShrink: 0, borderRadius: "3.5px 3.5px 0 0", border: `1px solid ${GOLD}` }}
                     />
-                    <span style={{ fontFamily: "var(--font-dm-sans)", fontSize: "15px", fontWeight: 300, lineHeight: 1.6, color: "rgba(28,28,26,0.8)" }}>
+                    <span style={{ fontFamily: "var(--font-dm-sans)", fontSize: "17px", fontWeight: 300, lineHeight: 1.6, color: "rgba(28,28,26,0.8)" }}>
                       {item}
                     </span>
                   </li>
