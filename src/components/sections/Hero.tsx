@@ -28,16 +28,19 @@ const MOBILE_FILL = HERO_MOBILE.w / HERO_MOBILE.h <= 0.62;
  * quality is unchanged.
  */
 const FRAMES = {
-  // Counts stop at the last real construction frame: the masters graft a finished
-  // CGI render onto the end (desktop 191+, mobile 113+), and the hard cut to it —
-  // the building "finishing again" — read as a glitch/repeat. The film now runs
-  // as one continuous timelapse and ends on the near-complete building.
-  desktop: { dir: "/images/hero-frames/desktop", count: 190, w: 1928, h: 1072 },
-  mobile: { dir: "/images/hero-frames/mobile", count: 112, w: 1072, h: 1928 },
+  desktop: { dir: "/images/hero-frames/desktop", count: 203, w: 1928, h: 1072 },
+  mobile: { dir: "/images/hero-frames/mobile", count: 132, w: 1072, h: 1928 },
 };
 
-/** The share of the pinned scroll spent on the opening, before the film scrubs on. */
-const INTRO = 0.5;
+/**
+ * The share of the pinned scroll spent on the OPENING (the plaster parting).
+ * The film is held on its very first frame — the empty plot — for the whole
+ * opening, and only STARTS scrubbing once the plaster is fully open. So the
+ * visitor watches the build from nothing to finished, in one pass, exactly
+ * like the film — never mid-way-in, which read as a "jump to the middle".
+ * Small = a quick open, most of the scroll left for the film.
+ */
+const OPEN = 0.18;
 
 export default function Hero() {
   const heroRef = useRef<HTMLElement>(null);
@@ -164,31 +167,32 @@ export default function Hero() {
         },
       });
 
-      // The film scrubs across the WHOLE pinned scroll: it is revealed as the
-      // plaster parts and then advances frame-by-frame with the scroll.
+      // The film is held on frame 0 (the empty plot) through the OPENING, then
+      // scrubs the WHOLE sequence — first frame to last — across the rest of the
+      // pin. One continuous pass from nothing built to finished, like the film.
       const state = { f: 0 };
-      tl.to(state, { f: N - 1, ease: "none", duration: 1, onUpdate: () => render(state.f) }, 0);
+      render(0);
+      tl.to(state, { f: N - 1, ease: "none", duration: 1 - OPEN, onUpdate: () => render(state.f) }, OPEN);
 
       if (reduce) {
-        tl.to([topRef.current], { yPercent: -100, ease: "none", duration: 1 }, 0)
-          .to([bottomRef.current], { yPercent: 100, ease: "none", duration: 1 }, 0)
-          .to(seamRef.current, { opacity: 0, ease: "none", duration: 0.3 }, 0)
-          .fromTo(grainRef.current, { opacity: 0 }, { opacity: 0.26, ease: "none", duration: 1 }, 0);
+        tl.to([topRef.current], { yPercent: -100, ease: "none", duration: OPEN }, 0)
+          .to([bottomRef.current], { yPercent: 100, ease: "none", duration: OPEN }, 0)
+          .to(seamRef.current, { opacity: 0, ease: "none", duration: OPEN * 0.6 }, 0)
+          .fromTo(grainRef.current, { opacity: 0 }, { opacity: 0.26, ease: "none", duration: 0.4 }, OPEN);
       } else {
         // 1) THE PLASTER QUICKENS — as the opening begins, the living field's gold
         //    veins brighten and the shimmer runs faster (uGlow), then eases back
         //    as the halves fly off. No flash — just the plaster coming alive.
-        tl.to(glow, { v: 1, ease: "power2.out", duration: 0.34, onUpdate: setGlow }, 0.02)
-          .to(glow, { v: 0.4, ease: "sine.inOut", duration: 0.3, onUpdate: setGlow }, 0.42)
-          .to(seamRef.current, { opacity: 0, ease: "power1.out", duration: 0.16 }, 0.05)
-          // 2) THE OPENING — the plaster parts from the centre; ANIMA rises,
-          //    RESIDENCES descends, and the film widens between them.
-          .to(topRef.current, { yPercent: -102, ease: "power2.in", duration: INTRO }, 0.05)
-          .to(bottomRef.current, { yPercent: 102, ease: "power2.in", duration: INTRO }, 0.05)
-          .fromTo(framesRef.current, { scale: 1.12 }, { scale: 1, ease: "power2.out", duration: INTRO + 0.1 }, 0.05)
-          .fromTo(grainRef.current, { opacity: 0 }, { opacity: 0.26, ease: "none", duration: 0.4 }, INTRO * 0.55)
-          // 3) hold on the film for the rest of the pin
-          .to({}, { duration: 1 - INTRO }, INTRO);
+        tl.to(glow, { v: 1, ease: "power2.out", duration: OPEN * 0.7, onUpdate: setGlow }, 0.01)
+          .to(glow, { v: 0.35, ease: "sine.inOut", duration: OPEN * 0.6, onUpdate: setGlow }, OPEN * 0.7)
+          .to(seamRef.current, { opacity: 0, ease: "power1.out", duration: OPEN * 0.35 }, 0.02)
+          // 2) THE OPENING — the plaster parts from the centre, quick and smooth;
+          //    ANIMA rises, RESIDENCES descends, the empty plot widens between them.
+          //    inOut so it eases in AND settles out — no hard stop, no stutter.
+          .to(topRef.current, { yPercent: -102, ease: "power3.inOut", duration: OPEN }, 0.02)
+          .to(bottomRef.current, { yPercent: 102, ease: "power3.inOut", duration: OPEN }, 0.02)
+          .fromTo(framesRef.current, { scale: 1.1 }, { scale: 1, ease: "power2.out", duration: OPEN + 0.12 }, 0.02)
+          .fromTo(grainRef.current, { opacity: 0 }, { opacity: 0.26, ease: "none", duration: 0.35 }, OPEN * 0.5);
       }
 
       ScrollTrigger.refresh();
