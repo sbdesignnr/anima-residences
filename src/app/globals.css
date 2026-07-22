@@ -608,6 +608,10 @@ body {
   z-index: 1;
   pointer-events: none;
   display: block;
+  /* The canvas backing is the frame's native size; the GPU cover-fits and
+     upscales it to the viewport here, so per-frame drawing stays a cheap 1:1
+     copy. This is what keeps the scroll scrub buttery. */
+  object-fit: cover;
 }
 
 .hero-half {

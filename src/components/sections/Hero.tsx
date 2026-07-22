@@ -28,8 +28,8 @@ const MOBILE_FILL = HERO_MOBILE.w / HERO_MOBILE.h <= 0.62;
  * quality is unchanged.
  */
 const FRAMES = {
-  desktop: { dir: "/images/hero-frames/desktop", count: 203 },
-  mobile: { dir: "/images/hero-frames/mobile", count: 132 },
+  desktop: { dir: "/images/hero-frames/desktop", count: 203, w: 1928, h: 1072 },
+  mobile: { dir: "/images/hero-frames/mobile", count: 132, w: 1072, h: 1928 },
 };
 
 /** The share of the pinned scroll spent on the opening, before the film scrubs on. */
@@ -89,20 +89,16 @@ export default function Hero() {
         return null;
       };
 
-      // Paint one frame cover-fit at a given opacity.
+      // Paint one frame at a given opacity. The canvas backing is the frame's
+      // OWN pixel size, so this is a 1:1 copy — no per-frame resample, the single
+      // most expensive thing a scrubbed canvas can do. The cover-fit and the
+      // Retina upscale are handed to the GPU via the element's CSS object-fit.
       const paint = (img: HTMLImageElement | null, alpha: number) => {
         if (!img || !img.naturalWidth) return;
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
-        // The frames are 1080p; a Retina canvas is larger, so ask for the best
-        // resampling the browser has rather than the default (fastest) one.
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = "high";
         ctx.globalAlpha = alpha;
-        const W = canvas.width, H = canvas.height;
-        const s = Math.max(W / img.naturalWidth, H / img.naturalHeight);
-        const dw = img.naturalWidth * s, dh = img.naturalHeight * s;
-        ctx.drawImage(img, (W - dw) / 2, (H - dh) / 2, dw, dh);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         ctx.globalAlpha = 1;
       };
 
@@ -120,10 +116,11 @@ export default function Hero() {
         curF = fc;
       };
 
+      // Fixed backing = the frame's native pixels (not the Retina viewport), so
+      // every draw is a 1:1 copy. CSS object-fit:cover + the GPU do the scaling.
       const sizeCanvas = () => {
-        const d = Math.min(window.devicePixelRatio || 1, 2);
-        canvas.width = Math.max(1, Math.round(window.innerWidth * d));
-        canvas.height = Math.max(1, Math.round(window.innerHeight * d));
+        if (canvas.width !== cfg.w) canvas.width = cfg.w;
+        if (canvas.height !== cfg.h) canvas.height = cfg.h;
         render(curF < 0 ? 0 : curF);
       };
 
