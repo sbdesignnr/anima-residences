@@ -190,6 +190,8 @@ export type Apartment = {
   balkon: string;
   pivnica: string;
   parkovanie: string;
+  /** Parking total for this flat (spaces × 15 000 €), shown separately. */
+  parkovanieCena: string;
   cena: string;
   stav: Stav;
 };
@@ -245,6 +247,7 @@ export function apartmentsFor(floor: Floor): Apartment[] {
     balkon: a.balkonM2 > 0 ? `${a.balkonKind} · ${fmtM2(a.balkonM2)} m²` : "—",
     pivnica: "Kobka · 1 ks",
     parkovanie: `${a.parkovanie} ${plural(a.parkovanie, "státie", "státia", "státí")}`,
+    parkovanieCena: `${fmtNum(a.parkovanie * PARK_PRICE)} €`,
     cena: `${fmtNum(a.cenaCelkom)} €`,
     stav: a.stav,
   }));

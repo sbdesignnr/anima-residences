@@ -288,7 +288,7 @@ export default function ApartmentDetail({
                   ["Orientácia", copy.orientation],
                   ["Balkón / terasa", apartment.balkon],
                   ["Kobka", apartment.pivnica],
-                  ["Parkovanie", apartment.parkovanie],
+                  ["Parkovanie", `${apartment.parkovanie} · ${apartment.parkovanieCena}`],
                   ["Stav", apartment.stav],
                   ["Cena", apartment.cena],
                 ] as const

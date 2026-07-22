@@ -218,6 +218,7 @@ export default function ApartmentTable() {
                 <SortTh k="area" className="tbl-num" sort={sort} onSort={setSortKey}>Plocha</SortTh>
                 <th className="tbl-th">Balkón</th>
                 <SortTh k="price" className="tbl-num" sort={sort} onSort={setSortKey}>Cena</SortTh>
+                <th className="tbl-th tbl-num">Parkovanie</th>
                 <SortTh k="stav" sort={sort} onSort={setSortKey}>Stav</SortTh>
                 <th className="tbl-th" aria-hidden />
               </tr>
@@ -234,6 +235,7 @@ export default function ApartmentTable() {
                     <td className="tbl-num">{apt.vymera}</td>
                     <td style={{ color: apt.balkon === "—" ? "rgba(242,237,230,0.35)" : undefined }}>{apt.balkon}</td>
                     <td className="tbl-num" style={{ color: STONE }}>{apt.cena}</td>
+                    <td className="tbl-num" style={{ color: "rgba(242,237,230,0.6)" }}>{apt.parkovanieCena}</td>
                     <td>
                       <span className="inline-flex items-center gap-2.5">
                         <Dot free={free} />
@@ -263,6 +265,7 @@ export default function ApartmentTable() {
                   <span className="annot" style={{ fontSize: 9, color: "rgba(242,237,230,0.55)" }}>{apt.floorId}</span>
                   <span className="annot" style={{ fontSize: 9, color: "rgba(242,237,230,0.55)" }}>{apt.dispozicia}</span>
                   <span className="annot" style={{ fontSize: 9, color: "rgba(242,237,230,0.55)" }}>{apt.vymera}</span>
+                  <span className="annot" style={{ fontSize: 9, color: "rgba(242,237,230,0.55)" }}>PARKOVANIE {apt.parkovanieCena}</span>
                 </div>
                 <div className="mt-4 flex items-center justify-between">
                   <span style={{ fontFamily: "var(--font-cormorant)", fontSize: 22, fontWeight: 300, color: STONE }}>{apt.cena}</span>
