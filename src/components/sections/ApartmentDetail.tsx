@@ -284,7 +284,7 @@ export default function ApartmentDetail({
                 [
                   ["Dispozícia", apartment.dispozicia],
                   ["Úžitková plocha", apartment.vymera],
-                  ["Podlažie", `${floor.id} · ${floor.level}`],
+                  ["Podlažie", floor.id],
                   ["Orientácia", copy.orientation],
                   ["Balkón / terasa", apartment.balkon],
                   ["Kobka", apartment.pivnica],
