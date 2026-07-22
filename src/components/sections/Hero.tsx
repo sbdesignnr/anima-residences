@@ -85,6 +85,11 @@ export default function Hero() {
       const framePath = (i: number) => `${cfg.dir}/${String(i + 1).padStart(3, "0")}.webp`;
       const imgs: HTMLImageElement[] = new Array(N);
 
+      // One opaque context, fetched once. `alpha: false` lets the compositor skip
+      // the canvas's own alpha channel (the film is fully opaque), so every scroll
+      // frame composites cheaper — one less thing between the scroll and the pixels.
+      const ctx = canvas.getContext("2d", { alpha: false });
+
       /** The fractional frame the canvas currently shows (−1 = nothing yet). */
       let curF = -1;
       const ok = (im?: HTMLImageElement) => !!im && im.complete && im.naturalWidth > 0;
@@ -101,9 +106,7 @@ export default function Hero() {
       // most expensive thing a scrubbed canvas can do. The cover-fit and the
       // Retina upscale are handed to the GPU via the element's CSS object-fit.
       const paint = (img: HTMLImageElement | null, alpha: number) => {
-        if (!img || !img.naturalWidth) return;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return;
+        if (!img || !img.naturalWidth || !ctx) return;
         ctx.globalAlpha = alpha;
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         ctx.globalAlpha = 1;
@@ -134,11 +137,18 @@ export default function Hero() {
       // Kick off every frame at once (HTTP/2 multiplexes them). The first frame
       // is high-priority so the opening paints immediately; as each other frame
       // arrives it repaints the current one if it just replaced a fallback.
+      //
+      // Then WARM ITS DECODE. A drawn <img> is decoded lazily on its first paint;
+      // if that first paint happens mid-scrub, the decode blocks the main thread
+      // for a few ms and drops a frame — the "not quite smooth" tell. `decode()`
+      // moves that work off the scroll path (it runs as each frame lands, during
+      // the intro, staggered by the network), so every draw is a ready bitmap.
       for (let i = 0; i < N; i++) {
         const img = new Image();
         img.decoding = "async";
         if (i === 0) img.setAttribute("fetchpriority", "high");
         img.onload = () => {
+          img.decode?.().catch(() => {});
           render(curF < 0 ? 0 : curF);
         };
         img.src = framePath(i);
@@ -160,7 +170,11 @@ export default function Hero() {
           trigger: sec,
           start: "top top",
           end: () => "+=" + window.innerHeight * (isCoarse() ? 2.4 : 3),
-          scrub: 0.7,
+          // A longer catch-up smooths the film's glide over steppy wheel/trackpad
+          // input: GSAP eases the frame position toward the scroll at 60fps, so
+          // the picture flows even when the scroll arrives in jumps. Higher = more
+          // cinematic glide (and a touch more lag); this is the tuning dial.
+          scrub: 1,
           pin: true,
           anticipatePin: 1,
           invalidateOnRefresh: true,
