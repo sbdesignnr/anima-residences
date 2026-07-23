@@ -79,7 +79,7 @@ export type FloorData = {
 };
 
 export const FLOOR_DATA: FloorData[] = [
-  { id: "4NP", byty: 1, volne: 0, vymera: "65 m²", cena: "294 250 €", cenaOd: 294250, level: "+9,300", areas: [65] },
+  { id: "4NP", byty: 2, volne: 0, vymera: "65 m²", cena: "294 250 €", cenaOd: 294250, level: "+9,300", areas: [65, 65] },
   { id: "3NP", byty: 3, volne: 0, vymera: "50 – 70 m²", cena: "od 198 790 €", cenaOd: 198790, level: "+6,200", areas: [50, 70, 55] },
   { id: "2NP", byty: 3, volne: 0, vymera: "50 – 70 m²", cena: "od 198 790 €", cenaOd: 198790, level: "+3,100", areas: [50, 70, 55] },
   { id: "1NP", byty: 3, volne: 0, vymera: "45 – 70 m²", cena: "od 174 000 €", cenaOd: 174000, level: "±0,000", areas: [45, 50, 70] },
@@ -125,6 +125,9 @@ export const edgeCenterOf = (f: FloorGeometry) => {
  * ------------------------------------------------------------------- */
 export const PLAN_W = 1042;
 export const PLAN_H = 1316;
+/** podorys2.png — the 4NP penthouse level, a different drawing (two units). */
+export const PLAN2_W = 1038;
+export const PLAN2_H = 1270;
 
 export type UnitLetter = "A" | "B" | "C";
 
@@ -141,6 +144,24 @@ export const UNITS: Unit[] = [
   { letter: "B", poly: [[40, 39], [1001, 39], [1003, 290], [723, 291], [722, 408], [683, 408], [683, 588], [548, 588], [444, 587], [366, 587], [367, 408], [42, 409]], area: 70, rooms: "3-izbový" },
   { letter: "C", poly: [[699, 419], [737, 419], [737, 303], [1001, 303], [1003, 1230], [698, 1230]], area: 50, rooms: "2-izbový" },
 ];
+
+/**
+ * 4NP is its OWN drawing (podorys2.png): two mirror penthouses either side of the
+ * central stair/lift core — 4 A on the left, 4 B on the right, each 65 m² with a
+ * 25 m² terrace. These are ROUGH left/right starting outlines in podorys2 pixels;
+ * open the 4NP plan with `?calibrate` to trace them exactly and paste back here.
+ */
+export const UNITS_4NP: Unit[] = [
+  { letter: "A", poly: [[18, 24], [500, 24], [500, 1246], [18, 1246]], area: 65, rooms: "3-izbový" },
+  { letter: "B", poly: [[538, 24], [1020, 24], [1020, 1246], [538, 1246]], area: 65, rooms: "3-izbový" },
+];
+
+/** A floor's plan: which drawing, its pixel size, and the unit outlines on it. */
+export type PlanConf = { img: string; w: number; h: number; units: Unit[] };
+export const DEFAULT_PLAN: PlanConf = { img: "/images/podorys.avif", w: PLAN_W, h: PLAN_H, units: UNITS };
+export const PLAN_4NP: PlanConf = { img: "/images/podorys2.avif", w: PLAN2_W, h: PLAN2_H, units: UNITS_4NP };
+/** 1–3NP share the repeating layout; 4NP is the two-penthouse drawing. */
+export const planFor = (floorId: FloorId): PlanConf => (floorId === "4NP" ? PLAN_4NP : DEFAULT_PLAN);
 
 /** Written per unit type, not per apartment — the layouts repeat on every floor. */
 export const UNIT_COPY: Record<UnitLetter, { orientation: string; lead: string; features: string[] }> = {
@@ -178,6 +199,27 @@ export const UNIT_COPY: Record<UnitLetter, { orientation: string; lead: string; 
     ],
   },
 };
+
+/**
+ * The two 4NP units are mirror penthouses, so they read from one copy block. The
+ * lower floors' UNIT_COPY is keyed by A/B/C; on 4NP the same letters mean the
+ * penthouses, so copy is resolved by floor, not by letter alone.
+ */
+export const PENTHOUSE_COPY: { orientation: string; lead: string; features: string[] } = {
+  orientation: "Terasa",
+  lead:
+    "Posledné podlažie a vlastná terasa 25 m² pod otvoreným nebom. Denná zóna sa otvára priamo na ňu, obe spálne sú odsunuté k tichej strane bytu a dve kúpeľne oddeľujú deň od noci — byt, ktorý sa končí pod holým nebom, nie na chodbe.",
+  features: [
+    "Súkromná terasa 25 m²",
+    "Priechodná denná zóna otvorená na terasu",
+    "Dve spálne pri tichej strane bytu",
+    "Dve kúpeľne · pivničná kobka v 1. PP",
+  ],
+};
+
+/** Copy for a unit — the penthouse block on 4NP, otherwise the per-letter layout. */
+export const unitCopy = (floorId: FloorId, letter: UnitLetter) =>
+  floorId === "4NP" ? PENTHOUSE_COPY : UNIT_COPY[letter];
 
 export type Stav = "Voľný" | "Rezervovaný" | "Predané";
 
@@ -231,17 +273,19 @@ export const APARTMENTS: AptSpec[] = [
   { id: "C1", floorId: "3NP", unitIndex: 0, rooms: "2-izbový", obytna: 50, balkonM2: 3.4, balkonKind: "Balkón", cenaByt: 185000, cenaBalkon: 6290,  cenaCelkom: 198790, parkovanie: 1, stav: "Predané" },
   { id: "C2", floorId: "3NP", unitIndex: 1, rooms: "3-izbový", obytna: 70, balkonM2: 3.4, balkonKind: "Balkón", cenaByt: 259000, cenaBalkon: 6290,  cenaCelkom: 272790, parkovanie: 1, stav: "Predané" },
   { id: "C3", floorId: "3NP", unitIndex: 2, rooms: "2-izbový", obytna: 55, balkonM2: 3.4, balkonKind: "Balkón", cenaByt: 203500, cenaBalkon: 6290,  cenaCelkom: 217290, parkovanie: 1, stav: "Predané" },
-  { id: "D1", floorId: "4NP", unitIndex: 0, rooms: "3-izbový", obytna: 65, balkonM2: 25,  balkonKind: "Terasa", cenaByt: 240500, cenaBalkon: 46250, cenaCelkom: 294250, parkovanie: 2, stav: "Predané" },
+  { id: "D1", floorId: "4NP", unitIndex: 0, rooms: "3-izbový", obytna: 65, balkonM2: 25,  balkonKind: "Terasa", cenaByt: 240500, cenaBalkon: 46250, cenaCelkom: 294250, parkovanie: 1, stav: "Predané" },
+  { id: "D2", floorId: "4NP", unitIndex: 1, rooms: "3-izbový", obytna: 65, balkonM2: 25,  balkonKind: "Terasa", cenaByt: 240500, cenaBalkon: 46250, cenaCelkom: 294250, parkovanie: 1, stav: "Predané" },
 ];
 
 const fmtNum = (n: number) => n.toLocaleString("sk-SK");
 const fmtM2 = (n: number) => String(n).replace(".", ",");
 
 export function apartmentsFor(floor: Floor): Apartment[] {
+  const plan = planFor(floor.id);
   return APARTMENTS.filter((a) => a.floorId === floor.id).map((a) => ({
     id: a.id,
     floorId: a.floorId,
-    unit: UNITS[a.unitIndex] ?? UNITS[0],
+    unit: plan.units[a.unitIndex] ?? plan.units[0],
     dispozicia: a.rooms,
     vymera: `${a.obytna} m²`,
     balkon: a.balkonM2 > 0 ? `${a.balkonKind} · ${fmtM2(a.balkonM2)} m²` : "—",

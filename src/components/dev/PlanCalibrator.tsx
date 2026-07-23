@@ -17,7 +17,7 @@ import { PLAN_H, PLAN_W, type Pt, type Unit } from "@/lib/building";
 
 const round = (n: number) => Math.round(n);
 
-function serialize(items: PolyItem[], units: Unit[]) {
+function serialize(items: PolyItem[], units: Unit[], exportName: string) {
   const rows = items
     .map((it) => {
       const u = units.find((x) => x.letter === it.id)!;
@@ -25,7 +25,7 @@ function serialize(items: PolyItem[], units: Unit[]) {
       return `  { letter: "${u.letter}", poly: [${pts}], area: ${u.area}, rooms: "${u.rooms}" },`;
     })
     .join("\n");
-  return `export const UNITS: Unit[] = [\n${rows}\n];`;
+  return `export const ${exportName}: Unit[] = [\n${rows}\n];`;
 }
 
 export default function PlanCalibrator({
@@ -33,11 +33,17 @@ export default function PlanCalibrator({
   onChange,
   frameRef,
   onReset,
+  viewW = PLAN_W,
+  viewH = PLAN_H,
+  exportName = "UNITS",
 }: {
   units: Unit[];
   onChange: (u: Unit[]) => void;
   frameRef: React.RefObject<HTMLDivElement | null>;
   onReset: () => void;
+  viewW?: number;
+  viewH?: number;
+  exportName?: string;
 }) {
   const [selected, setSelected] = useState<string>(units[0]?.letter ?? "A");
 
@@ -61,11 +67,11 @@ export default function PlanCalibrator({
         );
       }}
       frameRef={frameRef}
-      viewW={PLAN_W}
-      viewH={PLAN_H}
+      viewW={viewW}
+      viewH={viewH}
       title="KALIBRÁCIA PÔDORYSU"
       decimals={0}
-      serialize={(its) => serialize(its, units)}
+      serialize={(its) => serialize(its, units, exportName)}
       onReset={onReset}
     />
   );

@@ -184,8 +184,11 @@
   container-type: size;
 }
 .plan-box {
-  aspect-ratio: 1042 / 1316;
-  width: min(100cqw, 100cqh * 1042 / 1316);
+  /* Ratio is per-plan (4NP is a different drawing): the component sets --plan-w
+     / --plan-h so the box is locked to the drawing, which is what turns pointer
+     pixels into drawing pixels for the calibrator. */
+  aspect-ratio: var(--plan-w, 1042) / var(--plan-h, 1316);
+  width: min(100cqw, 100cqh * var(--plan-w, 1042) / var(--plan-h, 1316));
 }
 
 /*

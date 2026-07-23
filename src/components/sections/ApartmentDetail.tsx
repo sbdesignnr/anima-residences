@@ -4,10 +4,9 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { ArchMark, SheetRef } from "@/components/ui/brand";
 import {
-  PLAN_H,
-  PLAN_W,
+  planFor,
   polyStr,
-  UNIT_COPY,
+  unitCopy,
   type Apartment,
   type Floor,
 } from "@/lib/building";
@@ -146,7 +145,8 @@ export default function ApartmentDetail({
   onSelect: (a: Apartment) => void;
 }) {
   const [sent, setSent] = useState(false);
-  const copy = UNIT_COPY[apartment.unit.letter];
+  const copy = unitCopy(floor.id, apartment.unit.letter);
+  const plan = planFor(floor.id);
   const free = apartment.stav === "Voľný";
 
   useEffect(() => {
@@ -254,15 +254,15 @@ export default function ApartmentDetail({
           {/* the real drawing, inverted, with this unit picked out */}
           <div className="detail-reveal mt-16">
             <p className="annot mb-5" style={{ fontSize: 9, color: GOLD }}>PÔDORYS · {floor.id}</p>
-            <div className="relative w-full max-w-md" style={{ aspectRatio: `${PLAN_W} / ${PLAN_H}` }}>
+            <div className="relative w-full max-w-md" style={{ aspectRatio: `${plan.w} / ${plan.h}` }}>
               <Image
-                src="/images/podorys.avif"
+                src={plan.img}
                 alt={`Pôdorys bytu ${apartment.id}`}
                 fill
                 sizes="480px"
                 style={{ objectFit: "contain", filter: "invert(1)", opacity: 0.6 }}
               />
-              <svg viewBox={`0 0 ${PLAN_W} ${PLAN_H}`} className="absolute inset-0 h-full w-full">
+              <svg viewBox={`0 0 ${plan.w} ${plan.h}`} className="absolute inset-0 h-full w-full">
                 <polygon
                   points={polyStr(apartment.unit.poly)}
                   fill={GOLD}

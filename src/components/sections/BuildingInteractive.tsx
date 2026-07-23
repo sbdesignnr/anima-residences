@@ -14,15 +14,15 @@ import {
   buildFloors,
   centerOf,
   centroidOf,
+  DEFAULT_PLAN,
   edgeCenterOf,
   leftEdgeOf,
   FLOOR_GEOMETRY,
-  PLAN_H,
-  PLAN_W,
+  PLAN_4NP,
+  planFor,
   plural,
   polyPath,
   polyStr,
-  UNITS,
   type Apartment,
   type Floor,
   type FloorGeometry,
@@ -108,14 +108,10 @@ export default function BuildingInteractive() {
   const origin = useRef({ top: 0, left: 0, right: 0, bottom: 0 });
 
   const [geometry, setGeometry] = useState<Record<FloorId, FloorGeometry>>(FLOOR_GEOMETRY);
-  const [units, setUnits] = useState<Unit[]>(UNITS);
+  /** Calibrator overrides, keyed by plan image — 4NP is a different drawing. */
+  const [editedUnits, setEditedUnits] = useState<Record<string, Unit[]>>({});
   const [calibrating, setCalibrating] = useState(false);
   const floors = useMemo(() => buildFloors(geometry), [geometry]);
-  /** The live outline for a unit — the edited one while calibrating, else the shipped one. */
-  const polyForUnit = useCallback(
-    (u: Unit) => units.find((x) => x.letter === u.letter)?.poly ?? u.poly,
-    [units]
-  );
 
   const [activeFloorId, setActiveFloorId] = useState<FloorId | null>(null);
   // Derive from `floors` so a band being dragged updates the live spotlight.
@@ -128,6 +124,13 @@ export default function BuildingInteractive() {
   );
   const [selectedFloor, setSelectedFloor] = useState<Floor | null>(null);
   const [selectedApartment, setSelectedApartment] = useState<Apartment | null>(null);
+
+  // The plan whose modal is open — 4NP has its own drawing and its own two units.
+  const activePlan = selectedFloor ? planFor(selectedFloor.id) : DEFAULT_PLAN;
+  /** Outlines to draw: calibrated overrides while editing, else the shipped set. */
+  const units = (calibrating && editedUnits[activePlan.img]) || activePlan.units;
+  const polyForUnit = (u: Unit) => units.find((x) => x.letter === u.letter)?.poly ?? u.poly;
+
   const [hinted, setHinted] = useState(false);
   /** Phones have no hover, so the section demonstrates itself. */
   const [autoTour, setAutoTour] = useState(false);
@@ -158,8 +161,12 @@ export default function BuildingInteractive() {
     try {
       const saved = localStorage.getItem("anima:floor-geometry");
       if (saved) setGeometry(JSON.parse(saved));
-      const savedU = localStorage.getItem("anima:plan-units");
-      if (savedU) setUnits(JSON.parse(savedU));
+      const edits: Record<string, Unit[]> = {};
+      for (const img of [DEFAULT_PLAN.img, PLAN_4NP.img]) {
+        const s = localStorage.getItem(`anima:plan-units:${img}`);
+        if (s) edits[img] = JSON.parse(s);
+      }
+      if (Object.keys(edits).length) setEditedUnits(edits);
     } catch {}
   }, []);
 
@@ -175,17 +182,26 @@ export default function BuildingInteractive() {
     localStorage.removeItem("anima:floor-geometry");
   }, []);
 
-  const updateUnits = useCallback((u: Unit[]) => {
-    setUnits(u);
-    try {
-      localStorage.setItem("anima:plan-units", JSON.stringify(u));
-    } catch {}
-  }, []);
+  const updateUnits = useCallback(
+    (u: Unit[]) => {
+      const img = activePlan.img;
+      setEditedUnits((prev) => ({ ...prev, [img]: u }));
+      try {
+        localStorage.setItem(`anima:plan-units:${img}`, JSON.stringify(u));
+      } catch {}
+    },
+    [activePlan.img]
+  );
 
   const resetUnits = useCallback(() => {
-    setUnits(UNITS);
-    localStorage.removeItem("anima:plan-units");
-  }, []);
+    const img = activePlan.img;
+    setEditedUnits((prev) => {
+      const next = { ...prev };
+      delete next[img];
+      return next;
+    });
+    localStorage.removeItem(`anima:plan-units:${img}`);
+  }, [activePlan.img]);
 
   /**
    * Mobile auto-tour.
@@ -986,9 +1002,14 @@ export default function BuildingInteractive() {
           {/* The real drawing, with hover zones locked to its own pixel grid.
               `.plan-fit` / `.plan-box` fit it whole — see globals.css. */}
           <div className="plan-fit flex min-h-0 flex-1 items-center justify-center">
-            <div ref={planBoxRef} className="plan-box relative">
+            <div
+              ref={planBoxRef}
+              className="plan-box relative"
+              style={{ ["--plan-w" as string]: activePlan.w, ["--plan-h" as string]: activePlan.h }}
+            >
               <Image
-                src="/images/podorys.avif"
+                key={activePlan.img}
+                src={activePlan.img}
                 alt={`Pôdorys ${selectedFloor.id}`}
                 fill
                 sizes="(max-width: 767px) 100vw, 60vw"
@@ -996,7 +1017,7 @@ export default function BuildingInteractive() {
                 priority
               />
 
-              <svg viewBox={`0 0 ${PLAN_W} ${PLAN_H}`} className="absolute inset-0 h-full w-full">
+              <svg viewBox={`0 0 ${activePlan.w} ${activePlan.h}`} className="absolute inset-0 h-full w-full">
                 {apartmentsFor(selectedFloor).map((apt) => {
                   const poly = polyForUnit(apt.unit);
                   const pts = polyStr(poly);
@@ -1051,6 +1072,9 @@ export default function BuildingInteractive() {
                   onChange={updateUnits}
                   frameRef={planBoxRef}
                   onReset={resetUnits}
+                  viewW={activePlan.w}
+                  viewH={activePlan.h}
+                  exportName={selectedFloor.id === "4NP" ? "UNITS_4NP" : "UNITS"}
                 />
               )}
             </div>
