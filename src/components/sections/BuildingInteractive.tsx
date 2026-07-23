@@ -143,18 +143,19 @@ export default function BuildingInteractive() {
   }, []);
 
   /*
-   * The dev-only calibrator (`?calibrate`).
+   * The calibrator (`?calibrate`).
+   *
+   * Gated solely on the `?calibrate` flag in the URL — so it works on the LIVE
+   * domain too (the client traces the plans there), yet an ordinary visitor never
+   * sees it and its chunk (next/dynamic) never downloads without the flag.
    *
    * react-hooks/set-state-in-effect objects to the setState below, and here it is
    * wrong to: what this reads — the query string and localStorage — does not
    * exist while the component renders on the server, so it CANNOT be derived in
    * render or in a lazy initialiser without a hydration mismatch. Reading a
    * browser-only value once, after mount, is exactly what an effect is for.
-   *
-   * It never runs in production, and it never runs without ?calibrate.
    */
   useEffect(() => {
-    if (process.env.NODE_ENV === "production") return;
     if (!new URLSearchParams(window.location.search).has("calibrate")) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setCalibrating(true);
