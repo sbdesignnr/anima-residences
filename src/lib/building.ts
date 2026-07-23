@@ -152,8 +152,8 @@ export const UNITS: Unit[] = [
  * open the 4NP plan with `?calibrate` to trace them exactly and paste back here.
  */
 export const UNITS_4NP: Unit[] = [
-  { letter: "A", poly: [[18, 24], [500, 24], [500, 1246], [18, 1246]], area: 65, rooms: "3-izbový" },
-  { letter: "B", poly: [[538, 24], [1020, 24], [1020, 1246], [538, 1246]], area: 65, rooms: "3-izbový" },
+  { letter: "A", poly: [[22, 30], [513, 30], [513, 1248], [22, 1248]], area: 65, rooms: "3-izbový" },
+  { letter: "B", poly: [[515, 30], [1016, 30], [1016, 1248], [515, 1248]], area: 65, rooms: "3-izbový" },
 ];
 
 /** A floor's plan: which drawing, its pixel size, and the unit outlines on it. */

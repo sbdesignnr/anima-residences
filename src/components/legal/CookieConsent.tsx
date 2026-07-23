@@ -54,6 +54,10 @@ export default function CookieConsent() {
 
   // Decide what to show once, on the client, from the stored cookie.
   useEffect(() => {
+    // The admin calibration overlay (?calibrate) sits bottom-right; keep the
+    // banner out of its way — a calibrating session isn't a real visit anyway.
+    if (new URLSearchParams(window.location.search).has("calibrate")) return;
+
     const rec = readConsent();
     if (rec) setChoice({ analytics: rec.analytics, maps: rec.maps });
     // Small delay so the banner glides in after the page has settled.
