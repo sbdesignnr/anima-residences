@@ -36,8 +36,12 @@ export async function GET(req: Request) {
   // The env config actually shipped (host is a public mail hostname, not a secret).
   const base = {
     configured: !!(process.env.SMTP_HOST && pass),
-    smtpHost: process.env.SMTP_HOST || null,
+    smtpHost: process.env.SMTP_HOST?.trim() || null,
     smtpPass: !!pass,
+    // Lengths (not the value) help spot a wrong paste: passLen should equal your
+    // real password's character count; passRawLen > passLen means stray whitespace.
+    passLen: pass?.length ?? 0,
+    passRawLen: process.env.SMTP_PASS?.length ?? 0,
     smtpPort: Number(process.env.SMTP_PORT || 465),
     smtpUser: process.env.SMTP_USER || LEGAL.email,
     smtpUserSet: !!process.env.SMTP_USER,
@@ -55,15 +59,18 @@ export async function GET(req: Request) {
   const user = (q.get("user") || process.env.SMTP_USER || LEGAL.email).trim();
   const port = Number(q.get("port") || process.env.SMTP_PORT || 465);
   const authMethod = (q.get("method") || "").toUpperCase() || undefined;
+  // Temporary isolation only: an inline password tests whether the stored value
+  // is the problem. It lands in logs — reset the mailbox password afterwards.
+  const testPass = q.get("pass") || pass;
 
-  if (!host || !pass) {
+  if (!host || !testPass) {
     return NextResponse.json({ ...base, verify: "SMTP nie je nastavené (chýba SMTP_HOST alebo SMTP_PASS)." });
   }
 
-  const tried = { host, port, secure: port === 465, user, method: authMethod ?? "auto" };
+  const tried = { host, port, secure: port === 465, user, method: authMethod ?? "auto", passOverride: !!q.get("pass") };
   try {
     const transporter = nodemailer.createTransport({
-      host, port, secure: port === 465, auth: { user, pass }, authMethod,
+      host, port, secure: port === 465, auth: { user, pass: testPass }, authMethod,
     });
     await transporter.verify();
     return NextResponse.json({ ...base, verify: "OK — pripojenie a prihlásenie prešlo.", tried });
