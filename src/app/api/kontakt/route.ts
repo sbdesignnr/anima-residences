@@ -3,90 +3,29 @@ import nodemailer from "nodemailer";
 import { LEGAL } from "@/lib/legal";
 
 /**
- * The contact form's endpoint — delivers each enquiry by e-mail over SMTP.
+ * The contact form's endpoint — delivers each enquiry by e-mail, with reply-to
+ * set to the enquirer so replying to the notification writes straight to them.
+ * The enquiry always lands in the project's own inbox (info@animaresidences.sk).
  *
- * It sends AS the project's own mailbox (info@animaresidences.sk on Websupport)
- * and lands in that same inbox, with reply-to set to the enquirer — so replying
- * to the notification writes straight to the customer. It does NOT pretend: if
- * SMTP is not configured it answers 501 and the form tells the visitor plainly
- * to phone instead, because a lead that evaporates into a silent 200 is the one
- * thing a sales site must never do.
+ * TWO delivery paths, tried in this order:
+ *   1. Resend (RESEND_API_KEY set) — an HTTP API built to send from serverless.
+ *      Websupport (and most shared-hosting SMTP) rejects logins from datacenter
+ *      IPs like Vercel's, so SMTP-from-Vercel returns a 535 even with the right
+ *      password; Resend is the reliable route from the cloud.
+ *   2. SMTP (SMTP_HOST + SMTP_PASS set) — kept as a fallback, e.g. for a mail
+ *      host that does allow external/cloud logins.
+ * If neither is configured it answers 501 and the form tells the visitor to phone.
  *
- * Configure in Vercel → Settings → Environment Variables:
- *   SMTP_HOST   — Websupport outgoing server (e.g. smtp.m1.websupport.sk)   [required]
- *   SMTP_PASS   — the info@ mailbox password                               [required]
- *   SMTP_PORT   — 465 (SSL, default) or 587 (STARTTLS)                     [optional]
- *   SMTP_USER   — login; defaults to info@animaresidences.sk              [optional]
- *   CONTACT_TO  — where enquiries land; defaults to info@animaresidences.sk[optional]
- *   CONTACT_FROM— the From address; defaults to the login                  [optional]
+ * Env (Vercel → Settings → Environment Variables):
+ *   RESEND_API_KEY — from resend.com                                    [path 1]
+ *   CONTACT_FROM   — From address; default onboarding@resend.dev (or the SMTP
+ *                    login). Set to e.g. web@animaresidences.sk once the domain
+ *                    is verified in Resend.
+ *   CONTACT_TO     — where enquiries land; default info@animaresidences.sk
+ *   SMTP_HOST/SMTP_PASS/SMTP_PORT/SMTP_USER                             [path 2]
  */
 
 export const runtime = "nodejs";
-
-/**
- * Diagnostics — visit /api/kontakt to see what the RUNNING app sees (booleans +
- * the non-secret port; never the host or password). Add `?verify=1` to actually
- * open the SMTP connection and log in WITHOUT sending mail — it reports the real
- * server error (bad login, wrong port, unreachable host …) so we can pinpoint it.
- */
-export async function GET(req: Request) {
-  const q = new URL(req.url).searchParams;
-  const pass = process.env.SMTP_PASS?.trim();
-
-  // The env config actually shipped (host is a public mail hostname, not a secret).
-  const base = {
-    configured: !!(process.env.SMTP_HOST && pass),
-    smtpHost: process.env.SMTP_HOST?.trim() || null,
-    smtpPass: !!pass,
-    // Lengths (not the value) help spot a wrong paste: passLen should equal your
-    // real password's character count; passRawLen > passLen means stray whitespace.
-    passLen: pass?.length ?? 0,
-    passRawLen: process.env.SMTP_PASS?.length ?? 0,
-    smtpPort: Number(process.env.SMTP_PORT || 465),
-    smtpUser: process.env.SMTP_USER || LEGAL.email,
-    smtpUserSet: !!process.env.SMTP_USER,
-    contactTo: process.env.CONTACT_TO || LEGAL.email,
-  };
-
-  if (q.get("verify") !== "1") return NextResponse.json(base);
-
-  // URL overrides let you try variants without a redeploy (password stays in env):
-  //   ?verify=1&port=587        try STARTTLS on 587
-  //   ?verify=1&method=login    force AUTH LOGIN instead of PLAIN
-  //   ?verify=1&host=smtp.…     try a different server
-  //   ?verify=1&user=…          try a different login
-  const host = (q.get("host") || process.env.SMTP_HOST || "").trim();
-  const user = (q.get("user") || process.env.SMTP_USER || LEGAL.email).trim();
-  const port = Number(q.get("port") || process.env.SMTP_PORT || 465);
-  const authMethod = (q.get("method") || "").toUpperCase() || undefined;
-  // Temporary isolation only: an inline password tests whether the stored value
-  // is the problem. It lands in logs — reset the mailbox password afterwards.
-  const testPass = q.get("pass") || pass;
-
-  if (!host || !testPass) {
-    return NextResponse.json({ ...base, verify: "SMTP nie je nastavené (chýba SMTP_HOST alebo SMTP_PASS)." });
-  }
-
-  const tried = { host, port, secure: port === 465, user, method: authMethod ?? "auto", passOverride: !!q.get("pass") };
-  try {
-    const transporter = nodemailer.createTransport({
-      host, port, secure: port === 465, auth: { user, pass: testPass }, authMethod,
-    });
-    await transporter.verify();
-    return NextResponse.json({ ...base, verify: "OK — pripojenie a prihlásenie prešlo.", tried });
-  } catch (err) {
-    const e = err as { message?: string; code?: string; responseCode?: number; command?: string };
-    return NextResponse.json({
-      ...base,
-      verify: "FAILED",
-      tried,
-      error: e.message ?? String(err),
-      code: e.code,
-      responseCode: e.responseCode,
-      command: e.command,
-    });
-  }
-}
 
 const esc = (s: string) =>
   s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string);
@@ -102,6 +41,8 @@ const MUTE = "rgba(242,237,230,0.45)";
 const SERIF = "Georgia, 'Times New Roman', serif";
 const SANS = "Helvetica, Arial, sans-serif";
 
+type Fields = { name: string; email: string; phone: string; subject: string; unit: string; message: string; when: string };
+
 function row(label: string, valueHtml: string) {
   return `<tr>
     <td style="padding:12px 0;border-bottom:1px solid ${HAIR};width:36%;vertical-align:top;font-family:${SANS};font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:${MUTE};">${label}</td>
@@ -109,15 +50,7 @@ function row(label: string, valueHtml: string) {
   </tr>`;
 }
 
-function renderEmail(f: {
-  name: string;
-  email: string;
-  phone: string;
-  subject: string;
-  unit: string;
-  message: string;
-  when: string;
-}) {
+function renderEmail(f: Fields) {
   const rows =
     row("E-mail", `<a href="mailto:${esc(f.email)}" style="color:${GOLD};text-decoration:none;">${esc(f.email)}</a>`) +
     (f.phone ? row("Telefón", `<a href="tel:${esc(f.phone.replace(/\s/g, ""))}" style="color:${STONE};text-decoration:none;">${esc(f.phone)}</a>`) : "") +
@@ -154,7 +87,7 @@ function renderEmail(f: {
   </body></html>`;
 }
 
-function renderText(f: { name: string; email: string; phone: string; subject: string; unit: string; message: string; when: string }) {
+function renderText(f: Fields) {
   return [
     "ANIMA RESIDENCES — nový dopyt z webu",
     "",
@@ -166,11 +99,40 @@ function renderText(f: { name: string; email: string; phone: string; subject: st
     "",
     f.message ? `Správa:\n${f.message}` : "",
     "",
-    `Odpovedzte priamo na tento e-mail — píšete rovno záujemcovi.`,
+    "Odpovedzte priamo na tento e-mail — píšete rovno záujemcovi.",
     `Odoslané z animaresidences.sk · ${f.when}`,
   ]
     .filter((l) => l !== "")
     .join("\n");
+}
+
+/* ── delivery ─────────────────────────────────────────────────────────────── */
+
+const RESEND_FROM_DEFAULT = "Anima Residences <onboarding@resend.dev>";
+
+async function deliver(opts: { to: string; from: string; replyTo: string; subject: string; html: string; text: string }) {
+  const key = process.env.RESEND_API_KEY?.trim();
+  if (key) {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ from: opts.from, to: [opts.to], reply_to: opts.replyTo, subject: opts.subject, html: opts.html, text: opts.text }),
+    });
+    if (!res.ok) throw new Error(`Resend ${res.status}: ${(await res.text()).slice(0, 300)}`);
+    return;
+  }
+
+  // SMTP fallback
+  const host = process.env.SMTP_HOST?.trim();
+  const pass = process.env.SMTP_PASS?.trim();
+  const user = (process.env.SMTP_USER || LEGAL.email).trim();
+  const port = Number(process.env.SMTP_PORT || 465);
+  const transporter = nodemailer.createTransport({ host, port, secure: port === 465, auth: { user, pass } });
+  await transporter.sendMail({ from: opts.from, to: opts.to, replyTo: opts.replyTo, subject: opts.subject, text: opts.text, html: opts.html });
+}
+
+function deliveryConfigured() {
+  return !!process.env.RESEND_API_KEY?.trim() || !!(process.env.SMTP_HOST?.trim() && process.env.SMTP_PASS?.trim());
 }
 
 /* ── the handler ──────────────────────────────────────────────────────────── */
@@ -197,17 +159,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Skontrolujte, prosím, e-mailovú adresu." }, { status: 400 });
   }
 
-  // Trim: a stray trailing newline/space pasted into a Vercel env var is a common
-  // cause of a 535 "authentication failed" with otherwise-correct credentials.
-  const host = process.env.SMTP_HOST?.trim();
-  const pass = process.env.SMTP_PASS?.trim();
-  const user = (process.env.SMTP_USER || LEGAL.email).trim();
-  const to = (process.env.CONTACT_TO || LEGAL.email).trim();
-  const from = (process.env.CONTACT_FROM || user).trim();
-  const port = Number(process.env.SMTP_PORT || 465);
-
-  if (!host || !pass) {
-    console.error("[kontakt] An enquiry arrived and could not be delivered — SMTP_HOST / SMTP_PASS are not set.", { name, email });
+  if (!deliveryConfigured()) {
+    console.error("[kontakt] An enquiry arrived and could not be delivered — no RESEND_API_KEY and no SMTP.", { name, email });
     return NextResponse.json(
       {
         error:
@@ -217,7 +170,12 @@ export async function POST(req: Request) {
     );
   }
 
-  const fields = {
+  const useResend = !!process.env.RESEND_API_KEY?.trim();
+  const smtpUser = (process.env.SMTP_USER || LEGAL.email).trim();
+  const to = (process.env.CONTACT_TO || LEGAL.email).trim();
+  const from = (process.env.CONTACT_FROM || (useResend ? RESEND_FROM_DEFAULT : `Anima Residences <${smtpUser}>`)).trim();
+
+  const fields: Fields = {
     name,
     email,
     phone: (body.phone ?? "").trim(),
@@ -228,23 +186,16 @@ export async function POST(req: Request) {
   };
 
   try {
-    const transporter = nodemailer.createTransport({
-      host,
-      port,
-      secure: port === 465, // 465 = implicit TLS; 587 upgrades via STARTTLS
-      auth: { user, pass },
-    });
-
-    await transporter.sendMail({
-      from: `Anima Residences <${from}>`,
+    await deliver({
       to,
+      from,
       replyTo: `${name} <${email}>`,
       subject: `Dopyt z webu — ${name}${fields.subject ? ` · ${fields.subject}` : ""}`,
-      text: renderText(fields),
       html: renderEmail(fields),
+      text: renderText(fields),
     });
   } catch (err) {
-    console.error("[kontakt] SMTP send failed", err);
+    console.error("[kontakt] send failed", err);
     return NextResponse.json(
       { error: "Správu sa nepodarilo odoslať. Skúste to prosím znova, alebo nám zavolajte." },
       { status: 502 }
@@ -252,4 +203,49 @@ export async function POST(req: Request) {
   }
 
   return NextResponse.json({ ok: true });
+}
+
+/* ── diagnostics ──────────────────────────────────────────────────────────── */
+/**
+ * Visit /api/kontakt to see what the running app sees. `?verify=1` opens the SMTP
+ * connection (only relevant to the SMTP fallback) and reports the real error.
+ */
+export async function GET(req: Request) {
+  const q = new URL(req.url).searchParams;
+  const pass = process.env.SMTP_PASS?.trim();
+  const useResend = !!process.env.RESEND_API_KEY?.trim();
+
+  const base = {
+    configured: deliveryConfigured(),
+    deliveryMethod: useResend ? "resend" : (process.env.SMTP_HOST && pass ? "smtp" : "none"),
+    resendKeySet: useResend,
+    smtpHost: process.env.SMTP_HOST?.trim() || null,
+    smtpPass: !!pass,
+    smtpPort: Number(process.env.SMTP_PORT || 465),
+    smtpUser: process.env.SMTP_USER || LEGAL.email,
+    contactTo: process.env.CONTACT_TO || LEGAL.email,
+    contactFrom: process.env.CONTACT_FROM || (useResend ? RESEND_FROM_DEFAULT : null),
+  };
+
+  if (q.get("verify") !== "1") return NextResponse.json(base);
+
+  const host = (q.get("host") || process.env.SMTP_HOST || "").trim();
+  const user = (q.get("user") || process.env.SMTP_USER || LEGAL.email).trim();
+  const port = Number(q.get("port") || process.env.SMTP_PORT || 465);
+  const authMethod = (q.get("method") || "").toUpperCase() || undefined;
+  const testPass = q.get("pass") || pass;
+
+  if (!host || !testPass) {
+    return NextResponse.json({ ...base, verify: "SMTP nie je nastavené (verify testuje len SMTP fallback)." });
+  }
+
+  const tried = { host, port, secure: port === 465, user, method: authMethod ?? "auto" };
+  try {
+    const transporter = nodemailer.createTransport({ host, port, secure: port === 465, auth: { user, pass: testPass }, authMethod });
+    await transporter.verify();
+    return NextResponse.json({ ...base, verify: "OK — pripojenie a prihlásenie prešlo.", tried });
+  } catch (err) {
+    const e = err as { message?: string; code?: string; responseCode?: number; command?: string };
+    return NextResponse.json({ ...base, verify: "FAILED", tried, error: e.message ?? String(err), code: e.code, responseCode: e.responseCode });
+  }
 }
