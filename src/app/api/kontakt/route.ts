@@ -30,39 +30,49 @@ export const runtime = "nodejs";
  * server error (bad login, wrong port, unreachable host …) so we can pinpoint it.
  */
 export async function GET(req: Request) {
-  const host = process.env.SMTP_HOST;
+  const q = new URL(req.url).searchParams;
   const pass = process.env.SMTP_PASS;
-  const user = process.env.SMTP_USER || LEGAL.email;
-  const port = Number(process.env.SMTP_PORT || 465);
 
+  // The env config actually shipped (host is a public mail hostname, not a secret).
   const base = {
-    configured: !!(host && pass),
-    smtpHost: !!host,
+    configured: !!(process.env.SMTP_HOST && pass),
+    smtpHost: process.env.SMTP_HOST || null,
     smtpPass: !!pass,
-    smtpPort: port,
-    secure: port === 465,
-    smtpUser: user,
+    smtpPort: Number(process.env.SMTP_PORT || 465),
+    smtpUser: process.env.SMTP_USER || LEGAL.email,
     smtpUserSet: !!process.env.SMTP_USER,
     contactTo: process.env.CONTACT_TO || LEGAL.email,
   };
 
-  if (new URL(req.url).searchParams.get("verify") !== "1") {
-    return NextResponse.json(base);
-  }
+  if (q.get("verify") !== "1") return NextResponse.json(base);
+
+  // URL overrides let you try variants without a redeploy (password stays in env):
+  //   ?verify=1&port=587        try STARTTLS on 587
+  //   ?verify=1&method=login    force AUTH LOGIN instead of PLAIN
+  //   ?verify=1&host=smtp.…     try a different server
+  //   ?verify=1&user=…          try a different login
+  const host = q.get("host") || process.env.SMTP_HOST;
+  const user = q.get("user") || process.env.SMTP_USER || LEGAL.email;
+  const port = Number(q.get("port") || process.env.SMTP_PORT || 465);
+  const authMethod = (q.get("method") || "").toUpperCase() || undefined;
 
   if (!host || !pass) {
     return NextResponse.json({ ...base, verify: "SMTP nie je nastavené (chýba SMTP_HOST alebo SMTP_PASS)." });
   }
 
+  const tried = { host, port, secure: port === 465, user, method: authMethod ?? "auto" };
   try {
-    const transporter = nodemailer.createTransport({ host, port, secure: port === 465, auth: { user, pass } });
+    const transporter = nodemailer.createTransport({
+      host, port, secure: port === 465, auth: { user, pass }, authMethod,
+    });
     await transporter.verify();
-    return NextResponse.json({ ...base, verify: "OK — pripojenie a prihlásenie prešlo." });
+    return NextResponse.json({ ...base, verify: "OK — pripojenie a prihlásenie prešlo.", tried });
   } catch (err) {
     const e = err as { message?: string; code?: string; responseCode?: number; command?: string };
     return NextResponse.json({
       ...base,
       verify: "FAILED",
+      tried,
       error: e.message ?? String(err),
       code: e.code,
       responseCode: e.responseCode,
