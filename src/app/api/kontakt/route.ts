@@ -24,19 +24,51 @@ import { LEGAL } from "@/lib/legal";
 export const runtime = "nodejs";
 
 /**
- * Diagnostics — visit /api/kontakt in a browser to see what the RUNNING app sees.
- * Only booleans + the (non-secret) port; never the host or password. Tells us at
- * a glance whether the env vars have actually reached this deployment.
+ * Diagnostics — visit /api/kontakt to see what the RUNNING app sees (booleans +
+ * the non-secret port; never the host or password). Add `?verify=1` to actually
+ * open the SMTP connection and log in WITHOUT sending mail — it reports the real
+ * server error (bad login, wrong port, unreachable host …) so we can pinpoint it.
  */
-export async function GET() {
-  return NextResponse.json({
-    configured: !!(process.env.SMTP_HOST && process.env.SMTP_PASS),
-    smtpHost: !!process.env.SMTP_HOST,
-    smtpPass: !!process.env.SMTP_PASS,
-    smtpPort: Number(process.env.SMTP_PORT || 465),
+export async function GET(req: Request) {
+  const host = process.env.SMTP_HOST;
+  const pass = process.env.SMTP_PASS;
+  const user = process.env.SMTP_USER || LEGAL.email;
+  const port = Number(process.env.SMTP_PORT || 465);
+
+  const base = {
+    configured: !!(host && pass),
+    smtpHost: !!host,
+    smtpPass: !!pass,
+    smtpPort: port,
+    secure: port === 465,
+    smtpUser: user,
     smtpUserSet: !!process.env.SMTP_USER,
-    contactToSet: !!process.env.CONTACT_TO,
-  });
+    contactTo: process.env.CONTACT_TO || LEGAL.email,
+  };
+
+  if (new URL(req.url).searchParams.get("verify") !== "1") {
+    return NextResponse.json(base);
+  }
+
+  if (!host || !pass) {
+    return NextResponse.json({ ...base, verify: "SMTP nie je nastavené (chýba SMTP_HOST alebo SMTP_PASS)." });
+  }
+
+  try {
+    const transporter = nodemailer.createTransport({ host, port, secure: port === 465, auth: { user, pass } });
+    await transporter.verify();
+    return NextResponse.json({ ...base, verify: "OK — pripojenie a prihlásenie prešlo." });
+  } catch (err) {
+    const e = err as { message?: string; code?: string; responseCode?: number; command?: string };
+    return NextResponse.json({
+      ...base,
+      verify: "FAILED",
+      error: e.message ?? String(err),
+      code: e.code,
+      responseCode: e.responseCode,
+      command: e.command,
+    });
+  }
 }
 
 const esc = (s: string) =>
