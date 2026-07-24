@@ -31,7 +31,7 @@ export const runtime = "nodejs";
  */
 export async function GET(req: Request) {
   const q = new URL(req.url).searchParams;
-  const pass = process.env.SMTP_PASS;
+  const pass = process.env.SMTP_PASS?.trim();
 
   // The env config actually shipped (host is a public mail hostname, not a secret).
   const base = {
@@ -51,8 +51,8 @@ export async function GET(req: Request) {
   //   ?verify=1&method=login    force AUTH LOGIN instead of PLAIN
   //   ?verify=1&host=smtp.…     try a different server
   //   ?verify=1&user=…          try a different login
-  const host = q.get("host") || process.env.SMTP_HOST;
-  const user = q.get("user") || process.env.SMTP_USER || LEGAL.email;
+  const host = (q.get("host") || process.env.SMTP_HOST || "").trim();
+  const user = (q.get("user") || process.env.SMTP_USER || LEGAL.email).trim();
   const port = Number(q.get("port") || process.env.SMTP_PORT || 465);
   const authMethod = (q.get("method") || "").toUpperCase() || undefined;
 
@@ -190,11 +190,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Skontrolujte, prosím, e-mailovú adresu." }, { status: 400 });
   }
 
-  const host = process.env.SMTP_HOST;
-  const pass = process.env.SMTP_PASS;
-  const user = process.env.SMTP_USER || LEGAL.email;
-  const to = process.env.CONTACT_TO || LEGAL.email;
-  const from = process.env.CONTACT_FROM || user;
+  // Trim: a stray trailing newline/space pasted into a Vercel env var is a common
+  // cause of a 535 "authentication failed" with otherwise-correct credentials.
+  const host = process.env.SMTP_HOST?.trim();
+  const pass = process.env.SMTP_PASS?.trim();
+  const user = (process.env.SMTP_USER || LEGAL.email).trim();
+  const to = (process.env.CONTACT_TO || LEGAL.email).trim();
+  const from = (process.env.CONTACT_FROM || user).trim();
   const port = Number(process.env.SMTP_PORT || 465);
 
   if (!host || !pass) {
