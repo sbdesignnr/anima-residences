@@ -17,6 +17,8 @@ export const LEGAL = {
   ico: "53714679",
   /** DIČ — nepovinné; nechajte prázdne, ak sa nemá zobraziť. */
   dic: "2121468195",
+  /** IČ DPH — nepovinné; nechajte prázdne, ak firma nie je platiteľ DPH. */
+  icDph: "SK2121468195",
   /** Zápis v obchodnom / živnostenskom registri. */
   register: "Zapísaná v Obchodnom registri Okresného súdu Nitra, oddiel: Sro, vložka č. 62518/N",
 

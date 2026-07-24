@@ -6,6 +6,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import { openConsentSettings } from "@/lib/consent";
+import { LEGAL } from "@/lib/legal";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
@@ -158,6 +159,24 @@ export default function Footer() {
               {COMPANY.email}
             </a>
           </Fact>
+        </div>
+
+        {/* ── the developer / billing particulars ── */}
+        <div className="ft-col mt-10">
+          <p className="annot" style={{ fontSize: "9px", color: GOLD }}>DEVELOPER</p>
+          <p
+            className="mt-3"
+            style={{ fontFamily: "var(--font-dm-sans)", fontWeight: 300, fontSize: "13px", lineHeight: 1.95, color: "rgba(242,237,230,0.62)", maxWidth: "640px" }}
+          >
+            <span style={{ color: "rgba(242,237,230,0.9)" }}>{LEGAL.controllerName}</span>
+            {" · "}
+            {LEGAL.seat}
+            <br />
+            IČO {LEGAL.ico} · DIČ {LEGAL.dic}
+            {LEGAL.icDph && ` · IČ DPH ${LEGAL.icDph}`}
+            <br />
+            {LEGAL.register}
+          </p>
         </div>
 
         {/* ── the small print ── */}
