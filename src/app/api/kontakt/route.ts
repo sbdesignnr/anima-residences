@@ -23,6 +23,22 @@ import { LEGAL } from "@/lib/legal";
 
 export const runtime = "nodejs";
 
+/**
+ * Diagnostics — visit /api/kontakt in a browser to see what the RUNNING app sees.
+ * Only booleans + the (non-secret) port; never the host or password. Tells us at
+ * a glance whether the env vars have actually reached this deployment.
+ */
+export async function GET() {
+  return NextResponse.json({
+    configured: !!(process.env.SMTP_HOST && process.env.SMTP_PASS),
+    smtpHost: !!process.env.SMTP_HOST,
+    smtpPass: !!process.env.SMTP_PASS,
+    smtpPort: Number(process.env.SMTP_PORT || 465),
+    smtpUserSet: !!process.env.SMTP_USER,
+    contactToSet: !!process.env.CONTACT_TO,
+  });
+}
+
 const esc = (s: string) =>
   s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string);
 
