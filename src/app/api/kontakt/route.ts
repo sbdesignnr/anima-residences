@@ -225,6 +225,9 @@ export async function GET(req: Request) {
     smtpUser: process.env.SMTP_USER || LEGAL.email,
     contactTo: process.env.CONTACT_TO || LEGAL.email,
     contactFrom: process.env.CONTACT_FROM || (useResend ? RESEND_FROM_DEFAULT : null),
+    // The relevant env var NAMES the running app actually sees (values hidden) —
+    // reveals a typo like CONTACT_FORM or a var missing from this deployment.
+    envKeys: Object.keys(process.env).filter((k) => /^(SMTP_|CONTACT_|RESEND_API_KEY|BREVO_)/.test(k)).sort(),
   };
 
   if (q.get("verify") !== "1") return NextResponse.json(base);
