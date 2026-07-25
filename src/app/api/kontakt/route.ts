@@ -205,50 +205,5 @@ export async function POST(req: Request) {
   return NextResponse.json({ ok: true });
 }
 
-/* ── diagnostics ──────────────────────────────────────────────────────────── */
-/**
- * Visit /api/kontakt to see what the running app sees. `?verify=1` opens the SMTP
- * connection (only relevant to the SMTP fallback) and reports the real error.
- */
-export async function GET(req: Request) {
-  const q = new URL(req.url).searchParams;
-  const pass = process.env.SMTP_PASS?.trim();
-  const useResend = !!process.env.RESEND_API_KEY?.trim();
-
-  const base = {
-    configured: deliveryConfigured(),
-    deliveryMethod: useResend ? "resend" : (process.env.SMTP_HOST && pass ? "smtp" : "none"),
-    resendKeySet: useResend,
-    smtpHost: process.env.SMTP_HOST?.trim() || null,
-    smtpPass: !!pass,
-    smtpPort: Number(process.env.SMTP_PORT || 465),
-    smtpUser: process.env.SMTP_USER || LEGAL.email,
-    contactTo: process.env.CONTACT_TO || LEGAL.email,
-    contactFrom: process.env.CONTACT_FROM || (useResend ? RESEND_FROM_DEFAULT : null),
-    // The relevant env var NAMES the running app actually sees (values hidden) —
-    // reveals a typo like CONTACT_FORM or a var missing from this deployment.
-    envKeys: Object.keys(process.env).filter((k) => /^(SMTP_|CONTACT_|RESEND_API_KEY|BREVO_)/.test(k)).sort(),
-  };
-
-  if (q.get("verify") !== "1") return NextResponse.json(base);
-
-  const host = (q.get("host") || process.env.SMTP_HOST || "").trim();
-  const user = (q.get("user") || process.env.SMTP_USER || LEGAL.email).trim();
-  const port = Number(q.get("port") || process.env.SMTP_PORT || 465);
-  const authMethod = (q.get("method") || "").toUpperCase() || undefined;
-  const testPass = q.get("pass") || pass;
-
-  if (!host || !testPass) {
-    return NextResponse.json({ ...base, verify: "SMTP nie je nastavené (verify testuje len SMTP fallback)." });
-  }
-
-  const tried = { host, port, secure: port === 465, user, method: authMethod ?? "auto" };
-  try {
-    const transporter = nodemailer.createTransport({ host, port, secure: port === 465, auth: { user, pass: testPass }, authMethod });
-    await transporter.verify();
-    return NextResponse.json({ ...base, verify: "OK — pripojenie a prihlásenie prešlo.", tried });
-  } catch (err) {
-    const e = err as { message?: string; code?: string; responseCode?: number; command?: string };
-    return NextResponse.json({ ...base, verify: "FAILED", tried, error: e.message ?? String(err), code: e.code, responseCode: e.responseCode });
-  }
-}
+// (The temporary GET diagnostic used to bring SMTP online has been removed now
+// that delivery works. Only POST — the form submission — remains.)
