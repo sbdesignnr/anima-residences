@@ -918,6 +918,15 @@ body {
   color: #b69a78;
 }
 
+/* the build credit — brighter than the muted line around it, gold on hover */
+.ft-credit {
+  color: rgba(242, 237, 230, 0.6);
+  transition: color 0.3s ease;
+}
+.ft-credit:hover {
+  color: #b69a78;
+}
+
 .ft-top {
   display: inline-flex;
   align-items: center;

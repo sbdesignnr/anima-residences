@@ -181,9 +181,17 @@ export default function Footer() {
 
         {/* ── the small print ── */}
         <div className="mt-16 flex flex-col gap-5 border-t pt-7 sm:flex-row sm:items-center sm:justify-between" style={{ borderColor: "rgba(242,237,230,0.1)" }}>
-          <p className="annot" style={{ fontSize: "9px", lineHeight: 2, color: "rgba(242,237,230,0.36)" }}>
-            © 2026 Anima Residences. Všetky práva vyhradené.
-          </p>
+          <div>
+            <p className="annot" style={{ fontSize: "9px", lineHeight: 2, color: "rgba(242,237,230,0.36)" }}>
+              © 2026 Anima Residences. Všetky práva vyhradené.
+            </p>
+            <p className="annot" style={{ fontSize: "9px", lineHeight: 2, color: "rgba(242,237,230,0.3)" }}>
+              Web vytvoril{" "}
+              <a href="https://www.sbdesign.sk" target="_blank" rel="noopener noreferrer" className="ft-credit">
+                SB Design
+              </a>
+            </p>
+          </div>
 
           <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
             <Link href="/ochrana-osobnych-udajov" className="ft-fine">
