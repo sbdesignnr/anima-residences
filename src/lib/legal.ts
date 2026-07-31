@@ -33,6 +33,31 @@ export const LEGAL = {
 } as const;
 
 /**
+ * The companies credited as developers of the project (footer). The first IS the
+ * GDPR controller (LEGAL, reused so it never drifts); the second is the
+ * co-developer. Kept separate from LEGAL on purpose — the privacy policy's
+ * controller must stay a single entity, this list is just the business credit.
+ */
+export const DEVELOPERS = [
+  {
+    name: LEGAL.controllerName,
+    seat: LEGAL.seat,
+    ico: LEGAL.ico,
+    dic: LEGAL.dic,
+    icDph: LEGAL.icDph,
+    register: LEGAL.register,
+  },
+  {
+    name: "Home Development 2, s. r. o.",
+    seat: "Mostná 13, 949 01 Nitra",
+    ico: "52286061",
+    dic: "2120978849",
+    icDph: "SK2120978849",
+    register: "Zapísaná v Obchodnom registri Okresného súdu Nitra, oddiel: Sro, vložka č. 47794/N",
+  },
+] as const;
+
+/**
  * The Slovak supervisory authority — fixed public data, quoted so the "right to
  * lodge a complaint" section is complete and actionable.
  */

@@ -6,7 +6,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import { openConsentSettings } from "@/lib/consent";
-import { LEGAL } from "@/lib/legal";
+import { DEVELOPERS } from "@/lib/legal";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
@@ -161,22 +161,28 @@ export default function Footer() {
           </Fact>
         </div>
 
-        {/* ── the developer / billing particulars ── */}
+        {/* ── the developer(s) / billing particulars ── */}
         <div className="ft-col mt-10">
-          <p className="annot" style={{ fontSize: "9px", color: GOLD }}>DEVELOPER</p>
-          <p
-            className="mt-3"
-            style={{ fontFamily: "var(--font-dm-sans)", fontWeight: 300, fontSize: "13px", lineHeight: 1.95, color: "rgba(242,237,230,0.62)", maxWidth: "640px" }}
-          >
-            <span style={{ color: "rgba(242,237,230,0.9)" }}>{LEGAL.controllerName}</span>
-            {" · "}
-            {LEGAL.seat}
-            <br />
-            IČO {LEGAL.ico} · DIČ {LEGAL.dic}
-            {LEGAL.icDph && ` · IČ DPH ${LEGAL.icDph}`}
-            <br />
-            {LEGAL.register}
+          <p className="annot" style={{ fontSize: "9px", color: GOLD }}>
+            {DEVELOPERS.length > 1 ? "DEVELOPERI" : "DEVELOPER"}
           </p>
+          <div className="mt-3 grid gap-x-12 gap-y-6 sm:grid-cols-2" style={{ maxWidth: "860px" }}>
+            {DEVELOPERS.map((d) => (
+              <p
+                key={d.ico}
+                style={{ fontFamily: "var(--font-dm-sans)", fontWeight: 300, fontSize: "13px", lineHeight: 1.95, color: "rgba(242,237,230,0.62)" }}
+              >
+                <span style={{ color: "rgba(242,237,230,0.9)" }}>{d.name}</span>
+                {" · "}
+                {d.seat}
+                <br />
+                IČO {d.ico} · DIČ {d.dic}
+                {d.icDph && ` · IČ DPH ${d.icDph}`}
+                <br />
+                {d.register}
+              </p>
+            ))}
+          </div>
         </div>
 
         {/* ── the small print ── */}
