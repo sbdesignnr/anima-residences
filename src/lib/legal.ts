@@ -38,7 +38,18 @@ export const LEGAL = {
  * co-developer. Kept separate from LEGAL on purpose — the privacy policy's
  * controller must stay a single entity, this list is just the business credit.
  */
-export const DEVELOPERS = [
+export type Developer = {
+  name: string;
+  seat: string;
+  ico: string;
+  dic: string;
+  icDph: string;
+  register: string;
+  /** Optional brand logo — a /images/<stem> served as <stem>.avif/.webp/.png. */
+  logo?: string;
+};
+
+export const DEVELOPERS: Developer[] = [
   {
     name: LEGAL.controllerName,
     seat: LEGAL.seat,
@@ -54,8 +65,9 @@ export const DEVELOPERS = [
     dic: "2120978849",
     icDph: "SK2120978849",
     register: "Zapísaná v Obchodnom registri Okresného súdu Nitra, oddiel: Sro, vložka č. 47794/N",
+    logo: "/images/logo-home-development",
   },
-] as const;
+];
 
 /**
  * The Slovak supervisory authority — fixed public data, quoted so the "right to

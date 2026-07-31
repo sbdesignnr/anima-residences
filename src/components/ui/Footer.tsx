@@ -166,21 +166,33 @@ export default function Footer() {
           <p className="annot" style={{ fontSize: "9px", color: GOLD }}>
             {DEVELOPERS.length > 1 ? "DEVELOPERI" : "DEVELOPER"}
           </p>
-          <div className="mt-3 grid gap-x-12 gap-y-6 sm:grid-cols-2" style={{ maxWidth: "860px" }}>
+          <div className="mt-3 grid gap-x-12 gap-y-8 sm:grid-cols-2" style={{ maxWidth: "860px" }}>
             {DEVELOPERS.map((d) => (
-              <p
-                key={d.ico}
-                style={{ fontFamily: "var(--font-dm-sans)", fontWeight: 300, fontSize: "13px", lineHeight: 1.95, color: "rgba(242,237,230,0.62)" }}
-              >
-                <span style={{ color: "rgba(242,237,230,0.9)" }}>{d.name}</span>
-                {" · "}
-                {d.seat}
-                <br />
-                IČO {d.ico} · DIČ {d.dic}
-                {d.icDph && ` · IČ DPH ${d.icDph}`}
-                <br />
-                {d.register}
-              </p>
+              <div key={d.ico}>
+                {d.logo && (
+                  <picture>
+                    <source srcSet={`${d.logo}.avif`} type="image/avif" />
+                    <source srcSet={`${d.logo}.webp`} type="image/webp" />
+                    <img
+                      src={`${d.logo}.png`}
+                      alt={d.name}
+                      width={405}
+                      height={139}
+                      style={{ height: "34px", width: "auto", display: "block", marginBottom: "14px", opacity: 0.9 }}
+                    />
+                  </picture>
+                )}
+                <p style={{ fontFamily: "var(--font-dm-sans)", fontWeight: 300, fontSize: "13px", lineHeight: 1.95, color: "rgba(242,237,230,0.62)" }}>
+                  <span style={{ color: "rgba(242,237,230,0.9)" }}>{d.name}</span>
+                  {" · "}
+                  {d.seat}
+                  <br />
+                  IČO {d.ico} · DIČ {d.dic}
+                  {d.icDph && ` · IČ DPH ${d.icDph}`}
+                  <br />
+                  {d.register}
+                </p>
+              </div>
             ))}
           </div>
         </div>
