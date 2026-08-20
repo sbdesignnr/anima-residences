@@ -69,7 +69,7 @@ export type Poi = {
  * The development's own position on the map. Best-estimate for the Zobor
  * foothills — replace with the exact pin and every marker reframes around it.
  */
-export const RESIDENCE = { lat: 48.30519, lng: 18.08772, label: "Anima Residences" }; // Smetanova 26, Nitra
+export const RESIDENCE = { lat: 48.30542, lng: 18.08755, label: "Anima Residences" }; // Smetanova 2, Nitra
 
 export const POIS: Poi[] = [
   // Príroda & šport

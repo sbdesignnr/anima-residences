@@ -20,19 +20,19 @@ const STONE = "#F2EDE6";
  */
 export const COMPANY = {
   name: "Anima Residences",
-  street: "Smetanova 26",
+  street: "Smetanova 2",
   city: "949 01 Nitra",
   phone: "+421 948 341 154",
   phoneHref: "+421948341154",
   email: "info@animaresidences.sk",
   /** The address, spelled once — the map, the link and the footer all read it. */
-  query: "Smetanova 26, 949 01 Nitra",
+  query: "Smetanova 2, 949 01 Nitra",
   /** Opens the address in whatever map app the visitor actually uses. */
-  mapHref: "https://www.google.com/maps/search/?api=1&query=Smetanova%2026%2C%20949%2001%20Nitra",
+  mapHref: "https://www.google.com/maps/search/?api=1&query=Smetanova%202%2C%20949%2001%20Nitra",
   /** The same address as an embeddable map. No API key, and no coordinates to
       invent — Google geocodes the query itself. */
   mapEmbed:
-    "https://www.google.com/maps?q=Smetanova%2026%2C%20949%2001%20Nitra&hl=sk&z=16&output=embed",
+    "https://www.google.com/maps?q=Smetanova%202%2C%20949%2001%20Nitra&hl=sk&z=16&output=embed",
 };
 
 const COLUMNS: { head: string; links: { label: string; href: string }[] }[] = [

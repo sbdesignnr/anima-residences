@@ -56,7 +56,7 @@ function Header() {
     <section ref={ref} className="relative w-full overflow-hidden" style={{ backgroundColor: "#181913" }}>
       <div className="lk-glow pointer-events-none absolute inset-0" aria-hidden />
       <div className="mx-auto max-w-[1400px] px-[6%] pb-14 pt-36 md:pb-16 md:pt-44">
-        <div className="lh-rise"><SheetRef label="Anima Residences · Smetanova 26, Nitra" /></div>
+        <div className="lh-rise"><SheetRef label="Anima Residences · Smetanova 2, Nitra" /></div>
         <h1 className="lh-rise mt-7" style={{ fontFamily: "var(--font-cormorant)", fontSize: "clamp(46px, 9vw, 128px)", fontWeight: 300, lineHeight: 0.98, letterSpacing: "-0.015em", color: STONE }}>
           Lokalita
         </h1>
