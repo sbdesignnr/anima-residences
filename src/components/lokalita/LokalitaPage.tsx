@@ -61,7 +61,7 @@ function Header() {
           Lokalita
         </h1>
         <p className="lh-rise mt-8 max-w-[600px]" style={{ fontFamily: "var(--font-dm-sans)", fontSize: 18, fontWeight: 300, lineHeight: 1.85, letterSpacing: "0.01em", color: "rgba(242,237,230,0.72)" }}>
-          V srdci nitrianskeho Starého Mesta — na Smetanovej 26, kúsok od
+          V srdci nitrianskeho Starého Mesta — na Smetanovej 2, kúsok od
           Svätoplukovho námestia a s OC Mlyny hneď za rohom. Obchody, tržnica,
           škola aj univerzita na pár minút pešo, rieka a mestský park na dosah.
           Bývanie, kde máte celé mesto pod nohami.
@@ -95,7 +95,7 @@ function Places() {
           Celé okolie na jednej mape
         </h2>
         <p className="lo-rise mt-5 max-w-[600px]" style={{ fontFamily: "var(--font-dm-sans)", fontSize: 17, fontWeight: 300, lineHeight: 1.8, color: "rgba(242,237,230,0.66)" }}>
-          Anima na Smetanovej 26 žiari v strede — obchody, tržnica, hrad, park aj
+          Anima na Smetanovej 2 žiari v strede — obchody, tržnica, hrad, park aj
           rieka naokolo. Prejdite myšou po rozsvietenom mieste a otvorí sa náhľad:
           fotka, časy cesty, a tlačidlo{" "}
           <b style={{ color: GOLD, fontWeight: 400 }}>Trasa</b>, ktoré vás rovno
