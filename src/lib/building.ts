@@ -82,7 +82,7 @@ export const FLOOR_DATA: FloorData[] = [
   { id: "4NP", byty: 2, volne: 0, vymera: "65 m²", cena: "294 250 €", cenaOd: 294250, level: "+9,300", areas: [65, 65] },
   { id: "3NP", byty: 3, volne: 0, vymera: "50 – 70 m²", cena: "od 198 790 €", cenaOd: 198790, level: "+6,200", areas: [50, 70, 55] },
   { id: "2NP", byty: 3, volne: 0, vymera: "50 – 70 m²", cena: "od 198 790 €", cenaOd: 198790, level: "+3,100", areas: [50, 70, 55] },
-  { id: "1NP", byty: 3, volne: 0, vymera: "45 – 70 m²", cena: "od 174 000 €", cenaOd: 174000, level: "±0,000", areas: [45, 50, 70] },
+  { id: "1NP", byty: 3, volne: 1, vymera: "45 – 70 m²", cena: "od 174 000 €", cenaOd: 174000, level: "±0,000", areas: [45, 50, 70] },
 ];
 
 export type Floor = FloorData & FloorGeometry;
@@ -264,7 +264,7 @@ export const KOBKA_PRICE = 7500;
 export const PARK_PRICE = 15000;
 
 export const APARTMENTS: AptSpec[] = [
-  { id: "A1", floorId: "1NP", unitIndex: 0, rooms: "2-izbový", obytna: 45, balkonM2: 0,   balkonKind: "Balkón", cenaByt: 166500, cenaBalkon: 0,     cenaCelkom: 174000, parkovanie: 1, stav: "Predané" },
+  { id: "A1", floorId: "1NP", unitIndex: 0, rooms: "2-izbový", obytna: 45, balkonM2: 0,   balkonKind: "Balkón", cenaByt: 166500, cenaBalkon: 0,     cenaCelkom: 174000, parkovanie: 1, stav: "Voľný" },
   { id: "A2", floorId: "1NP", unitIndex: 1, rooms: "2-izbový", obytna: 50, balkonM2: 0,   balkonKind: "Balkón", cenaByt: 185000, cenaBalkon: 0,     cenaCelkom: 192500, parkovanie: 1, stav: "Predané" },
   { id: "A3", floorId: "1NP", unitIndex: 2, rooms: "3-izbový", obytna: 70, balkonM2: 0,   balkonKind: "Balkón", cenaByt: 259000, cenaBalkon: 0,     cenaCelkom: 266500, parkovanie: 1, stav: "Predané" },
   { id: "B1", floorId: "2NP", unitIndex: 0, rooms: "2-izbový", obytna: 50, balkonM2: 3.4, balkonKind: "Balkón", cenaByt: 185000, cenaBalkon: 6290,  cenaCelkom: 198790, parkovanie: 1, stav: "Predané" },
